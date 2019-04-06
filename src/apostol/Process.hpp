@@ -1,0 +1,446 @@
+/*++
+
+Programm name:
+
+  Apostol
+
+Module Name:
+
+  Process.hpp
+
+Notices:
+
+  Apostol Web Service
+
+Author:
+
+  Copyright (c) Prepodobny Alen
+
+  mailto: alienufo@inbox.ru
+  mailto: ufocomp@gmail.com
+
+--*/
+
+#ifndef APOSTOL_PROCESS_HPP
+#define APOSTOL_PROCESS_HPP
+//----------------------------------------------------------------------------------------------------------------------
+
+#define PROCESS_NORESPAWN     -1
+#define PROCESS_JUST_SPAWN    -2
+#define PROCESS_RESPAWN       -3
+#define PROCESS_JUST_RESPAWN  -4
+#define PROCESS_DETACHED      -5
+//----------------------------------------------------------------------------------------------------------------------
+
+//extern sig_atomic_t    sig_fatal;
+//----------------------------------------------------------------------------------------------------------------------
+
+#define INVALID_PID (-1)
+//----------------------------------------------------------------------------------------------------------------------
+
+#define signal_value_helper(n)      SIG##n
+#define signal_value(n)             signal_value_helper(n)
+
+#define value_helper(n)             #n
+#define value(n)                    value_helper(n)
+//----------------------------------------------------------------------------------------------------------------------
+
+#define SIG_SHUTDOWN_SIGNAL      QUIT
+#define SIG_TERMINATE_SIGNAL     TERM
+#define SIG_NOACCEPT_SIGNAL      WINCH
+#define SIG_RECONFIGURE_SIGNAL   HUP
+
+#if (LINUX_THREADS)
+#define SIG_REOPEN_SIGNAL        INFO
+#define SIG_CHANGEBIN_SIGNAL     XCPU
+#else
+#define SIG_REOPEN_SIGNAL        USR1
+#define SIG_CHANGEBIN_SIGNAL     USR2
+#endif
+//----------------------------------------------------------------------------------------------------------------------
+
+#define log_failure(msg) {                                  \
+  if (GLog != nullptr)                                      \
+    GLog->Error(LOG_EMERG, 0, msg);                         \
+  else                                                      \
+    std::cerr << AWS_NAME << ": " << (msg) << std::endl;    \
+}                                                           \
+//----------------------------------------------------------------------------------------------------------------------
+
+typedef void (* CSignalHandler) (int signo, siginfo_t *siginfo, void *ucontext);
+//----------------------------------------------------------------------------------------------------------------------
+
+void signal_handler(int signo, siginfo_t *siginfo, void *ucontext);
+void signal_error(int signo, siginfo_t *siginfo, void *ucontext);
+//----------------------------------------------------------------------------------------------------------------------
+
+typedef enum ProcessType {
+    ptMain, ptSingle, ptMaster, ptSignaller, ptNewBinary, ptWorker, ptHelper
+} CProcessType;
+//----------------------------------------------------------------------------------------------------------------------
+
+static LPCTSTR PROCESS_TYPE_NAME[] = {
+        _T("main"), _T("single"), _T("master"), _T("signaller"), _T("new binary"), _T("worker"), _T("helper")
+};
+//----------------------------------------------------------------------------------------------------------------------
+
+typedef struct {
+    char         *path;
+    const char   *name;
+    char *const  *argv;
+    char *const  *envp;
+} CExecuteContext;
+//----------------------------------------------------------------------------------------------------------------------
+
+extern "C++" {
+
+namespace Apostol {
+
+    namespace Process {
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CCustomProcess --------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CCustomProcess: public CObject, public CGlobalComponent {
+        private:
+
+            pid_t m_Pid;
+
+            CCustomProcess *m_pParent;
+
+            CProcessType m_Type;
+
+            int m_Status;
+            CString m_Name;
+
+            bool m_respawn: true;
+            bool m_just_spawn: true;
+            bool m_detached: true;
+            bool m_exiting: true;
+            bool m_exited: true;
+
+            pid_t m_NewBinary;
+
+            bool m_fDaemonized;
+
+            Pointer m_pData;
+
+        protected:
+
+            void SetPid(pid_t Value) { m_Pid = Value; };
+
+            void SetName(LPCTSTR Value) { m_Name = Value; };
+            void SetData(Pointer Value) { m_pData = Value; };
+            void SetStatus(int Value) { m_Status = Value; };
+
+            void SetRespawn(bool Value) { m_respawn = Value; };
+            void SetJustSpawn(bool Value) { m_just_spawn = Value; };
+            void SetDetached(bool Value) { m_detached = Value; };
+            void SetExited(bool Value) { m_exited = Value; };
+            void SetExiting(bool Value) { m_exiting = Value; };
+
+        public:
+
+            CCustomProcess(): CCustomProcess(ptMain, nullptr) {
+            };
+
+            explicit CCustomProcess(CProcessType AType): CCustomProcess(AType, nullptr) {
+            };
+
+            explicit CCustomProcess(CProcessType AType, CCustomProcess *AParent);
+
+            ~CCustomProcess() override = default;
+
+            virtual void BeforeRun() abstract;
+            virtual void AfterRun() abstract;
+
+            virtual void Run() abstract;
+
+            virtual void Terminate();
+
+            virtual void Assign(CCustomProcess *AProcess);
+
+            void ExecuteProcess(CExecuteContext *AContext);
+
+            CProcessType Type() { return m_Type; };
+
+            pid_t Pid() { return m_Pid; };
+            void Pid(pid_t Value) { SetPid(Value); };
+
+            pid_t ParentId();
+
+            CCustomProcess *Parent() { return m_pParent; };
+
+            const CString& Name() { return m_Name; };
+            void Name(LPCTSTR Value) { SetName(Value); };
+
+            LPCTSTR ProcessName() { return m_Name.c_str(); };
+
+            Pointer Data() { return m_pData; };
+            void Data(Pointer Value) { SetData(Value); };
+
+            pid_t NewBinary() { return m_NewBinary; };
+            void NewBinary(pid_t Value) { m_NewBinary = Value; };
+
+            bool Daemonized() { return m_fDaemonized; };
+            void Daemonized(bool Value) { m_fDaemonized = Value; };
+
+            bool Respawn() { return m_respawn; };
+            void Respawn(bool Value) { SetRespawn(Value); };
+
+            bool JustSpawn() { return m_just_spawn; };
+            void JustSpawn(bool Value) { SetJustSpawn(Value); };
+
+            bool Detached() { return m_detached; };
+            void Detached(bool Value) { SetDetached(Value); };
+
+            bool Exited() { return m_exited; };
+            void Exited(bool Value) { SetExited(Value); };
+
+            bool Exiting() { return m_exiting; };
+            void Exiting(bool Value) { SetExiting(Value); };
+
+            int Status() { return m_Status; };
+            void Status(int Value) { SetStatus(Value); };
+
+        }; // class CCustomProcess
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CSignal ---------------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CSignal: public CCollectionItem {
+        private:
+
+            int             m_signo;
+
+            LPCTSTR         m_code;
+            LPCTSTR         m_name;
+
+            CSignalHandler  m_handler;
+
+        protected:
+
+            void SetCode(LPCTSTR Value);
+            void SetName(LPCTSTR Value);
+
+            void SetHandler(CSignalHandler Value);
+
+        public:
+
+            CSignal(CCollection *ACollection, int ASigno);
+
+            int Signo() { return m_signo; };
+
+            LPCTSTR Code() { return m_code; };
+            void Code(LPCTSTR Value) { SetCode(Value); };
+
+            LPCTSTR Name() { return m_name; };
+            void Name(LPCTSTR Value) { SetName(Value); };
+
+            CSignalHandler Handler() { return m_handler; };
+            void Handler(CSignalHandler Value) { SetHandler(Value); };
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CSignals --------------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CSignals: public CCollection {
+            typedef CCollection inherited;
+
+        private:
+
+            CSignal *Get(int Index);
+            void Put(int Index, CSignal *Signal);
+
+        public:
+
+            CSignals(): CCollection(this) {};
+
+            void AddSignal(int ASigno, LPCTSTR ACode, LPCTSTR AName, CSignalHandler AHandler);
+
+            inline static class CSignals *Create() { return new CSignals(); };
+
+            ~CSignals() override = default;
+
+            int IndexOfSigno(int Signo);
+
+            void InitSignals();
+
+            sigset_t *SigAddSet(sigset_t *set);
+
+            void SigProcMask(int How, const sigset_t *set, sigset_t *oset = nullptr);
+
+            int SignalsCount() { return Count(); };
+
+            CSignal *Signals(int Index) { return Get(Index); };
+
+            void Strings(int Index, CSignal *Value) { return Put(Index, Value); };
+
+            CSignal *operator[] (int Index) override { return Signals(Index); }
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CSignalProcess --------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CSignalProcess: public CCustomProcess, public CSignals {
+        private:
+
+            CSignalProcess *m_pSignalProcess;
+
+        protected:
+
+            sig_atomic_t    sig_reap;
+            sig_atomic_t    sig_sigio;
+            sig_atomic_t    sig_sigalrm;
+            sig_atomic_t    sig_terminate;
+            sig_atomic_t    sig_quit;
+            sig_atomic_t    sig_debug_quit;
+            sig_atomic_t    sig_reconfigure;
+            sig_atomic_t    sig_reopen;
+            sig_atomic_t    sig_noaccept;
+            sig_atomic_t    sig_change_binary;
+
+            uint_t          sig_exiting;
+            uint_t          sig_restart;
+            uint_t          sig_noaccepting;
+
+            virtual void CreateSignals();
+
+            virtual void ChildProcessGetStatus() abstract;
+
+            void SetSignalProcess(CSignalProcess *Value);
+
+        public:
+
+            CSignalProcess(CProcessType AType, CCustomProcess *AParent);
+
+            virtual CSignalProcess *SignalProcess() { return m_pSignalProcess; };
+
+            virtual void SignalHandler(int signo, siginfo_t *siginfo, void *ucontext);
+
+            //virtual void Terminate();
+
+            virtual void Quit();
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CServerProcess --------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CServerProcess: public CSignalProcess {
+        private:
+
+            CHTTPServer *m_pServer;
+            CPQServer *m_pPQServer;
+
+            virtual void DoOptions(CCommand *ACommand);
+            virtual void DoGet(CCommand *ACommand);
+            virtual void DoHead(CCommand *ACommand);
+            virtual void DoPost(CCommand *ACommand);
+            virtual void DoPut(CCommand *ACommand);
+            virtual void DoPatch(CCommand *ACommand);
+            virtual void DoDelete(CCommand *ACommand);
+            virtual void DoTrace(CCommand *ACommand);
+            virtual void DoConnect(CCommand *ACommand);
+
+        protected:
+
+            virtual void DoExecute(CTCPServerConnection *AConnection) abstract;
+
+            void DoDebug(CSocketServer *AServer, CTCPServerConnection *AConnection, LPCTSTR AFormat, va_list args);
+            void DoAccessLog(CTCPServerConnection *AConnection);
+
+            void DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException);
+            void DoPQConnectException(CPQConnection *AConnection, Delphi::Exception::Exception *AException);
+
+            void DoPQStatus(CPQConnection *AConnection);
+            void DoPQPollingStatus(CPQConnection *AConnection);
+
+            void DoPQReceiver(CPQConnection *AConnection, const PGresult *AResult);
+            void DoPQProcessor(CPQConnection *AConnection, LPCSTR AMessage);
+
+            void DoPQConnect(CPQConnection *AConnection);
+            void DoPQDisconnect(CPQConnection *AConnection);
+
+            void DoPQSendQuery(CPQQuery *AQuery);
+            void DoPQResultStatus(CPQResult *AResult);
+            void DoPQResult(CPQResult *AResult, ExecStatusType AExecStatus);
+
+            void DoServerListenException(CSocketServer *AServer, Delphi::Exception::Exception *AException);
+            void DoServerException(CTCPServerConnection *AConnection, Delphi::Exception::Exception *AException);
+            void DoServerEventHandlerException(CPollEventHandler *AHandler, Delphi::Exception::Exception *AException);
+
+            void DoServerConnected(CObject *Sender);
+            void DoServerDisconnected(CObject *Sender);
+
+            void DoNoCommandHandler(CSocketServer *AServer, LPCTSTR AData, CTCPServerConnection *AConnection);
+
+            void SetServer(CHTTPServer *Value);
+            void SetPQServer(CPQServer *Value);
+
+        public:
+
+            CServerProcess(CProcessType AType, CCustomProcess *AParent);
+
+            CHTTPServer *Server() { return m_pServer; };
+            void Server(CHTTPServer *Value) { SetServer(Value); };
+
+            CPQServer *PQServer() { return m_pPQServer; };
+            void PQServer(CPQServer *Value) { SetPQServer(Value); };
+
+            void InitializeServerHandlers();
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CModuleProcess --------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CModuleProcess: public CServerProcess {
+        private:
+
+            CStringList *m_pModules;
+
+        protected:
+
+            void DoExecute(CTCPServerConnection *AConnection) override;
+
+            CApostolModule *GetModule(CHTTPConnection *AConnection) const;
+
+        public:
+
+            CModuleProcess(CProcessType AType, CCustomProcess *AParent);
+
+            ~CModuleProcess() override;
+
+            CApostolModule *Modules(CHTTPConnection *AConnection) const { return GetModule(AConnection); };
+
+            CApostolModule *operator[] (CHTTPConnection *AConnection) const { return GetModule(AConnection); };
+        };
+
+    }
+//----------------------------------------------------------------------------------------------------------------------
+}
+
+using namespace Apostol::Process;
+}
+//----------------------------------------------------------------------------------------------------------------------
+
+#endif //APOSTOL_PROCESS_HPP
