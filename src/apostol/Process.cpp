@@ -102,6 +102,16 @@ namespace Apostol {
             m_fDaemonized = false;
             m_NewBinary = 0;
 
+            m_Status = 0;
+
+            m_respawn = false;
+            m_just_spawn = false;
+            m_detached = false;
+            m_exiting = false;
+            m_exited = false;
+
+            m_pData = nullptr;
+
             Name(PROCESS_TYPE_NAME[m_Type]);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -803,7 +813,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoNoCommandHandler(CSocketServer *AServer, LPCTSTR AData, CTCPServerConnection *AConnection) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (AConnection), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (AConnection)->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -814,47 +824,47 @@ namespace Apostol {
             if (LRequest->Uri == _T("/quit"))
                 SignalProcess()->Quit();
 
-            CReply::SendStockReply(LConnection, CReply::ok);
+            LConnection->SendStockReply(CReply::ok);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoGet(CCommand *ACommand) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (ACommand->Connection()), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoHead(CCommand *ACommand) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (ACommand->Connection()), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPost(CCommand *ACommand) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (ACommand->Connection()), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPut(CCommand *ACommand) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (ACommand->Connection()), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPatch(CCommand *ACommand) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (ACommand->Connection()), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoDelete(CCommand *ACommand) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (ACommand->Connection()), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoTrace(CCommand *ACommand) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (ACommand->Connection()), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoConnect(CCommand *ACommand) {
-            CReply::SendStockReply(dynamic_cast<CHTTPConnection *> (ACommand->Connection()), CReply::not_implemented);
+            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -907,7 +917,7 @@ namespace Apostol {
             auto LModule = GetModule(LConnection);
 
             if (LModule == nullptr) {
-                CReply::SendStockReply(LConnection, CReply::forbidden);
+                LConnection->SendStockReply(CReply::forbidden);
                 return;
             }
 
@@ -915,7 +925,7 @@ namespace Apostol {
                 LModule->Execute(LConnection);
             } catch (Delphi::Exception::Exception &E) {
                 DoServerException(LConnection, &E);
-                CReply::SendStockReply(LConnection, CReply::internal_server_error);
+                LConnection->SendStockReply(CReply::internal_server_error);
             }
 
             if (LModule->FreeAfterExecute()) {

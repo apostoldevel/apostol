@@ -851,8 +851,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        http_reply *CReply::GetReply(http_reply *AReply, status_type AStatus, content_type AType,
-                LPCTSTR AContentType) {
+        http_reply *CReply::GetReply(http_reply *AReply, status_type AStatus, LPCTSTR AContentType) {
 
             TCHAR szTime[MAX_BUFFER_SIZE + 1] = {0};
             TCHAR szSize[_INT_T_LEN + 1] = {0};
@@ -887,7 +886,7 @@ namespace Delphi {
                 AReply->AddHeader(_T("Accept-Ranges"), _T("bytes"));
 
                 if (AContentType == nullptr) {
-                    switch (AType) {
+                    switch (AReply->ContentType) {
                         case content_type::html:
                             AContentType = _T("text/html");
                             break;
@@ -921,54 +920,10 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        http_reply *CReply::GetStockReply(http_reply *AReply, CReply::status_type AStatus, content_type AType) {
-            AReply->Content = StockReplies::ToString(AStatus, AType);
-            AReply = GetReply(AReply, AStatus, AType);
+        http_reply *CReply::GetStockReply(http_reply *AReply, CReply::status_type AStatus) {
+            AReply->Content = StockReplies::ToString(AStatus, AReply->ContentType);
+            AReply = GetReply(AReply, AStatus);
             return AReply;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void http_reply::SendStockReply(CHTTPConnection *AConnection, http_reply::status_type AStatus,
-                                        http_reply::content_type AType, bool ASendNow) {
-
-            auto LReply = AConnection->Reply();
-
-            AConnection->CloseConnection(true);
-
-            LReply->CloseConnection = AConnection->CloseConnection();
-
-            CReply::GetStockReply(LReply, AStatus, AType);
-            LReply->ToBuffers(AConnection->OutputBuffer());
-
-            if (ASendNow)
-                AConnection->WriteAsync();
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void http_reply::SendReply(CHTTPConnection *AConnection, http_reply::status_type AStatus,
-                                   http_reply::content_type AType, LPCTSTR AContentType,
-                                   bool ASendNow) {
-
-            auto LReply = AConnection->Reply();
-            auto LRequest = AConnection->Request();
-
-            AConnection->CloseConnection(true);
-
-            if (AStatus == CReply::ok) {
-                const CString &Value = LRequest->Headers.Values(_T("connection"));
-                if (!Value.IsEmpty()) {
-                    if (Value == _T("keep-alive"))
-                        AConnection->CloseConnection(false);
-                }
-            }
-
-            LReply->CloseConnection = AConnection->CloseConnection();
-
-            CReply::GetReply(LReply, AStatus, AType, AContentType);
-            LReply->ToBuffers(AConnection->OutputBuffer());
-
-            if (ASendNow)
-                AConnection->WriteAsync();
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -979,9 +934,11 @@ namespace Delphi {
 
         CHTTPConnection::CHTTPConnection(CHTTPServer *AServer) : CTCPServerConnection(AServer) {
             m_CloseConnection = true;
+            m_ConnectionStatus = csConnected;
             m_Request = nullptr;
             m_Reply = nullptr;
             m_RequestParser = new CRequestParser();
+            m_OnReply = nullptr;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1015,7 +972,8 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        int CHTTPConnection::ParseInput() {
+        void CHTTPConnection::ParseInput() {
+            int LResult;
             CMemoryStream *LStream = nullptr;
 
             if (Connected()) {
@@ -1024,8 +982,22 @@ namespace Delphi {
                 try {
                     if (LStream->Size() > 0) {
                         InputBuffer()->Extract(LStream->Memory(), LStream->Size());
-                        m_RequestParser->Parse(GetRequest(), (LPTSTR) LStream->Memory(),
+                        LResult = m_RequestParser->Parse(GetRequest(), (LPTSTR) LStream->Memory(),
                                                (LPCTSTR) LStream->Memory() + LStream->Size());
+
+                        switch (LResult) {
+                            case 0:
+                                m_ConnectionStatus = csRequestError;
+                                break;
+
+                            case 1:
+                                m_ConnectionStatus = csRequestOk;
+                                break;
+
+                            default:
+                                m_ConnectionStatus = csWaitRequest;
+                                break;
+                        }
                     }
                 } catch (...) {
                     delete LStream;
@@ -1033,8 +1005,61 @@ namespace Delphi {
                 }
                 delete LStream;
             }
+        }
 
-            return m_RequestParser->Result();
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPConnection::SendStockReply(http_reply::status_type AStatus, bool ASendNow) {
+
+            CloseConnection(true);
+
+            m_Reply->CloseConnection = CloseConnection();
+
+            CReply::GetStockReply(m_Reply, AStatus);
+
+            SendReply(ASendNow);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPConnection::SendReply(http_reply::status_type AStatus, LPCTSTR AContentType, bool ASendNow) {
+
+            CloseConnection(true);
+
+            if (AStatus == CReply::ok) {
+                const CString &Value = m_Request->Headers.Values(_T("connection"));
+                if (!Value.IsEmpty()) {
+                    if (Value == _T("keep-alive"))
+                        CloseConnection(false);
+                }
+            }
+
+            m_Reply->CloseConnection = CloseConnection();
+
+            CReply::GetReply(m_Reply, AStatus, AContentType);
+
+            SendReply(ASendNow);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPConnection::SendReply(bool ASendNow) {
+
+            m_Reply->ToBuffers(OutputBuffer());
+
+            m_ConnectionStatus = csReplyReady;
+
+            DoReply();
+
+            if (ASendNow) {
+                WriteAsync();
+                m_ConnectionStatus = csReplySent;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPConnection::DoReply() {
+            if (m_OnReply != nullptr) {
+                m_OnReply(this);
+            }
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -1080,8 +1105,10 @@ namespace Delphi {
         void CHTTPServer::DoTimeOut(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CHTTPConnection *> (AHandler->PollConnection());
             try {
-                CReply::SendStockReply(LConnection, CReply::gateway_timeout, CReply::html, true);
-                DoAccessLog(LConnection);
+                if (LConnection->ConnectionStatus() == csRequestOk) {
+                    LConnection->SendStockReply(CReply::gateway_timeout, true);
+                }
+                LConnection->Disconnect();
             } catch (Delphi::Exception::Exception &E) {
                 DoException(LConnection, &E);
                 LConnection->Disconnect();
@@ -1092,7 +1119,7 @@ namespace Delphi {
         void CHTTPServer::DoAccept(CPollEventHandler* AHandler) {
             CIOHandlerSocket *LIOHandler = nullptr;
             CPollEventHandler *LEventHandler = nullptr;
-            CTCPServerConnection *LConnection = nullptr;
+            CHTTPConnection *LConnection = nullptr;
 
             try {
                 LIOHandler = (CIOHandlerSocket *) IOHandler()->Accept(AHandler->Socket(), SOCK_NONBLOCK);
@@ -1101,6 +1128,8 @@ namespace Delphi {
                     LConnection = new CHTTPConnection(this);
 
                     LConnection->OnDisconnected(std::bind(&CHTTPServer::DoDisconnected, this, _1));
+                    LConnection->OnReply(std::bind(&CHTTPServer::DoReply, this, _1));
+
                     LConnection->IOHandler(LIOHandler);
 
                     LIOHandler->AfterAccept();
@@ -1123,15 +1152,14 @@ namespace Delphi {
         void CHTTPServer::DoRead(CPollEventHandler* AHandler) {
             auto LConnection = dynamic_cast<CHTTPConnection *> (AHandler->PollConnection());
             try {
-                switch (LConnection->ParseInput()) {
-                    case 0:
-                        CReply::SendStockReply(LConnection, CReply::bad_request);
-                        DoAccessLog(LConnection);
+                LConnection->ParseInput();
+                switch (LConnection->ConnectionStatus()) {
+                    case csRequestError:
+                        LConnection->SendStockReply(CReply::bad_request);
                         break;
 
-                    case 1:
+                    case csRequestOk:
                         DoExecute(LConnection);
-                        DoAccessLog(LConnection);
                         break;
 
                     default:
@@ -1146,16 +1174,13 @@ namespace Delphi {
 
         void CHTTPServer::DoWrite(CPollEventHandler* AHandler) {
             auto LConnection = dynamic_cast<CHTTPConnection *> (AHandler->PollConnection());
-            int Result;
             try {
-                LConnection->CheckForDisconnect(true);
+                if (LConnection->ConnectionStatus() == csReplyReady) {
+                    if (LConnection->WriteAsync()) {
 
-                if (LConnection->WriteAsync()) {
-
-                    Result = LConnection->RequestParser()->Result();
-
-                    if (Result != -1) {
+                        LConnection->ConnectionStatus(csReplySent);
                         LConnection->Clear();
+
                         if (LConnection->CloseConnection()) {
                             LConnection->Disconnect();
                         }
@@ -1201,6 +1226,11 @@ namespace Delphi {
                 }
                 DoAfterCommandHandler(AConnection);
             }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPServer::DoReply(CObject *Sender) {
+            DoAccessLog(dynamic_cast<CHTTPConnection *> (Sender));
         }
 
     }

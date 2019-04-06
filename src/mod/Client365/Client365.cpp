@@ -117,8 +117,6 @@ namespace Apostol::Client365 {
 
             CReply::status_type LStatus = CReply::internal_server_error;
 
-            LReply->Clear();
-
             try {
                 TList<TList<CStringList>> QResult;
 
@@ -224,7 +222,7 @@ namespace Apostol::Client365 {
                         e.what(), _T("Query"), _T("PostgreSQL"), LStatus, _T("Internal Server Error"));
             }
 
-            CReply::SendReply(LConnection, LStatus, CReply::json, nullptr, true);
+            LConnection->SendReply(LStatus, nullptr, true);
         }
     }
     //--------------------------------------------------------------------------------------------------------------
@@ -245,7 +243,7 @@ namespace Apostol::Client365 {
 
             Log()->Postgres(LOG_EMERG, LReply->Content.c_str());
 
-            CReply::SendReply(LConnection, LStatus, CReply::json);
+            LConnection->SendReply(LStatus);
         }
     }
     //--------------------------------------------------------------------------------------------------------------
@@ -262,7 +260,7 @@ namespace Apostol::Client365 {
         CStringList LUri;
         SplitColumns(LRequest->Uri.c_str(), LRequest->Uri.Size(), &LUri, '/');
         if (LUri.Count() < 3) {
-            CReply::SendStockReply(AConnection, CReply::not_found, CReply::json);
+            AConnection->SendStockReply(CReply::not_found);
             return;
         }
 
@@ -273,13 +271,13 @@ namespace Apostol::Client365 {
         }
 
         if (LUri[0] != _T("api") || (LVersion == -1) || LUri[2] != _T("json")) {
-            CReply::SendStockReply(AConnection, CReply::not_found, CReply::json);
+            AConnection->SendStockReply(CReply::not_found);
             return;
         }
 
         const CString &LContentType = LRequest->Headers.Values(_T("content-type"));
         if (!LContentType.IsEmpty() && LRequest->ContentLength == 0) {
-            CReply::SendStockReply(AConnection, CReply::bad_request, CReply::json);
+            AConnection->SendStockReply(CReply::bad_request);
             return;
         }
 
@@ -297,14 +295,14 @@ namespace Apostol::Client365 {
 
         auto LQuery = GetQuery(AConnection);
         if (LQuery == nullptr) {
-            CReply::SendStockReply(AConnection, CReply::internal_server_error, CReply::json);
+            AConnection->SendStockReply(CReply::internal_server_error);
             return;
         }
 
         if (LUri[3] == _T("login")) {
 
             if (LRequest->Content.IsEmpty()) {
-                CReply::SendStockReply(AConnection, CReply::bad_request, CReply::json);
+                AConnection->SendStockReply(CReply::bad_request);
                 return;
             }
 
@@ -316,7 +314,7 @@ namespace Apostol::Client365 {
             const CString &Password = Login["password"].AsSiring();
 
             if (UserName.IsEmpty() && Password.IsEmpty()) {
-                CReply::SendStockReply(AConnection, CReply::bad_request, CReply::json);
+                AConnection->SendStockReply(CReply::bad_request);
                 return;
             }
 
@@ -339,14 +337,14 @@ namespace Apostol::Client365 {
             const CString &LAuthenticate = LRequest->Headers.Values(_T("authenticate"));
 
             if (LAuthorization.IsEmpty() && LAuthenticate.IsEmpty()) {
-                CReply::SendStockReply(AConnection, CReply::unauthorized, CReply::json);
+                AConnection->SendStockReply(CReply::unauthorized);
                 return;
             }
 
             if (!LAuthenticate.IsEmpty()) {
                 size_t Pos = LAuthenticate.Find('=');
                 if (Pos == CString::npos) {
-                    CReply::SendStockReply(AConnection, CReply::bad_request, CReply::json);
+                    AConnection->SendStockReply(CReply::bad_request);
                     return;
                 }
 
@@ -354,7 +352,7 @@ namespace Apostol::Client365 {
             }
 
             if (m_Session.Length() != 40) {
-                CReply::SendStockReply(AConnection, CReply::bad_request, CReply::json);
+                AConnection->SendStockReply(CReply::bad_request);
                 return;
             }
 
@@ -376,7 +374,7 @@ namespace Apostol::Client365 {
 
                 LReply->Content = "{\"jobid\":" "\"" + LQuery->JobId() + "\"}";
 
-                CReply::SendReply(AConnection, CReply::ok, CReply::json, nullptr, true);
+                AConnection->SendReply(CReply::ok, nullptr, true);
             }
         }
     }
@@ -399,7 +397,7 @@ namespace Apostol::Client365 {
             return;
         }
 
-        CReply::SendStockReply(AConnection, CReply::not_implemented);
+        AConnection->SendStockReply(CReply::not_implemented);
     }
 }
 }

@@ -867,7 +867,7 @@ namespace Delphi {
 
             ~CTCPServerConnection() override;
 
-            CEventSocketServer *Server() { return m_Server; }
+            virtual CEventSocketServer *Server() { return m_Server; }
 
         }; // CTCPServerConnection
 

@@ -56,14 +56,6 @@ namespace Delphi {
             CString Value;
             CStringList Options;
 
-            http_header() {
-                Name.Clear();
-            };
-
-            ~http_header() {
-                Name.Clear();
-            };
-
             http_header& operator= (const http_header& H) {
                 if (this != &H) {
                     Name = H.Name;
@@ -311,18 +303,10 @@ namespace Delphi {
             void AddHeader(LPCTSTR lpszName, LPCTSTR lpszValue);
 
             /// Get a prepare reply.
-            static http_reply *GetReply(http_reply *AReply, status_type AStatus,
-                    content_type AType = content_type::html, LPCTSTR AContentType = nullptr);
+            static http_reply *GetReply(http_reply *AReply, status_type AStatus, LPCTSTR AContentType = nullptr);
 
             /// Get a stock reply.
-            static http_reply *GetStockReply(http_reply *AReply, status_type AStatus,
-                    content_type AType = content_type::html);
-
-            static void SendReply(CHTTPConnection *AConnection, status_type AStatus,
-                    content_type AType = content_type::html, LPCTSTR AContentType = nullptr, bool ASendNow = false);
-
-            static void SendStockReply(CHTTPConnection *AConnection, status_type AStatus,
-                    content_type AType = content_type::html, bool ASendNow = false);
+            static http_reply *GetStockReply(http_reply *AReply, status_type AStatus);
 
         } CReply, *PReply;
 
@@ -333,6 +317,9 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         class CHTTPServer;
+        //--------------------------------------------------------------------------------------------------------------
+
+        enum CHTTPConnectionStatus { csConnected, csWaitRequest, csRequestOk, csRequestError, csReplyReady, csReplySent };
         //--------------------------------------------------------------------------------------------------------------
 
         class CHTTPConnection: public CTCPServerConnection {
@@ -346,7 +333,11 @@ namespace Delphi {
 
             CRequestParser *m_RequestParser;
 
+            CHTTPConnectionStatus m_ConnectionStatus;
+
             bool m_CloseConnection;
+
+            CNotifyEvent m_OnReply;
 
         protected:
 
@@ -354,15 +345,19 @@ namespace Delphi {
 
             CReply *GetReply();
 
+            void DoReply();
+
         public:
 
             explicit CHTTPConnection(CHTTPServer *AServer);
 
             ~CHTTPConnection() override;
 
-            int ParseInput();
+            void ParseInput();
 
             void Clear();
+
+            CHTTPServer *HTTPServer() { return (CHTTPServer *) Server(); }
 
             CRequestParser *RequestParser() { return m_RequestParser; }
 
@@ -373,7 +368,19 @@ namespace Delphi {
             bool CloseConnection() { return m_CloseConnection; };
             void CloseConnection(bool Value) { m_CloseConnection = Value; };
 
-        }; // CTCPServerConnection
+            CHTTPConnectionStatus ConnectionStatus() { return m_ConnectionStatus; };
+            void ConnectionStatus(CHTTPConnectionStatus Value) { m_ConnectionStatus = Value; };
+
+            void SendReply(bool ASendNow = false);
+
+            void SendReply(CReply::status_type AStatus, LPCTSTR AContentType = nullptr, bool ASendNow = false);
+
+            void SendStockReply(CReply::status_type AStatus, bool ASendNow = false);
+
+            const CNotifyEvent &OnReply() { return m_OnReply; }
+            void OnReply(CNotifyEvent && Value) { m_OnReply = Value; }
+
+        }; // CHTTPConnection
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -402,6 +409,8 @@ namespace Delphi {
 
             bool DoExecute(CTCPServerConnection *AConnection) override;
 
+            void DoReply(CObject *Sender);
+
         public:
 
             explicit CHTTPServer(unsigned short AListen, LPCTSTR lpDocRoot);
@@ -411,7 +420,6 @@ namespace Delphi {
             bool URLDecode(const CString& In, CString& Out);
 
             CString& DocRoot() { return m_sDocRoot; };
-            void DocRoot(const CString& AValue) { SetDocRoot(AValue.c_str()); };
             void DocRoot(LPCTSTR AValue) { SetDocRoot(AValue); };
 
         };

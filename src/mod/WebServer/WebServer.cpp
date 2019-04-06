@@ -81,7 +81,7 @@ namespace Apostol {
             if (!AllowedMethods().IsEmpty())
                 LReply->AddHeader(_T("Allow"), AllowedMethods().c_str());
 
-            LReply->ToBuffers(AConnection->OutputBuffer());
+            AConnection->SendReply();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ namespace Apostol {
             if (!AllowedMethods().IsEmpty())
                 LReply->AddHeader(_T("Allow"), AllowedMethods().c_str());
 
-            LReply->ToBuffers(AConnection->OutputBuffer());
+            AConnection->SendReply();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -114,14 +114,14 @@ namespace Apostol {
             CString LRequestPath;
             if (!LServer->URLDecode(LRequest->Uri, LRequestPath))
             {
-                CReply::SendStockReply(AConnection, CReply::bad_request);
+                AConnection->SendStockReply(CReply::bad_request);
                 return;
             }
 
             // Request path must be absolute and not contain "..".
             if (LRequestPath.empty() || LRequestPath.front() != '/' || LRequestPath.find("..") != CString::npos)
             {
-                CReply::SendStockReply(AConnection, CReply::bad_request);
+                AConnection->SendStockReply(CReply::bad_request);
                 return;
             }
 
@@ -135,14 +135,14 @@ namespace Apostol {
             CString LFullPath = LServer->DocRoot() + LRequestPath;
             if (!FileExists(LFullPath.c_str()))
             {
-                CReply::SendStockReply(AConnection, CReply::not_found);
+                AConnection->SendStockReply(CReply::not_found);
                 return;
             }
 
             LReply->Content.LoadFromFile(LFullPath.c_str());
 
             // Fill out the CReply to be sent to the client.
-            CReply::SendReply(AConnection, CReply::ok, CReply::html, Mapping::ExtToType(ExtractFileExt(szExt, LRequestPath.c_str())));
+            AConnection->SendReply(CReply::ok, Mapping::ExtToType(ExtractFileExt(szExt, LRequestPath.c_str())));
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -168,7 +168,7 @@ namespace Apostol {
             }
 
             if (i == m_Headers->Count()) {
-                CReply::SendStockReply(AConnection, CReply::not_implemented);
+                AConnection->SendStockReply(CReply::not_implemented);
             }
         }
 

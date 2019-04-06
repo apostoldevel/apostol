@@ -37,11 +37,14 @@ namespace Apostol {
 
         CCustomApplication::CCustomApplication(int argc, char *const *argv): CObject() {
 
+            m_exitcode = 0;
+
             m_argc = argc;
             m_os_argv = (char **) argv;
             m_os_environ = environ;
 
             m_environ = nullptr;
+            m_os_argv_last = nullptr
 
             Initialize();
             SetEnviron();
@@ -900,7 +903,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::ServerStart() {
-            Server()->DocRoot(Config()->DocRoot());
+            Server()->DocRoot() = Config()->DocRoot();
             Server()->ActiveLevel(alActive);
         }
         //--------------------------------------------------------------------------------------------------------------
