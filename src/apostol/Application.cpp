@@ -44,7 +44,7 @@ namespace Apostol {
             m_os_environ = environ;
 
             m_environ = nullptr;
-            m_os_argv_last = nullptr
+            m_os_argv_last = nullptr;
 
             Initialize();
             SetEnviron();

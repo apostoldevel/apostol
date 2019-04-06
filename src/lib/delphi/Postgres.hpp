@@ -496,6 +496,9 @@ namespace Delphi {
         typedef std::function<void (CPQPollQuery *APollQuery, Exception::Exception *AException)> COnPQPollQueryExceptionEvent;
         //--------------------------------------------------------------------------------------------------------------
 
+        #define POLL_QUERY_START_ERROR 0x10000
+        //--------------------------------------------------------------------------------------------------------------
+
         class CPQPollQuery: public CPQQuery, public CCollectionItem {
         private:
 

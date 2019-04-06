@@ -810,7 +810,7 @@ namespace Delphi {
                     }
                 } else {
 
-                    if (m_Server->Queue()->Count() == 0xFFFFFFFF)
+                    if (m_Server->Queue()->Count() == 0xFFFF)
                         throw EPollServerError(_T("Request queue is full!"));
 
                     return AddToQueue();
@@ -821,7 +821,7 @@ namespace Delphi {
                 DoException(&E);
             }
 
-            return 0xFFFFFFFF;
+            return POLL_QUERY_START_ERROR;
         }
         //--------------------------------------------------------------------------------------------------------------
 

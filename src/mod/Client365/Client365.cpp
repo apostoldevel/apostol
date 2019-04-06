@@ -280,13 +280,16 @@ namespace Apostol::Client365 {
             AConnection->SendStockReply(CReply::bad_request);
             return;
         }
-
+/*
         const CString &Value = LRequest->Headers.Values(_T("connection"));
         if (!Value.IsEmpty()) {
             AConnection->CloseConnection(true);
             if (Value == _T("keep-alive"))
                 AConnection->CloseConnection(false);
         }
+*/
+
+        AConnection->CloseConnection(LVersion == 1);
 
         CString LRoute;
         for (int I = 3; I < LUri.Count(); ++I) {
@@ -368,7 +371,7 @@ namespace Apostol::Client365 {
 
         LQuery->JobId() = generate_hex(36);
 
-        if (LQuery->QueryStart() != 0xFFFFFFFF) {
+        if (LQuery->QueryStart() != POLL_QUERY_START_ERROR) {
             if (LVersion == 1) {
                 auto LReply = AConnection->Reply();
 
