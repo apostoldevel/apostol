@@ -54,16 +54,16 @@
             line-height: 1.5;
             word-wrap: break-word;
     }
-    .markdown-body code, .markdown-body tt {
-            background-color: rgba(27,31,35,.05);
+    .markdown-body pre {
+            background-color: #f6f8fa;
             border-radius: 3px;
             font-size: 85%;
-            margin: 0;
-            padding: .2em .4em;
+            line-height: 1.45;
+            overflow: auto;
+            padding: 16px;
     }
-    code, pre, tt {
-            font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
-            font-size: 12px;
+    .markdown-body pre {
+            word-wrap: normal;
     }
     .markdown-body pre code, .markdown-body pre tt {
             background-color: transparent;
@@ -75,6 +75,26 @@
             overflow: visible;
             padding: 0;
             word-wrap: normal;
+    }
+    .markdown-body pre>code {
+            background: transparent;
+            border: 0;
+            font-size: 100%;
+            margin: 0;
+            padding: 0;
+            white-space: pre;
+            word-break: normal;
+    }
+    .markdown-body code, .markdown-body tt {
+            background-color: rgba(27,31,35,.05);
+            border-radius: 3px;
+            font-size: 85%;
+            margin: 0;
+            padding: .2em .4em;
+    }
+    code, pre, tt {
+            font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+            font-size: 12px;
     }
     .p-5 {
             padding: 32px!important;
@@ -105,17 +125,6 @@
     .markdown-body h6 {
             color: #6a737d;
             font-size: .85em;
-    }
-    .markdown-body pre {
-            background-color: #f6f8fa;
-            border-radius: 3px;
-            font-size: 85%;
-            line-height: 1.45;
-            overflow: auto;
-            padding: 16px;
-    }
-    .markdown-body pre {
-            word-wrap: normal;
     }
     .markdown-body blockquote, .markdown-body details, .markdown-body dl, .markdown-body ol, .markdown-body p, .markdown-body pre, .markdown-body table, .markdown-body ul {
             margin-bottom: 16px;
