@@ -73,8 +73,8 @@ Apostol Web Service
 Для сборки проекта Вам потребуется:
 
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
-1. Библиотека [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language development).
-
+1. Библиотека [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development).
+1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development)
 ###### Описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство. 
 
 Для сборки Апостол, выполнить:
@@ -91,6 +91,7 @@ git clone https://github.com/ufocomp/apostol.git
 Скомпилировать:
 ~~~
 cd apostol
+cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles" . -B cmake-build-release
 cmake --build cmake-build-release --target apostol -- -j 4
 ~~~
 

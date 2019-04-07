@@ -28,1151 +28,1234 @@ Author:
 
 extern "C++" {
 
-namespace Delphi::Json {
+namespace Delphi {
 
-    class CJSON;
-    class CJSONValue;
-    class CJSONMember;
-    class CJSONArray;
-    class CJSONObject;
-    class CJSONParser;
-    //------------------------------------------------------------------------------------------------------------------
+    namespace Json {
 
-    typedef struct json_parser_result_s {
-        int result;
-        size_t pos;
-    } CJSONParserResult;
-    //------------------------------------------------------------------------------------------------------------------
+        class CJSON;
 
-    //------------------------------------------------------------------------------------------------------------------
+        class CJSONValue;
 
-    //-- CJSON ---------------------------------------------------------------------------------------------------------
+        class CJSONMember;
 
-    //------------------------------------------------------------------------------------------------------------------
+        class CJSONArray;
 
-    enum CJSONValueType { jvtObject = 0, jvtArray, jvtString, jvtNumber, jvtBoolean, jvtNull };
-    //------------------------------------------------------------------------------------------------------------------
+        class CJSONObject;
 
-    class LIB_DELPHI CJSON: public CPersistent {
-        friend CJSONValue;
-        typedef LPCTSTR reference;
+        class CJSONParser;
+        //--------------------------------------------------------------------------------------------------------------
 
-    private:
+        typedef struct json_parser_result_s {
+            int result;
+            size_t pos;
+        } CJSONParserResult;
 
-        CJSONValueType m_ValueType;
+        //--------------------------------------------------------------------------------------------------------------
 
-        CJSON *m_Json;
+        //-- CJSON -----------------------------------------------------------------------------------------------------
 
-        CString m_JSON;
+        //--------------------------------------------------------------------------------------------------------------
 
-        int m_UpdateCount;
+        enum CJSONValueType {
+            jvtObject = 0, jvtArray, jvtString, jvtNumber, jvtBoolean, jvtNull
+        };
+        //--------------------------------------------------------------------------------------------------------------
 
-    protected:
+        class LIB_DELPHI CJSON : public CPersistent {
+            friend CJSONValue;
+            typedef LPCTSTR reference;
 
-        virtual int GetCount() const noexcept;
+        private:
 
-        CString& GetJSON();
-        const CString& GetJSON() const;
+            CJSONValueType m_ValueType;
 
-        void SetJSON(const CString& Value);
+            CJSON *m_Json;
 
-        void SetJSONStr(LPCTSTR ABuffer, size_t ASize);
-        bool GetJSONStr(LPTSTR ABuffer, size_t& ASize);
+            CString m_JSON;
 
-    public:
+            int m_UpdateCount;
 
-        CJSON();
+        protected:
 
-        explicit CJSON(CPersistent *AOwner);
+            virtual int GetCount() const noexcept;
 
-        explicit CJSON(CPersistent *AOwner, CJSONValueType ValueType);
+            CString &GetJSON();
 
-        ~CJSON() override;
+            const CString &GetJSON() const;
 
-        CJSONValueType ValueType() const { return m_ValueType; };
+            void SetJSON(const CString &Value);
 
-        void ValueType(CJSONValueType AValueType) { m_ValueType = AValueType; };
+            void SetJSONStr(LPCTSTR ABuffer, size_t ASize);
 
-        int UpdateCount() { return m_UpdateCount; };
-        virtual void SetUpdateState(bool Updating);
+            bool GetJSONStr(LPTSTR ABuffer, size_t &ASize);
 
-        void BeginUpdate();
-        void EndUpdate();
+        public:
 
-        virtual bool IsNull() const { return m_ValueType == jvtNull; };
+            CJSON();
 
-        bool IsObject() const { return m_ValueType == jvtObject; };
+            explicit CJSON(CPersistent *AOwner);
 
-        bool IsArray() const { return m_ValueType == jvtArray; };
+            explicit CJSON(CPersistent *AOwner, CJSONValueType ValueType);
 
-        bool IsString() const { return m_ValueType == jvtString; };
+            ~CJSON() override;
 
-        bool IsNumber() const { return m_ValueType == jvtNumber; };
+            CJSONValueType ValueType() const { return m_ValueType; };
 
-        bool IsBoolean() const { return m_ValueType == jvtBoolean; };
+            void ValueType(CJSONValueType AValueType) { m_ValueType = AValueType; };
 
-        virtual CJSONArray *CreateArray();
+            int UpdateCount() { return m_UpdateCount; };
 
-        virtual CJSONObject *CreateObject();
+            virtual void SetUpdateState(bool Updating);
 
-        virtual void Assign(const CJSON& Source);
+            void BeginUpdate();
 
-        int Count() const noexcept { return GetCount(); };
+            void EndUpdate();
 
-        virtual void Clear();
+            virtual bool IsNull() const { return m_ValueType == jvtNull; };
 
-        virtual CJSON *Json() { return m_Json; };
-        virtual const CJSON *Json() const { return m_Json; };
+            bool IsObject() const { return m_ValueType == jvtObject; };
 
-        CJSONArray& Array() { return *(CJSONArray *) m_Json; }
+            bool IsArray() const { return m_ValueType == jvtArray; };
 
-        const CJSONArray& Array() const { return *(CJSONArray *) m_Json; }
+            bool IsString() const { return m_ValueType == jvtString; };
 
-        CJSONObject& Object() { return *(CJSONObject *) m_Json; }
+            bool IsNumber() const { return m_ValueType == jvtNumber; };
 
-        const CJSONObject& Object() const { return *(CJSONObject *) m_Json; }
+            bool IsBoolean() const { return m_ValueType == jvtBoolean; };
 
-        void LoadFromFile(LPCTSTR lpszFileName);
-        void LoadFromStream(CStream* Stream);
-        void SaveToFile(LPCTSTR lpszFileName);
-        void SaveToStream(CStream* Stream);
+            virtual CJSONArray *CreateArray();
 
-        virtual const CString& GetJSON(CString& JSON);
+            virtual CJSONObject *CreateObject();
 
-        CString& JSON() { return GetJSON(); };
-        const CString& JSON() const { return GetJSON(); };
-        void JSON(const CString& Value) { SetJSON(Value); };
+            virtual void Assign(const CJSON &Source);
 
-        CJSON& operator<< (const CJSON& Json) {
-            if (this != &Json)
-                Assign(Json);
-            return *this;
+            int Count() const noexcept { return GetCount(); };
+
+            virtual void Clear();
+
+            virtual CJSON *Json() { return m_Json; };
+
+            virtual const CJSON *Json() const { return m_Json; };
+
+            CJSONArray &Array() { return *(CJSONArray *) m_Json; }
+
+            const CJSONArray &Array() const { return *(CJSONArray *) m_Json; }
+
+            CJSONObject &Object() { return *(CJSONObject *) m_Json; }
+
+            const CJSONObject &Object() const { return *(CJSONObject *) m_Json; }
+
+            void LoadFromFile(LPCTSTR lpszFileName);
+
+            void LoadFromStream(CStream *Stream);
+
+            void SaveToFile(LPCTSTR lpszFileName);
+
+            void SaveToStream(CStream *Stream);
+
+            virtual const CString &GetJSON(CString &JSON);
+
+            CString &JSON() { return GetJSON(); };
+
+            const CString &JSON() const { return GetJSON(); };
+
+            void JSON(const CString &Value) { SetJSON(Value); };
+
+            CJSON &operator<<(const CJSON &Json) {
+                if (this != &Json)
+                    Assign(Json);
+                return *this;
+            };
+
+            virtual CJSON &operator<<(const CString &String) {
+                JSON(String);
+                return *this;
+            };
+
+            virtual CJSON &operator<<(reference Str) {
+                CString J(Str);
+                JSON(J);
+                return *this;
+            };
+
+            friend CJSON &operator>>(const CString &LS, CJSON &RM) {
+                RM.JSON(LS);
+                return RM;
+            };
+
+            friend CJSON &operator>>(reference LS, CJSON &RM) {
+                CString J(LS);
+                RM.JSON(J);
+                return RM;
+            };
+
+            friend tostream &operator<<(tostream &Out, CJSON &RM) {
+                Out << RM.JSON().c_str();
+                return Out;
+            };
+
+            friend tistream &operator>>(tistream &In, CJSON &RM) {
+                TCHAR C;
+                CString S;
+                while (In.get(C) && C != '\n')
+                    S.Append(C);
+                RM.JSON(S);
+                return In;
+            };
+
+            virtual CJSONMember &Members(int Index);;
+
+            virtual const CJSONMember &Members(int Index) const;;
+
+            virtual void Members(int Index, const CJSONMember &Value);;
+
+            virtual CJSONValue &operator[](int Index);
+
+            virtual const CJSONValue &operator[](int Index) const;
+
+            virtual CJSONValue &operator[](const CString &String);
+
+            virtual const CJSONValue &operator[](const CString &String) const;
+
+            virtual CJSONValue &operator[](reference String);
+
+            virtual const CJSONValue &operator[](reference String) const;
         };
 
-        virtual CJSON& operator<< (const CString& String) {
-            JSON(String);
-            return *this;
-        };
+        //--------------------------------------------------------------------------------------------------------------
 
-        virtual CJSON& operator<< (reference Str) {
-            CString J(Str);
-            JSON(J);
-            return *this;
-        };
+        //-- CJSONElements ---------------------------------------------------------------------------------------------
 
-        friend CJSON& operator>> (const CString& LS, CJSON& RM) {
-            RM.JSON(LS);
-            return RM;
-        };
+        //--------------------------------------------------------------------------------------------------------------
 
-        friend CJSON& operator>> (reference LS, CJSON& RM) {
-            CString J(LS);
-            RM.JSON(J);
-            return RM;
-        };
+        class LIB_DELPHI CJSONElements : public CJSON {
 
-        friend tostream& operator<< (tostream& Out, CJSON& RM) {
-            Out << RM.JSON().c_str();
-            return Out;
-        };
+            typedef CJSON inherited;
+            typedef LPCTSTR reference;
 
-        friend tistream& operator>> (tistream& In, CJSON& RM) {
-            TCHAR C;
-            CString S;
-            while (In.get(C) && C != '\n')
-                S.Append(C);
-            RM.JSON(S);
-            return In;
-        };
+        private:
 
-        virtual CJSONMember& Members(int Index);;
-        virtual const CJSONMember& Members(int Index) const;;
+            LPCTSTR m_LineBreak;
 
-        virtual void Members(int Index, const CJSONMember& Value);;
+            TCHAR m_Delimiter;
+            TCHAR m_QuoteChar;
 
-        virtual CJSONValue& operator[] (int Index);
-        virtual const CJSONValue& operator[] (int Index) const;
+            bool m_StrictDelimiter;
 
-        virtual CJSONValue& operator[] (const CString& String);
-        virtual const CJSONValue& operator[] (const CString& String) const;
+            int m_CurrentIndex;
 
-        virtual CJSONValue& operator[] (reference String);
-        virtual const CJSONValue& operator[] (reference String) const;
-    };
+            virtual CJSONValue &Get(int Index) abstract;
 
-    //------------------------------------------------------------------------------------------------------------------
+            virtual const CJSONValue &Get(int Index) const abstract;
 
-    //-- CJSONElements -------------------------------------------------------------------------------------------------
+            virtual void Put(int Index, const CJSONValue &Value);
 
-    //------------------------------------------------------------------------------------------------------------------
+            CJSONValue &GetValueFromIndex(int Index);
 
-    class LIB_DELPHI CJSONElements: public CJSON {
+            const CJSONValue &GetValueFromIndex(int Index) const;
 
-        typedef CJSON inherited;
-        typedef LPCTSTR reference;
+            void SetValueFromIndex(int Index, const CJSONValue &Value);
 
-    private:
+            void SetCurrentIndex(int Index);
 
-        LPCTSTR m_LineBreak;
+        protected:
 
-        TCHAR m_Delimiter;
-        TCHAR m_QuoteChar;
+            void Error(const CString &Msg, int Data);
 
-        bool m_StrictDelimiter;
+            virtual int GetCapacity() const noexcept;
 
-        int m_CurrentIndex;
+            //virtual int GetCount() const noexcept abstract;
+            virtual void SetCapacity(int NewCapacity);
 
-        virtual CJSONValue& Get(int Index) abstract;
-        virtual const CJSONValue& Get(int Index) const abstract;
-        virtual void Put(int Index, const CJSONValue& Value);
+            virtual int CompareStrings(const CString &S1, const CString &S2);
 
-        CJSONValue& GetValueFromIndex(int Index);
-        const CJSONValue& GetValueFromIndex(int Index) const;
+        public:
 
-        void SetValueFromIndex(int Index, const CJSONValue& Value);
+            CJSONElements(CPersistent *AOwner, CJSONValueType ValueType);
 
-        void SetCurrentIndex(int Index);
+            ~CJSONElements() override = default;
 
-    protected:
+            virtual int Add(const CJSONValue &Value);
 
-        void Error(const CString& Msg, int Data);
+            virtual void AddElements(const CJSONElements &Source);
 
-        virtual int GetCapacity() const noexcept;
-        //virtual int GetCount() const noexcept abstract;
-        virtual void SetCapacity(int NewCapacity);
+            virtual void SetElements(const CJSONElements &Source);
 
-        virtual int CompareStrings(const CString& S1, const CString& S2);
+            virtual void Assign(const CJSONElements &Source);
 
-    public:
+            //virtual void Clear() abstract;
+            virtual void Delete(int Index) abstract;
 
-        CJSONElements(CPersistent *AOwner, CJSONValueType ValueType);
+            bool Equals(const CJSONElements &Elements);
 
-        ~CJSONElements() override = default;
+            virtual void Exchange(int Index1, int Index2);
 
-        virtual int Add(const CJSONValue& Value);
+            virtual int IndexOf(const CJSONValue &Value) const;
 
-        virtual void AddElements(const CJSONElements& Source);
-        virtual void SetElements(const CJSONElements& Source);
+            virtual void Insert(int Index, const CJSONValue &Value) abstract;
 
-        virtual void Assign(const CJSONElements& Source);
+            virtual void Move(int CurIndex, int NewIndex);
 
-        //virtual void Clear() abstract;
-        virtual void Delete(int Index) abstract;
+            const CString &GetJSON(CString &JSON) override;
 
-        bool Equals(const CJSONElements& Elements);
-        virtual void Exchange(int Index1, int Index2);
+            int CurrentIndex() const { return m_CurrentIndex; };
 
-        virtual int IndexOf(const CJSONValue& Value) const;
+            void CurrentIndex(int Value) { SetCurrentIndex(Value); };
 
-        virtual void Insert(int Index, const CJSONValue& Value) abstract;
+            int Capacity() const noexcept { return GetCapacity(); };
 
-        virtual void Move(int CurIndex, int NewIndex);
+            void Capacity(int NewCapacity) { SetCapacity(NewCapacity); };
 
-        const CString& GetJSON(CString& JSON) override;
+            //int Count() const noexcept { return GetCount(); };
 
-        int CurrentIndex() const { return m_CurrentIndex; };
-        void CurrentIndex(int Value) { SetCurrentIndex(Value); };
+            CJSONValue &ValueFromIndex(int Index) { return GetValueFromIndex(Index); };
 
-        int Capacity() const noexcept { return GetCapacity(); };
-        void Capacity(int NewCapacity) { SetCapacity(NewCapacity); };
+            const CJSONValue &ValueFromIndex(int Index) const { return GetValueFromIndex(Index); };
 
-        //int Count() const noexcept { return GetCount(); };
+            void ValueFromIndex(int Index, const CJSONValue &Value) { SetValueFromIndex(Index, Value); };
 
-        CJSONValue& ValueFromIndex(int Index) { return GetValueFromIndex(Index); };
-        const CJSONValue& ValueFromIndex(int Index) const { return GetValueFromIndex(Index); };
+            CJSONValue &First() { return Get(0); };
 
-        void ValueFromIndex(int Index, const CJSONValue& Value) { SetValueFromIndex(Index, Value); };
+            const CJSONValue &First() const { return Get(0); };
 
-        CJSONValue& First() { return Get(0); };
-        const CJSONValue& First() const { return Get(0); };
+            CJSONValue &front() { return Get(0); };
 
-        CJSONValue& front() { return Get(0); };
-        const CJSONValue& front() const { return Get(0); };
+            const CJSONValue &front() const { return Get(0); };
 
-        CJSONValue& Last() { return Get(GetCount() - 1); };
-        const CJSONValue& Last() const { return Get(GetCount() - 1); };
+            CJSONValue &Last() { return Get(GetCount() - 1); };
 
-        CJSONValue& back() { return Get(GetCount() - 1); };
-        const CJSONValue& back() const { return Get(GetCount() - 1); };
+            const CJSONValue &Last() const { return Get(GetCount() - 1); };
 
-        virtual CJSONValue& Values(int Index) { return Get(Index); };
-        virtual const CJSONValue& Values(int Index) const { return Get(Index); };
+            CJSONValue &back() { return Get(GetCount() - 1); };
 
-        virtual void Values(int Index, const CJSONValue& Value) { return Put(Index, Value); };
+            const CJSONValue &back() const { return Get(GetCount() - 1); };
 
-        CJSONElements& operator=(const CJSONElements& Value) {
-            if (&Value != this) {
-                Assign(Value);
-            }
-            return *this;
-        }
+            virtual CJSONValue &Values(int Index) { return Get(Index); };
 
-        virtual CJSONElements& operator<< (const CJSONElements& Value) {
-            if (this != &Value)
-                Assign(Value);
-            return *this;
-        };
+            virtual const CJSONValue &Values(int Index) const { return Get(Index); };
 
-        virtual CJSONElements& operator<< (const CJSONValue& Value) {
-            Add(Value);
-            return *this;
-        };
+            virtual void Values(int Index, const CJSONValue &Value) { return Put(Index, Value); };
 
-        CJSONElements& operator<< (const CString& String) override {
-            SetJSON(String);
-            return *this;
-        };
-
-        CJSONElements& operator<< (reference Str) override {
-            SetJSONStr(Str, strlen(Str));
-            return *this;
-        };
-
-        friend CJSONElements& operator>> (const CString& LS, CJSONElements& RM) {
-            RM.SetJSON(LS);
-            return RM;
-        };
-
-        friend CJSONElements& operator>> (reference LS, CJSONElements& RM) {
-            RM.SetJSONStr(LS, strlen(LS));
-            return RM;
-        };
-
-        friend tostream& operator<< (tostream& Out, CJSONElements& RM) {
-            CString J;
-            RM.GetJSON(J);
-            return Out << J.c_str();
-        };
-
-        friend tistream& operator>> (tistream& In, CJSONElements& RM) {
-            TCHAR C;
-            CString S;
-            while (In.get(C) && C != '\n')
-                S.Append(C);
-            RM.SetJSON(S);
-            return In;
-        };
-
-        CJSONValue& operator[] (int Index) override { return Get(Index); }
-        const CJSONValue& operator[] (int Index) const override { return Get(Index); }
-    };
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    //-- CJSONMembers --------------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    class LIB_DELPHI CJSONMembers: public CJSON {
-
-        typedef CJSON inherited;
-        typedef LPCTSTR reference;
-
-    private:
-
-        LPCTSTR m_LineBreak;
-
-        TCHAR m_Delimiter;
-        TCHAR m_QuoteChar;
-        TCHAR m_NameValueSeparator;
-
-        bool m_StrictDelimiter;
-
-        int m_CurrentIndex;
-
-        virtual const CString& GetString(int Index) const abstract;
-
-        virtual CJSONValue& GetValue(const CString& String) abstract;
-        virtual const CJSONValue& GetValue(const CString& String) const abstract;
-
-        virtual CJSONValue& GetValue(reference String) abstract;;
-        virtual const CJSONValue& GetValue(reference String) const abstract;;
-
-        void SetValue(const CString& String, const CJSONValue& Value);
-        void SetValue(reference String, const CJSONValue& Value);
-
-        CJSONValue& GetValueFromIndex(int Index);
-        const CJSONValue& GetValueFromIndex(int Index) const;
-
-        void SetValueFromIndex(int Index, const CJSONValue& Value);
-
-        void SetCurrentIndex(int Index);
-
-    protected:
-
-        void Error(const CString& Msg, int Data);
-
-        virtual CJSONMember& Get(int Index) abstract;
-        virtual const CJSONMember& Get(int Index) const abstract;
-        virtual void Put(int Index, const CJSONMember& Value);
-        virtual int GetCapacity() const noexcept;
-        //virtual int GetCount() const noexcept abstract;
-        virtual void PutPair(int Index, const CString& String, const CJSONValue& Value);
-        virtual void PutPair(int Index, reference String, const CJSONValue& Value);
-        virtual void SetCapacity(int NewCapacity);
-
-        virtual int CompareStrings(const CString& S1, const CString& S2);
-
-    public:
-
-        CJSONMembers(CPersistent *AOwner, CJSONValueType ValueType);
-
-        ~CJSONMembers() override = default;
-
-        virtual int Add(const CJSONMember& Value);
-
-        virtual int AddPair(const CString& String, const CJSONValue& Value);
-        virtual int AddPair(reference String, const CJSONValue& Value);
-
-        virtual void AddMembers(const CJSONMembers& Value);
-
-        virtual void Assign(const CJSONMembers& Source);
-        virtual void SetMembers(const CJSONMembers& Source);
-
-        //virtual void Clear() abstract;
-        virtual void Delete(int Index) abstract;
-
-        bool Equals(const CJSONMembers& Members);
-        virtual void Exchange(int Index1, int Index2);
-
-        virtual int IndexOf(const CJSONMember& Value) const;
-
-        virtual int IndexOfString(const CString& Value) const;
-        virtual int IndexOfString(reference Value) const;
-
-        virtual void Insert(int Index, const CJSONMember& Value) abstract;
-        virtual void InsertPair(int Index, const CString& String, const CJSONValue& Value) abstract;
-        virtual void InsertPair(int Index, reference String, const CJSONValue& Value) abstract;
-
-        const CString& GetJSON(CString& JSON) override;
-
-        virtual void Move(int CurIndex, int NewIndex);
-
-        int CurrentIndex() const { return m_CurrentIndex; };
-        void CurrentIndex(int Value) { SetCurrentIndex(Value); };
-
-        int Capacity() const noexcept { return GetCapacity(); };
-        void Capacity(int NewCapacity) { SetCapacity(NewCapacity); };
-
-        //int Count() const noexcept { return GetCount(); };
-
-        const CString& Strings(int Index) const { return GetString(Index); };
-
-        CJSONValue& Values(const CString& String) { return GetValue(String); };
-        const CJSONValue& Values(const CString& String) const { return GetValue(String); };
-
-        void Values(const CString& String, const CJSONValue& Value) { SetValue(String, Value); };
-
-        CJSONValue& Values(reference String) { return GetValue(String); };
-        const CJSONValue& Values(reference String) const { return GetValue(String); };
-
-        void Values(reference String, const CJSONValue& Value) { SetValue(String, Value); };
-
-        CJSONValue& ValueFromIndex(int Index) { return GetValueFromIndex(Index); };
-        const CJSONValue& ValueFromIndex(int Index) const { return GetValueFromIndex(Index); };
-
-        void ValueFromIndex(int Index, const CJSONValue& Value) { SetValueFromIndex(Index, Value); };
-
-        CJSONMember& First() { return Get(0); };
-        const CJSONMember& First() const { return Get(0); };
-
-        CJSONMember& front() { return Get(0); };
-        const CJSONMember& front() const { return Get(0); };
-
-        CJSONMember& Last() { return Get(GetCount() - 1); };
-        const CJSONMember& Last() const { return Get(GetCount() - 1); };
-
-        CJSONMember& back() { return Get(GetCount() - 1); };
-        const CJSONMember& back() const { return Get(GetCount() - 1); };
-
-        CJSONMember& Members(int Index) override { return Get(Index); };
-        const CJSONMember& Members(int Index) const override { return Get(Index); };
-
-        void Members(int Index, const CJSONMember& Value) override { return Put(Index, Value); };
-
-        CJSONMembers& operator=(const CJSONMembers& Value) {
-            if (&Value != this) {
-                Assign(Value);
-            }
-            return *this;
-        }
-
-         CJSONMembers& operator<< (const CJSONMembers& Value) {
-            if (this != &Value)
-                Assign(Value);
-            return *this;
-        };
-
-        virtual CJSONMembers& operator<< (const CJSONMember& Value) {
-            Add(Value);
-            return *this;
-        };
-
-        CJSONMembers& operator<< (const CString& String) override {
-            SetJSON(String);
-            return *this;
-        };
-
-        CJSONMembers& operator<< (reference Str) override {
-            SetJSONStr(Str, strlen(Str));
-            return *this;
-        };
-
-        friend CJSONMembers& operator>> (const CString& LS, CJSONMembers& RM) {
-            RM.SetJSON(LS);
-            return RM;
-        };
-
-        friend CJSONMembers& operator>> (reference LS, CJSONMembers& RM) {
-            RM.SetJSONStr(LS, strlen(LS));
-            return RM;
-        };
-
-        friend tostream& operator<< (tostream& Out, CJSONMembers& RM) {
-            CString J;
-            RM.GetJSON(J);
-            return Out << J.c_str();
-        };
-
-        friend tistream& operator>> (tistream& In, CJSONMembers& RM) {
-            TCHAR C;
-            CString S;
-            while (In.get(C) && C != '\n')
-                S.Append(C);
-            RM.SetJSON(S);
-            return In;
-        };
-
-        //CJSONMember& operator[] (int Index) { return Get(Index); }
-        //const CJSONMember& operator[] (int Index) const { return Get(Index); }
-
-        CJSONValue& operator[] (const CString& Value) override { return GetValue(Value); }
-        const CJSONValue& operator[] (const CString& Value) const override { return GetValue(Value); }
-
-        CJSONValue& operator[] (reference Value) override { return GetValue(Value); }
-        const CJSONValue& operator[] (reference Value) const override { return GetValue(Value); }
-    };
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    //-- CMembersEnumerator --------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    class LIB_DELPHI CMembersEnumerator: public CObject
-    {
-        typedef CObject inherited;
-
-    private:
-
-        int m_Index;
-
-        CJSONMembers *m_Members;
-
-    public:
-
-        explicit CMembersEnumerator(CJSONMembers* AMembers): CObject() {
-            m_Index = -1;
-            m_Members = AMembers;
-        }
-
-        inline ~CMembersEnumerator() override = default;
-
-        CJSONMember& GetCurrent() {
-            return m_Members->Members(m_Index);
-        }
-
-        const CJSONMember& GetCurrent() const {
-            return m_Members->Members(m_Index);
-        }
-
-        bool Next() {
-            if (m_Index < m_Members->Count() - 1) {
-                m_Index++;
-                return true;
-            }
-            return false;
-        }
-
-        bool Prior() {
-            if (m_Index > 0) {
-                m_Index--;
-                return true;
-            }
-            return false;
-        }
-
-        CJSONMember& Current() { return GetCurrent(); };
-
-        const CJSONMember& Current() const { return GetCurrent(); };
-    };
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    //-- CJSONValue ----------------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    class LIB_DELPHI CJSONValue: public CJSON {
-        typedef CJSON inherited;
-        typedef LPCTSTR reference;
-
-    private:
-
-        CString m_Data;
-
-    protected:
-
-        CJSONValue& GetValue(const CString& String);
-        const CJSONValue& GetValue(const CString& String) const;
-
-        CJSONValue& GetValue(reference String);
-        const CJSONValue& GetValue(reference String) const;
-
-        void SetValue(const CString& String, const CJSONValue& Value);
-        void SetValue(reference String, const CJSONValue& Value);
-
-        CJSONValue& Get(int Index);
-        const CJSONValue& Get(int Index) const;
-
-        void Put(int Index, const CJSONValue& Data);;
-
-    public:
-
-        CJSONValue(): CJSON(this, jvtNull) {
-            m_Json = nullptr;
-        };
-
-        explicit CJSONValue(CJSONValueType AType): CJSON(this, AType) {
-            m_Json = nullptr;
-
-            if (AType == jvtObject)
-                CreateObject();
-
-            if (AType == jvtArray)
-                CreateArray();
-        };
-
-        ~CJSONValue() override = default;
-
-        void Assign(const CJSONValue& Value);
-
-        bool IsEmpty() const { return m_Data.IsEmpty(); };
-
-        CString& Data() { return m_Data; }
-
-        const CString& Data() const { return m_Data; }
-
-        CString& AsSiring() { return m_Data; }
-
-        const CString& AsSiring() const { return m_Data; }
-
-        long AsInteger() const { return StrToInt(m_Data.c_str()); };
-
-        double AsDouble() const { return StrToInt(m_Data.c_str()); };
-
-        bool AsBoolean() const {
-            LPCTSTR LBoolStr[] = ARRAY_BOOLEAN_STRINGS;
-
-            for (unsigned int i = 0; i < chARRAY(LBoolStr); ++i) {
-                if (SameText(LBoolStr[i], m_Data.c_str()))
-                    return Odd(i);
+            CJSONElements &operator=(const CJSONElements &Value) {
+                if (&Value != this) {
+                    Assign(Value);
+                }
+                return *this;
             }
 
-            throw EConvertError(_T("Invalid conversion string \"%s\" to boolean value."), m_Data.c_str());
+            virtual CJSONElements &operator<<(const CJSONElements &Value) {
+                if (this != &Value)
+                    Assign(Value);
+                return *this;
+            };
+
+            virtual CJSONElements &operator<<(const CJSONValue &Value) {
+                Add(Value);
+                return *this;
+            };
+
+            CJSONElements &operator<<(const CString &String) override {
+                SetJSON(String);
+                return *this;
+            };
+
+            CJSONElements &operator<<(reference Str) override {
+                SetJSONStr(Str, strlen(Str));
+                return *this;
+            };
+
+            friend CJSONElements &operator>>(const CString &LS, CJSONElements &RM) {
+                RM.SetJSON(LS);
+                return RM;
+            };
+
+            friend CJSONElements &operator>>(reference LS, CJSONElements &RM) {
+                RM.SetJSONStr(LS, strlen(LS));
+                return RM;
+            };
+
+            friend tostream &operator<<(tostream &Out, CJSONElements &RM) {
+                CString J;
+                RM.GetJSON(J);
+                return Out << J.c_str();
+            };
+
+            friend tistream &operator>>(tistream &In, CJSONElements &RM) {
+                TCHAR C;
+                CString S;
+                while (In.get(C) && C != '\n')
+                    S.Append(C);
+                RM.SetJSON(S);
+                return In;
+            };
+
+            CJSONValue &operator[](int Index) override { return Get(Index); }
+
+            const CJSONValue &operator[](int Index) const override { return Get(Index); }
         };
 
-        CJSONArray& AsArray() { return *(CJSONArray *) m_Json; }
+        //--------------------------------------------------------------------------------------------------------------
 
-        const CJSONArray& AsArray() const { return *(CJSONArray *) m_Json; }
+        //-- CJSONMembers ----------------------------------------------------------------------------------------------
 
-        CJSONObject& AsObject() { return *(CJSONObject *) m_Json; }
+        //--------------------------------------------------------------------------------------------------------------
 
-        const CJSONObject& AsObject() const { return *(CJSONObject *) m_Json; }
+        class LIB_DELPHI CJSONMembers : public CJSON {
 
-        virtual bool operator!=(const CJSONValue& AValue) const {
-            if (this != &AValue) {
-                return Data() != AValue.Data();
+            typedef CJSON inherited;
+            typedef LPCTSTR reference;
+
+        private:
+
+            LPCTSTR m_LineBreak;
+
+            TCHAR m_Delimiter;
+            TCHAR m_QuoteChar;
+            TCHAR m_NameValueSeparator;
+
+            bool m_StrictDelimiter;
+
+            int m_CurrentIndex;
+
+            virtual const CString &GetString(int Index) const abstract;
+
+            virtual CJSONValue &GetValue(const CString &String) abstract;
+
+            virtual const CJSONValue &GetValue(const CString &String) const abstract;
+
+            virtual CJSONValue &GetValue(reference String) abstract;;
+
+            virtual const CJSONValue &GetValue(reference String) const abstract;;
+
+            void SetValue(const CString &String, const CJSONValue &Value);
+
+            void SetValue(reference String, const CJSONValue &Value);
+
+            CJSONValue &GetValueFromIndex(int Index);
+
+            const CJSONValue &GetValueFromIndex(int Index) const;
+
+            void SetValueFromIndex(int Index, const CJSONValue &Value);
+
+            void SetCurrentIndex(int Index);
+
+        protected:
+
+            void Error(const CString &Msg, int Data);
+
+            virtual CJSONMember &Get(int Index) abstract;
+
+            virtual const CJSONMember &Get(int Index) const abstract;
+
+            virtual void Put(int Index, const CJSONMember &Value);
+
+            virtual int GetCapacity() const noexcept;
+
+            //virtual int GetCount() const noexcept abstract;
+            virtual void PutPair(int Index, const CString &String, const CJSONValue &Value);
+
+            virtual void PutPair(int Index, reference String, const CJSONValue &Value);
+
+            virtual void SetCapacity(int NewCapacity);
+
+            virtual int CompareStrings(const CString &S1, const CString &S2);
+
+        public:
+
+            CJSONMembers(CPersistent *AOwner, CJSONValueType ValueType);
+
+            ~CJSONMembers() override = default;
+
+            virtual int Add(const CJSONMember &Value);
+
+            virtual int AddPair(const CString &String, const CJSONValue &Value);
+
+            virtual int AddPair(reference String, const CJSONValue &Value);
+
+            virtual void AddMembers(const CJSONMembers &Value);
+
+            virtual void Assign(const CJSONMembers &Source);
+
+            virtual void SetMembers(const CJSONMembers &Source);
+
+            //virtual void Clear() abstract;
+            virtual void Delete(int Index) abstract;
+
+            bool Equals(const CJSONMembers &Members);
+
+            virtual void Exchange(int Index1, int Index2);
+
+            virtual int IndexOf(const CJSONMember &Value) const;
+
+            virtual int IndexOfString(const CString &Value) const;
+
+            virtual int IndexOfString(reference Value) const;
+
+            virtual void Insert(int Index, const CJSONMember &Value) abstract;
+
+            virtual void InsertPair(int Index, const CString &String, const CJSONValue &Value) abstract;
+
+            virtual void InsertPair(int Index, reference String, const CJSONValue &Value) abstract;
+
+            const CString &GetJSON(CString &JSON) override;
+
+            virtual void Move(int CurIndex, int NewIndex);
+
+            int CurrentIndex() const { return m_CurrentIndex; };
+
+            void CurrentIndex(int Value) { SetCurrentIndex(Value); };
+
+            int Capacity() const noexcept { return GetCapacity(); };
+
+            void Capacity(int NewCapacity) { SetCapacity(NewCapacity); };
+
+            //int Count() const noexcept { return GetCount(); };
+
+            const CString &Strings(int Index) const { return GetString(Index); };
+
+            CJSONValue &Values(const CString &String) { return GetValue(String); };
+
+            const CJSONValue &Values(const CString &String) const { return GetValue(String); };
+
+            void Values(const CString &String, const CJSONValue &Value) { SetValue(String, Value); };
+
+            CJSONValue &Values(reference String) { return GetValue(String); };
+
+            const CJSONValue &Values(reference String) const { return GetValue(String); };
+
+            void Values(reference String, const CJSONValue &Value) { SetValue(String, Value); };
+
+            CJSONValue &ValueFromIndex(int Index) { return GetValueFromIndex(Index); };
+
+            const CJSONValue &ValueFromIndex(int Index) const { return GetValueFromIndex(Index); };
+
+            void ValueFromIndex(int Index, const CJSONValue &Value) { SetValueFromIndex(Index, Value); };
+
+            CJSONMember &First() { return Get(0); };
+
+            const CJSONMember &First() const { return Get(0); };
+
+            CJSONMember &front() { return Get(0); };
+
+            const CJSONMember &front() const { return Get(0); };
+
+            CJSONMember &Last() { return Get(GetCount() - 1); };
+
+            const CJSONMember &Last() const { return Get(GetCount() - 1); };
+
+            CJSONMember &back() { return Get(GetCount() - 1); };
+
+            const CJSONMember &back() const { return Get(GetCount() - 1); };
+
+            CJSONMember &Members(int Index) override { return Get(Index); };
+
+            const CJSONMember &Members(int Index) const override { return Get(Index); };
+
+            void Members(int Index, const CJSONMember &Value) override { return Put(Index, Value); };
+
+            CJSONMembers &operator=(const CJSONMembers &Value) {
+                if (&Value != this) {
+                    Assign(Value);
+                }
+                return *this;
             }
-            return false;
-        }
 
-        virtual bool operator==(const CJSONValue& AValue) const {
-            if (this != &AValue) {
-                return Data() == AValue.Data();
+            CJSONMembers &operator<<(const CJSONMembers &Value) {
+                if (this != &Value)
+                    Assign(Value);
+                return *this;
+            };
+
+            virtual CJSONMembers &operator<<(const CJSONMember &Value) {
+                Add(Value);
+                return *this;
+            };
+
+            CJSONMembers &operator<<(const CString &String) override {
+                SetJSON(String);
+                return *this;
+            };
+
+            CJSONMembers &operator<<(reference Str) override {
+                SetJSONStr(Str, strlen(Str));
+                return *this;
+            };
+
+            friend CJSONMembers &operator>>(const CString &LS, CJSONMembers &RM) {
+                RM.SetJSON(LS);
+                return RM;
+            };
+
+            friend CJSONMembers &operator>>(reference LS, CJSONMembers &RM) {
+                RM.SetJSONStr(LS, strlen(LS));
+                return RM;
+            };
+
+            friend tostream &operator<<(tostream &Out, CJSONMembers &RM) {
+                CString J;
+                RM.GetJSON(J);
+                return Out << J.c_str();
+            };
+
+            friend tistream &operator>>(tistream &In, CJSONMembers &RM) {
+                TCHAR C;
+                CString S;
+                while (In.get(C) && C != '\n')
+                    S.Append(C);
+                RM.SetJSON(S);
+                return In;
+            };
+
+            //CJSONMember& operator[] (int Index) { return Get(Index); }
+            //const CJSONMember& operator[] (int Index) const { return Get(Index); }
+
+            CJSONValue &operator[](const CString &Value) override { return GetValue(Value); }
+
+            const CJSONValue &operator[](const CString &Value) const override { return GetValue(Value); }
+
+            CJSONValue &operator[](reference Value) override { return GetValue(Value); }
+
+            const CJSONValue &operator[](reference Value) const override { return GetValue(Value); }
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CMembersEnumerator ----------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CMembersEnumerator : public CObject {
+            typedef CObject inherited;
+
+        private:
+
+            int m_Index;
+
+            CJSONMembers *m_Members;
+
+        public:
+
+            explicit CMembersEnumerator(CJSONMembers *AMembers) : CObject() {
+                m_Index = -1;
+                m_Members = AMembers;
             }
-            return false;
-        }
 
-        CJSONValue& operator<< (const CString& Value) override {
-            m_Data << Value;
-            return *this;
+            inline ~CMembersEnumerator() override = default;
+
+            CJSONMember &GetCurrent() {
+                return m_Members->Members(m_Index);
+            }
+
+            const CJSONMember &GetCurrent() const {
+                return m_Members->Members(m_Index);
+            }
+
+            bool Next() {
+                if (m_Index < m_Members->Count() - 1) {
+                    m_Index++;
+                    return true;
+                }
+                return false;
+            }
+
+            bool Prior() {
+                if (m_Index > 0) {
+                    m_Index--;
+                    return true;
+                }
+                return false;
+            }
+
+            CJSONMember &Current() { return GetCurrent(); };
+
+            const CJSONMember &Current() const { return GetCurrent(); };
         };
 
-        CJSONValue& operator<< (reference Value) override {
-            m_Data << Value;
-            return *this;
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CJSONValue ------------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CJSONValue : public CJSON {
+            typedef CJSON inherited;
+            typedef LPCTSTR reference;
+
+        private:
+
+            CString m_Data;
+
+        protected:
+
+            CJSONValue &GetValue(const CString &String);
+
+            const CJSONValue &GetValue(const CString &String) const;
+
+            CJSONValue &GetValue(reference String);
+
+            const CJSONValue &GetValue(reference String) const;
+
+            void SetValue(const CString &String, const CJSONValue &Value);
+
+            void SetValue(reference String, const CJSONValue &Value);
+
+            CJSONValue &Get(int Index);
+
+            const CJSONValue &Get(int Index) const;
+
+            void Put(int Index, const CJSONValue &Data);;
+
+        public:
+
+            CJSONValue() : CJSON(this, jvtNull) {
+                m_Json = nullptr;
+            };
+
+            explicit CJSONValue(CJSONValueType AType) : CJSON(this, AType) {
+                m_Json = nullptr;
+
+                if (AType == jvtObject)
+                    CreateObject();
+
+                if (AType == jvtArray)
+                    CreateArray();
+            };
+
+            ~CJSONValue() override = default;
+
+            void Assign(const CJSONValue &Value);
+
+            bool IsEmpty() const { return m_Data.IsEmpty(); };
+
+            CString &Data() { return m_Data; }
+
+            const CString &Data() const { return m_Data; }
+
+            CString &AsSiring() { return m_Data; }
+
+            const CString &AsSiring() const { return m_Data; }
+
+            long AsInteger() const { return StrToInt(m_Data.c_str()); };
+
+            double AsDouble() const { return StrToInt(m_Data.c_str()); };
+
+            bool AsBoolean() const {
+                LPCTSTR LBoolStr[] = ARRAY_BOOLEAN_STRINGS;
+
+                for (unsigned int i = 0; i < chARRAY(LBoolStr); ++i) {
+                    if (SameText(LBoolStr[i], m_Data.c_str()))
+                        return Odd(i);
+                }
+
+                throw EConvertError(_T("Invalid conversion string \"%s\" to boolean value."), m_Data.c_str());
+            };
+
+            CJSONArray &AsArray() { return *(CJSONArray *) m_Json; }
+
+            const CJSONArray &AsArray() const { return *(CJSONArray *) m_Json; }
+
+            CJSONObject &AsObject() { return *(CJSONObject *) m_Json; }
+
+            const CJSONObject &AsObject() const { return *(CJSONObject *) m_Json; }
+
+            virtual bool operator!=(const CJSONValue &AValue) const {
+                if (this != &AValue) {
+                    return Data() != AValue.Data();
+                }
+                return false;
+            }
+
+            virtual bool operator==(const CJSONValue &AValue) const {
+                if (this != &AValue) {
+                    return Data() == AValue.Data();
+                }
+                return false;
+            }
+
+            CJSONValue &operator<<(const CString &Value) override {
+                m_Data << Value;
+                return *this;
+            };
+
+            CJSONValue &operator<<(reference Value) override {
+                m_Data << Value;
+                return *this;
+            };
+
+            friend tostream &operator<<(tostream &Out, const CJSONValue &RM) {
+                return Out << RM.Data().c_str();
+            };
+
+            CJSONValue &operator=(const CJSONValue &AValue) {
+                if (this != &AValue) {
+                    Assign(AValue);
+                }
+                return *this;
+            }
+
+            CJSONValue &operator[](int Index) override { return Get(Index); }
+
+            const CJSONValue &operator[](int Index) const override { return Get(Index); }
+
+            CJSONValue &operator[](const CString &String) override { return GetValue(String); }
+
+            const CJSONValue &operator[](const CString &String) const override { return GetValue(String); }
+
+            CJSONValue &operator[](reference String) override { return GetValue(String); }
+
+            const CJSONValue &operator[](reference String) const override { return GetValue(String); }
         };
 
-        friend tostream& operator<< (tostream& Out, const CJSONValue& RM) {
-            return Out << RM.Data().c_str();
-        };
+        //--------------------------------------------------------------------------------------------------------------
 
-        CJSONValue& operator=(const CJSONValue& AValue) {
-            if (this != &AValue) {
+        //-- CJSONMember -----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CJSONMember : public CPersistent {
+            typedef LPCTSTR reference;
+
+        private:
+
+            CString m_String;
+
+            CJSONValue m_Value;
+
+        public:
+
+            CJSONMember() : CPersistent(this) {
+
+            };
+
+            CJSONMember(const CJSONMember &AValue) : CPersistent(this) {
                 Assign(AValue);
             }
-            return *this;
-        }
 
-        CJSONValue& operator[] (int Index) override { return Get(Index); }
-        const CJSONValue& operator[] (int Index) const override{ return Get(Index); }
-
-        CJSONValue& operator[] (const CString& String) override{ return GetValue(String); }
-        const CJSONValue& operator[] (const CString& String) const override{ return GetValue(String); }
-
-        CJSONValue& operator[] (reference String) override{ return GetValue(String); }
-        const CJSONValue& operator[] (reference String) const override{ return GetValue(String); }
-    };
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    //-- CJSONMember ---------------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    class LIB_DELPHI CJSONMember: public CPersistent {
-        typedef LPCTSTR reference;
-
-    private:
-
-        CString m_String;
-
-        CJSONValue m_Value;
-
-    public:
-
-        CJSONMember(): CPersistent(this) {
-
-        };
-
-        CJSONMember(const CJSONMember& AValue): CPersistent(this) {
-            Assign(AValue);
-        }
-
-        explicit CJSONMember(CJSONValueType ValueType): CPersistent(this) {
-            m_Value.ValueType(ValueType);
-        }
-
-        explicit CJSONMember(const CJSONValue& AValue): CPersistent(this)  {
-            m_Value = AValue;
-        }
-
-        explicit CJSONMember(const CString& AString, const CJSONValue& AValue): CPersistent(this)  {
-            m_String = AString;
-            m_Value = AValue;
-        }
-
-        explicit CJSONMember(LPCTSTR AString, const CJSONValue& AValue): CPersistent(this) {
-            m_String = AString;
-            m_Value = AValue;
-        }
-
-        CString& String() { return m_String; };
-
-        const CString& String() const { return m_String; };
-
-        CJSONValue& Value() { return m_Value; };
-
-        const CJSONValue& Value() const { return m_Value; };
-
-        void Assign(const CJSONMember& AValue) {
-            m_String = AValue.m_String;
-            m_Value = AValue.m_Value;
-        };
-
-        virtual bool operator!=(const CJSONMember& AValue) const {
-            if (this != &AValue) {
-                return m_Value != AValue.m_Value;
+            explicit CJSONMember(CJSONValueType ValueType) : CPersistent(this) {
+                m_Value.ValueType(ValueType);
             }
-            return false;
-        }
 
-        virtual bool operator==(const CJSONMember& AValue) const {
-            if (this != &AValue) {
-                return m_Value == AValue.m_Value;
+            explicit CJSONMember(const CJSONValue &AValue) : CPersistent(this) {
+                m_Value = AValue;
             }
-            return false;
-        }
 
-        CJSONMember& operator=(const CJSONMember& AValue) {
-            if (this != &AValue) {
-                Assign(AValue);
+            explicit CJSONMember(const CString &AString, const CJSONValue &AValue) : CPersistent(this) {
+                m_String = AString;
+                m_Value = AValue;
             }
-            return *this;
-        }
 
-        virtual CJSONMember& operator<< (const CJSONMember& Element) {
-            if (this != &Element)
-                Assign(Element);
-            return *this;
-        };
-
-        CJSONMember& operator<< (const CString& Value) {
-            m_Value << Value;
-            return *this;
-        };
-
-        CJSONMember& operator<< (reference Str) {
-            m_Value << Str;
-            return *this;
-        };
-
-        friend CJSONMember& operator>> (const CJSONMember& LE, CJSONMember& RE) {
-            RE = LE;
-            return RE;
-        };
-
-        friend tostream& operator<< (tostream& Out, const CJSONMember& RE) {
-            return Out << RE.Value().Data().c_str();
-        };
-
-        friend tistream& operator>> (tistream& In, CJSONMember& RE) {
-            TCHAR C;
-            CString S;
-            while (In.get(C) && C != '\n')
-                S.Append(C);
-            RE.Value().Data() = S;
-            return In;
-        };
-    };
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    //-- CJSONArray ----------------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    class LIB_DELPHI CJSONArray: public CJSONElements
-    {
-        typedef CJSONElements inherited;
-        typedef LPCTSTR reference;
-
-    private:
-
-        TList<CJSONValue> m_pList;
-
-        CJSONValue& Get(int Index) override;
-        const CJSONValue& Get(int Index) const override;
-
-        void Put(int Index, const CJSONValue& Value) override;
-
-    protected:
-
-        int GetCapacity() const noexcept override;
-        void SetCapacity(int NewCapacity) override;
-
-        int GetCount() const noexcept override;
-
-    public:
-
-        explicit CJSONArray(CPersistent *AOwner);
-
-        ~CJSONArray() override;
-
-        inline static class CJSONArray* Create(CPersistent *AOwner) { return new CJSONArray(AOwner); };
-
-        void Assign(const CJSONElements& Source) override;
-
-        void Clear() override;
-
-        void Delete(int Index) override;
-
-        int Add(const CJSONValue& Value) override;
-
-        void Insert(int Index, const CJSONValue& Value) override;
-
-        CJSONArray& operator=(const CJSONArray& Value) {
-            if (&Value != this) {
-                Assign(Value);
+            explicit CJSONMember(LPCTSTR AString, const CJSONValue &AValue) : CPersistent(this) {
+                m_String = AString;
+                m_Value = AValue;
             }
-            return *this;
-        }
 
-        CJSONArray& operator<< (const CJSONArray& Value) {
-            if (this != &Value)
-                Assign(Value);
-            return *this;
-        };
+            CString &String() { return m_String; };
 
-        CJSONArray& operator<< (const CJSONValue& Value) override {
-            Add(Value);
-            return *this;
-        };
+            const CString &String() const { return m_String; };
 
-        CJSONArray& operator<< (const CString& String) override {
-            SetJSON(String);
-            return *this;
-        };
+            CJSONValue &Value() { return m_Value; };
 
-        CJSONArray& operator<< (reference Str) override {
-            SetJSONStr(Str, strlen(Str));
-            return *this;
-        };
+            const CJSONValue &Value() const { return m_Value; };
 
-        friend CJSONArray& operator>> (const CString& LS, CJSONArray& RM) {
-            RM.SetJSON(LS);
-            return RM;
-        };
+            void Assign(const CJSONMember &AValue) {
+                m_String = AValue.m_String;
+                m_Value = AValue.m_Value;
+            };
 
-        friend CJSONArray& operator>> (reference LS, CJSONArray& RM) {
-            RM.SetJSONStr(LS, strlen(LS));
-            return RM;
-        };
-
-        friend tostream& operator<< (tostream& Out, CJSONArray& RM) {
-            CString J;
-            RM.GetJSON(J);
-            return Out << J.c_str();
-        };
-
-        friend tistream& operator>> (tistream& In, CJSONArray& RM) {
-            TCHAR C;
-            CString S;
-            while (In.get(C) && C != '\n')
-                S.Append(C);
-            RM.SetJSON(S);
-            return In;
-        };
-
-        CJSONValue& operator[] (int Index) override { return Get(Index); }
-        const CJSONValue& operator[] (int Index) const override { return Get(Index); }
-
-    }; // CJSONArray
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    //-- CJSONObject ---------------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    class LIB_DELPHI CJSONObject: public CJSONMembers {
-        typedef CJSONMembers inherited;
-        typedef LPCTSTR reference;
-
-    private:
-
-        TList<CJSONMember> m_pList;
-
-        CJSONValue m_NullValue;
-
-        const CString& GetString(int Index) const override;
-
-        CJSONValue& GetValue(const CString& String) override;
-        const CJSONValue& GetValue(const CString& String) const override;
-
-        CJSONValue& GetValue(reference String) override;
-        const CJSONValue& GetValue(reference String) const override;
-
-    protected:
-
-        CJSONMember& Get(int Index) override;
-        const CJSONMember& Get(int Index) const override;
-
-        void Put(int Index, const CJSONMember& Value) override;
-
-        int GetCapacity() const noexcept override;
-        void SetCapacity(int NewCapacity) override;
-
-        int GetCount() const noexcept override;
-
-        void InsertPair(int Index, const CString& String, const CJSONValue& Value) override;
-        void InsertPair(int Index, reference String, const CJSONValue& Value) override;
-
-    public:
-
-        explicit CJSONObject(CPersistent *AOwner);
-
-        inline static class CJSONObject* Create(CPersistent *AOwner) { return new CJSONObject(AOwner); };
-
-        ~CJSONObject() override;
-
-        void Assign(const CJSONMembers& Source) override;
-
-        void Clear() override;
-
-        virtual void Update(int Index);
-
-        void Delete(int Index) override;
-
-        int Add(const CJSONMember& Value) override;
-
-        int AddPair(const CString& String, const CJSONValue& Value) override;
-        int AddPair(reference String, const CJSONValue& Value) override;
-
-        void Insert(int Index, const CJSONMember& Value) override;
-
-        CJSONMember& Members(int Index) override { return Get(Index); };
-        const CJSONMember& Members(int Index) const override { return Get(Index); };
-
-        void Members(int Index, const CJSONMember& Value) override { return Put(Index, Value); };
-
-        CJSONObject& operator=(const CJSONObject& Value) {
-            if (&Value != this) {
-                Assign(Value);
+            virtual bool operator!=(const CJSONMember &AValue) const {
+                if (this != &AValue) {
+                    return m_Value != AValue.m_Value;
+                }
+                return false;
             }
-            return *this;
-        }
 
-        CJSONObject& operator<< (const CJSONObject& Value) {
-            if (this != &Value)
-                Assign(Value);
-            return *this;
+            virtual bool operator==(const CJSONMember &AValue) const {
+                if (this != &AValue) {
+                    return m_Value == AValue.m_Value;
+                }
+                return false;
+            }
+
+            CJSONMember &operator=(const CJSONMember &AValue) {
+                if (this != &AValue) {
+                    Assign(AValue);
+                }
+                return *this;
+            }
+
+            virtual CJSONMember &operator<<(const CJSONMember &Element) {
+                if (this != &Element)
+                    Assign(Element);
+                return *this;
+            };
+
+            CJSONMember &operator<<(const CString &Value) {
+                m_Value << Value;
+                return *this;
+            };
+
+            CJSONMember &operator<<(reference Str) {
+                m_Value << Str;
+                return *this;
+            };
+
+            friend CJSONMember &operator>>(const CJSONMember &LE, CJSONMember &RE) {
+                RE = LE;
+                return RE;
+            };
+
+            friend tostream &operator<<(tostream &Out, const CJSONMember &RE) {
+                return Out << RE.Value().Data().c_str();
+            };
+
+            friend tistream &operator>>(tistream &In, CJSONMember &RE) {
+                TCHAR C;
+                CString S;
+                while (In.get(C) && C != '\n')
+                    S.Append(C);
+                RE.Value().Data() = S;
+                return In;
+            };
         };
 
-        CJSONObject& operator<< (const CJSONMember& Value) override {
-            Add(Value);
-            return *this;
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CJSONArray ------------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CJSONArray : public CJSONElements {
+            typedef CJSONElements inherited;
+            typedef LPCTSTR reference;
+
+        private:
+
+            TList<CJSONValue> m_pList;
+
+            CJSONValue &Get(int Index) override;
+
+            const CJSONValue &Get(int Index) const override;
+
+            void Put(int Index, const CJSONValue &Value) override;
+
+        protected:
+
+            int GetCapacity() const noexcept override;
+
+            void SetCapacity(int NewCapacity) override;
+
+            int GetCount() const noexcept override;
+
+        public:
+
+            explicit CJSONArray(CPersistent *AOwner);
+
+            ~CJSONArray() override;
+
+            inline static class CJSONArray *Create(CPersistent *AOwner) { return new CJSONArray(AOwner); };
+
+            void Assign(const CJSONElements &Source) override;
+
+            void Clear() override;
+
+            void Delete(int Index) override;
+
+            int Add(const CJSONValue &Value) override;
+
+            void Insert(int Index, const CJSONValue &Value) override;
+
+            CJSONArray &operator=(const CJSONArray &Value) {
+                if (&Value != this) {
+                    Assign(Value);
+                }
+                return *this;
+            }
+
+            CJSONArray &operator<<(const CJSONArray &Value) {
+                if (this != &Value)
+                    Assign(Value);
+                return *this;
+            };
+
+            CJSONArray &operator<<(const CJSONValue &Value) override {
+                Add(Value);
+                return *this;
+            };
+
+            CJSONArray &operator<<(const CString &String) override {
+                SetJSON(String);
+                return *this;
+            };
+
+            CJSONArray &operator<<(reference Str) override {
+                SetJSONStr(Str, strlen(Str));
+                return *this;
+            };
+
+            friend CJSONArray &operator>>(const CString &LS, CJSONArray &RM) {
+                RM.SetJSON(LS);
+                return RM;
+            };
+
+            friend CJSONArray &operator>>(reference LS, CJSONArray &RM) {
+                RM.SetJSONStr(LS, strlen(LS));
+                return RM;
+            };
+
+            friend tostream &operator<<(tostream &Out, CJSONArray &RM) {
+                CString J;
+                RM.GetJSON(J);
+                return Out << J.c_str();
+            };
+
+            friend tistream &operator>>(tistream &In, CJSONArray &RM) {
+                TCHAR C;
+                CString S;
+                while (In.get(C) && C != '\n')
+                    S.Append(C);
+                RM.SetJSON(S);
+                return In;
+            };
+
+            CJSONValue &operator[](int Index) override { return Get(Index); }
+
+            const CJSONValue &operator[](int Index) const override { return Get(Index); }
+
+        }; // CJSONArray
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CJSONObject -----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CJSONObject : public CJSONMembers {
+            typedef CJSONMembers inherited;
+            typedef LPCTSTR reference;
+
+        private:
+
+            TList<CJSONMember> m_pList;
+
+            CJSONValue m_NullValue;
+
+            const CString &GetString(int Index) const override;
+
+            CJSONValue &GetValue(const CString &String) override;
+
+            const CJSONValue &GetValue(const CString &String) const override;
+
+            CJSONValue &GetValue(reference String) override;
+
+            const CJSONValue &GetValue(reference String) const override;
+
+        protected:
+
+            CJSONMember &Get(int Index) override;
+
+            const CJSONMember &Get(int Index) const override;
+
+            void Put(int Index, const CJSONMember &Value) override;
+
+            int GetCapacity() const noexcept override;
+
+            void SetCapacity(int NewCapacity) override;
+
+            int GetCount() const noexcept override;
+
+            void InsertPair(int Index, const CString &String, const CJSONValue &Value) override;
+
+            void InsertPair(int Index, reference String, const CJSONValue &Value) override;
+
+        public:
+
+            explicit CJSONObject(CPersistent *AOwner);
+
+            inline static class CJSONObject *Create(CPersistent *AOwner) { return new CJSONObject(AOwner); };
+
+            ~CJSONObject() override;
+
+            void Assign(const CJSONMembers &Source) override;
+
+            void Clear() override;
+
+            virtual void Update(int Index);
+
+            void Delete(int Index) override;
+
+            int Add(const CJSONMember &Value) override;
+
+            int AddPair(const CString &String, const CJSONValue &Value) override;
+
+            int AddPair(reference String, const CJSONValue &Value) override;
+
+            void Insert(int Index, const CJSONMember &Value) override;
+
+            CJSONMember &Members(int Index) override { return Get(Index); };
+
+            const CJSONMember &Members(int Index) const override { return Get(Index); };
+
+            void Members(int Index, const CJSONMember &Value) override { return Put(Index, Value); };
+
+            CJSONObject &operator=(const CJSONObject &Value) {
+                if (&Value != this) {
+                    Assign(Value);
+                }
+                return *this;
+            }
+
+            CJSONObject &operator<<(const CJSONObject &Value) {
+                if (this != &Value)
+                    Assign(Value);
+                return *this;
+            };
+
+            CJSONObject &operator<<(const CJSONMember &Value) override {
+                Add(Value);
+                return *this;
+            };
+
+            CJSONObject &operator<<(const CString &String) override {
+                SetJSON(String);
+                return *this;
+            };
+
+            CJSONObject &operator<<(reference Str) override {
+                CString J(Str);
+                SetJSON(J);
+                return *this;
+            };
+
+            friend CJSONObject &operator>>(const CString &LS, CJSONObject &RM) {
+                RM.SetJSON(LS);
+                return RM;
+            };
+
+            friend CJSONObject &operator>>(reference LS, CJSONObject &RM) {
+                CString J(LS);
+                RM.SetJSON(J);
+                return RM;
+            };
+
+            friend tostream &operator<<(tostream &Out, CJSONObject &RM) {
+                CString J;
+                RM.GetJSON(J);
+                return Out << J.c_str();
+            };
+
+            friend tistream &operator>>(tistream &In, CJSONObject &RM) {
+                TCHAR C;
+                CString S;
+                while (In.get(C) && C != '\n')
+                    S.Append(C);
+                RM.SetJSON(S);
+                return In;
+            };
+
+            CJSONValue &operator[](int Index) override { return ValueFromIndex(Index); }
+
+            const CJSONValue &operator[](int Index) const override { return ValueFromIndex(Index); }
+
+            CJSONValue &operator[](const CString &Value) override { return GetValue(Value); }
+
+            const CJSONValue &operator[](const CString &Value) const override { return GetValue(Value); }
+
+            CJSONValue &operator[](reference Value) override { return GetValue(Value); }
+
+            const CJSONValue &operator[](reference Value) const override { return GetValue(Value); }
+
         };
 
-        CJSONObject& operator<< (const CString& String) override {
-            SetJSON(String);
-            return *this;
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CJSONParser -----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        typedef enum parcer_state {
+            json_start,
+            string_start,
+            string,
+            string_end,
+            value_start,
+            value,
+            value_end,
+            value_string_start,
+            value_string,
+            value_string_end,
+            value_digit,
+            value_true,
+            value_false,
+            value_null
+        } CParcerState;
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CJSONParser -----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CJSONParser : public CObject {
+        private:
+
+            CJSON *m_Json;
+
+            CList *m_pJsonList;
+
+            CParcerState m_State;
+
+            int m_Result;
+
+            int m_CharIndex;
+
+            int Consume(u_char AInput);
+
+            static bool IsWS(u_char c);
+
+            static bool IsEscape(u_char c);
+
+            static bool IsLetter(u_char c);
+
+            static bool IsCharacter(unsigned c);
+
+            static bool IsCtl(u_char c);
+
+            static bool IsDigit(u_char c);
+
+        protected:
+
+            CJSON &CurrentJson();
+
+            CJSONMember &CurrentMember();
+
+            CJSONObject &CurrentObject();
+
+            CJSONArray &CurrentArray();
+
+            CJSONValue &CurrentValue();
+
+            void CreateValue(CJSONValueType ValueType);
+
+            void UpdateData(TCHAR C);
+
+            void DeleteLastJson();
+
+        public:
+
+            explicit CJSONParser(CJSON *Json);
+
+            ~CJSONParser() override;
+
+            void Reset();
+
+            CJSONParserResult Parse(LPTSTR ABegin, LPCTSTR AEnd);
+
+            CParcerState State() { return m_State; };
+
+            int Result() { return m_Result; };
+
         };
-
-        CJSONObject& operator<< (reference Str) override {
-            CString J(Str);
-            SetJSON(J);
-            return *this;
-        };
-
-        friend CJSONObject& operator>> (const CString& LS, CJSONObject& RM) {
-            RM.SetJSON(LS);
-            return RM;
-        };
-
-        friend CJSONObject& operator>> (reference LS, CJSONObject& RM) {
-            CString J(LS);
-            RM.SetJSON(J);
-            return RM;
-        };
-
-        friend tostream& operator<< (tostream& Out, CJSONObject& RM) {
-            CString J;
-            RM.GetJSON(J);
-            return Out << J.c_str();
-        };
-
-        friend tistream& operator>> (tistream& In, CJSONObject& RM) {
-            TCHAR C;
-            CString S;
-            while (In.get(C) && C != '\n')
-                S.Append(C);
-            RM.SetJSON(S);
-            return In;
-        };
-
-        CJSONValue& operator[] (int Index) override { return ValueFromIndex(Index); }
-        const CJSONValue& operator[] (int Index) const override { return ValueFromIndex(Index); }
-
-        CJSONValue& operator[] (const CString& Value) override { return GetValue(Value); }
-        const CJSONValue& operator[] (const CString& Value) const override { return GetValue(Value); }
-
-        CJSONValue& operator[] (reference Value) override { return GetValue(Value); }
-        const CJSONValue& operator[] (reference Value) const override { return GetValue(Value); }
-
-    };
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    //-- CJSONParser ---------------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    typedef enum parcer_state
-    {
-        json_start,
-        string_start,
-        string,
-        string_end,
-        value_start,
-        value,
-        value_end,
-        value_string_start,
-        value_string,
-        value_string_end,
-        value_digit,
-        value_true,
-        value_false,
-        value_null
-    } CParcerState;
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    //-- CJSONParser ---------------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    class CJSONParser: public CObject {
-    private:
-
-        CJSON *m_Json;
-
-        CList *m_pJsonList;
-
-        CParcerState m_State;
-
-        int m_Result;
-
-        int m_CharIndex;
-
-        int Consume(u_char AInput);
-
-        static bool IsWS(u_char c);
-
-        static bool IsEscape(u_char c);
-
-        static bool IsLetter(u_char c);
-
-        static bool IsCharacter(unsigned c);
-
-        static bool IsCtl(u_char c);
-
-        static bool IsDigit(u_char c);
-
-    protected:
-
-        CJSON& CurrentJson();
-
-        CJSONMember& CurrentMember();
-
-        CJSONObject& CurrentObject();
-
-        CJSONArray& CurrentArray();
-
-        CJSONValue& CurrentValue();
-
-        void CreateValue(CJSONValueType ValueType);
-
-        void UpdateData(TCHAR C);
-
-        void DeleteLastJson();
-
-    public:
-
-        explicit CJSONParser(CJSON *Json);
-
-        ~CJSONParser() override;
-
-        void Reset();
-
-        CJSONParserResult Parse(LPTSTR ABegin, LPCTSTR AEnd);
-
-        CParcerState State() { return m_State; };
-
-        int Result() { return m_Result; };
-
-    };
+    }
 }
 
 using namespace Delphi::Json;
