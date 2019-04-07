@@ -31,7 +31,7 @@ Apostol Web Service
 2. PostgreSQL Server.
 ~~~
 
-###### При реализации _"демона"_ **`apostol`**, вдохновение черпалось из исходных кодов [nginx](http://nginx.org). Поэтому управление apostol схоже с [управлением nginx](http://nginx.org/ru/docs/control.html#reconfiguration), как следствие производительность и отказоустойчивость **apostol** на уровне [nginx](http://nginx.org).
+###### При реализации "демона" **apostol**, вдохновение черпалось из исходных кодов [nginx](http://nginx.org). Поэтому управление **apostol** схоже с [управлением nginx](http://nginx.org/ru/docs/control.html#reconfiguration), как следствие производительность и отказоустойчивость **apostol** на уровне [nginx](http://nginx.org).
 
 ## HTTP Server
 
