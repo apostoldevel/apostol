@@ -19,7 +19,7 @@ Apostol Web Service
 -
 
 `Apostol Web Service` (`AWS`) - платформа, написанная на C++, для быстрого создания **`RESTful API`** 
-сервисов под Linux, со встроенной поддержкой СУБД [PostgreSQL][https://www.postgresql.org/].
+сервисов под Linux, со встроенной поддержкой СУБД [PostgreSQL](https://www.postgresql.org/).
 
 Платформа AWS построена на базе библиотеки **`libdelphi`** с применением **асинхронной** модели программирования.
 
@@ -31,7 +31,7 @@ Apostol Web Service
 2. PostgreSQL Server.
 ~~~
 
-###### При реализации _"демона"_ **`apostol`**, вдохновение черпалось из исходных кодов [nginx][http://nginx.org]. Поэтому управление apostol схоже с [управлением nginx][http://nginx.org/ru/docs/control.html#reconfiguration], как следствие производительность и отказоустойчивость **apostol** на уровне [nginx][http://nginx.org].
+###### При реализации _"демона"_ **`apostol`**, вдохновение черпалось из исходных кодов [nginx](http://nginx.org). Поэтому управление apostol схоже с [управлением nginx](http://nginx.org/ru/docs/control.html#reconfiguration), как следствие производительность и отказоустойчивость **apostol** на уровне [nginx](http://nginx.org).
 
 ## HTTP Server
 
