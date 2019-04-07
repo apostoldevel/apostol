@@ -196,36 +196,112 @@
 <body>
 <div class="container">
         <div id="readme" class="Box Box--condensed instapaper_body md js-code-block-container">
-        <div class="Box-header d-flex flex-items-center flex-justify-between px-2">
-                <strong>Welcome to apostol!</strong>
-        </div>
+                <div class="Box-header d-flex flex-items-center flex-justify-between px-2">
+                        <h3 class="Box-title pr-3">
+                                <svg class="octicon octicon-book" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M3 5h4v1H3V5zm0 3h4V7H3v1zm0 2h4V9H3v1zm11-5h-4v1h4V5zm0 2h-4v1h4V7zm0 2h-4v1h4V9zm2-6v9c0 .55-.45 1-1 1H9.5l-1 1-1-1H2c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h5.5l1 1 1-1H15c.55 0 1 .45 1 1zm-8 .5L7.5 3H2v9h6V3.5zm7-.5H9.5l-.5.5V12h6V3z"></path></svg>
+                                README.md
+                        </h3>
+                        <div>
+                                <a href="/ufocomp/apostol/edit/master/README.md" class="Box-btn-octicon btn-octicon float-right" aria-label="Edit this file"><svg class="octicon octicon-pencil" viewBox="0 0 14 16" version="1.1" width="14" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M0 12v3h3l8-8-3-3-8 8zm3 2H1v-2h1v1h1v1zm10.3-9.3L12 6 9 3l1.3-1.3a.996.996 0 0 1 1.41 0l1.59 1.59c.39.39.39 1.02 0 1.41z"></path></svg></a>
+                        </div>
+                </div>
                 <div class="Box-body">
                         <article class="markdown-body entry-content p-5" itemprop="text"><h1><a id="user-content-apostol-web-service" class="anchor" aria-hidden="true" href="#apostol-web-service"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Apostol Web Service</h1>
-                                <p>Поздравляем, Веб-сервис <strong>Апостол</strong>, установлен и работает!</p>
+                                <p>Веб-сервис <strong>Апостол</strong>, исходные коды на C++.</p>
+                                <h2><a id="user-content-структура-каталогов" class="anchor" aria-hidden="true" href="#структура-каталогов"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>СТРУКТУРА КАТАЛОГОВ</h2>
+                                <pre><code>conf/             содержит файлы с настройками
+src/              содержит файлы с исходным кодом
+├─apostol/        содержит файлы с исходным кодом: Apostol Web Service
+├─lib/            содержит файлы с исходным кодом библиотек
+| └─delphi/       содержит файлы с исходным кодом библиотеки: Delphi classes for C++
+└─mod/            содержит файлы с исходным кодом дополнений (модулей)
+  ├─WebServer/    содержит файлы с исходным кодом дополнения: Web-Server
+  └─Client365/    содержит файлы с исходным кодом дополнения: Клиент 365
+</code></pre>
                                 <h2><a id="user-content-описание" class="anchor" aria-hidden="true" href="#описание"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ОПИСАНИЕ</h2>
                                 <p><strong>Apostol Web Service</strong> (AWS) - платформа, написанная на C++, для быстрого создания <strong>RESTful API</strong>
                                         сервисов под Linux, со встроенной поддержкой СУБД <a href="https://www.postgresql.org/" rel="nofollow">PostgreSQL</a>.</p>
                                 <p>Платформа <strong>AWS</strong> построена на базе библиотеки <strong><code>libdelphi</code></strong> с применением <strong>асинхронной</strong> модели программирования.</p>
-                                <p>Бинарный файл <strong><code>apostol</code></strong> - приложение Linux <em>демон</em> в задачу которого входит запуск и поддержка работоспособности
-                                        двух служб:</p>
+                                <p>Бинарный файл <strong><code>apostol</code></strong> - системная служба Linux (демон) в задачу которого входит запуск и поддержка
+                                        работоспособности двух внутренних служб:</p>
                                 <ol>
-                                        <li>HTTP Server;</li>
-                                        <li>PostgreSQL Server.</li>
+                                        <li>Server (HTTP-сервер);</li>
+                                        <li>PQServer (PostgreSQL-сервер).</li>
                                 </ol>
-                                <h6><a id="user-content-при-реализации-демона-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx" class="anchor" aria-hidden="true" href="#при-реализации-демона-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>При реализации <em>демона</em> <strong>apostol</strong>, вдохновение черпалось из исходных кодов <a href="http://nginx.org" rel="nofollow">nginx</a>. Поэтому управление <strong>apostol</strong> схоже с <a href="http://nginx.org/ru/docs/control.html#reconfiguration" rel="nofollow">управлением nginx</a>, как следствие производительность и отказоустойчивость <strong>apostol</strong> на уровне <a href="http://nginx.org" rel="nofollow">nginx</a>.</h6>
-                                <h3><a id="user-content-http-server" class="anchor" aria-hidden="true" href="#http-server"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>HTTP Server</h3>
+                                <h6><a id="user-content-при-реализации-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx" class="anchor" aria-hidden="true" href="#при-реализации-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>При реализации <strong>apostol</strong>, вдохновение черпалось из исходных кодов <a href="http://nginx.org" rel="nofollow">nginx</a>. Поэтому управление <strong>apostol</strong> схоже с <a href="http://nginx.org/ru/docs/control.html#reconfiguration" rel="nofollow">управлением nginx</a>, как следствие производительность и отказоустойчивость <strong>apostol</strong> на уровне <a href="http://nginx.org" rel="nofollow">nginx</a>.</h6>
+                                <h3><a id="user-content-server" class="anchor" aria-hidden="true" href="#server"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Server</h3>
                                 <h4><a id="user-content-асинхронный-http-сервер" class="anchor" aria-hidden="true" href="#асинхронный-http-сервер"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Асинхронный HTTP сервер</strong>.</h4>
                                 <p>Принимает HTTP запросы от клиентов и в зависимости от значения в заголовке <code>User-Agent</code> распределяет их между модулями
                                         (модификациями). При отсутствии заголовка <code>User-Agent</code> или должного, в нём, значения направляет запрос в модуль
                                         <strong><code>Web-Server</code></strong> превращая AWS в <strong>Веб-сервер</strong>.</p>
-                                <h3><a id="user-content-postgresql-server" class="anchor" aria-hidden="true" href="#postgresql-server"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>PostgreSQL Server</h3>
+                                <h6><a id="user-content-асинхронная-работа-сервера-реализована-с-помощью-epoll-api" class="anchor" aria-hidden="true" href="#асинхронная-работа-сервера-реализована-с-помощью-epoll-api"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Асинхронная работа сервера реализована с помощью <code>epoll API</code>.</h6>
+                                <h3><a id="user-content-pqserver" class="anchor" aria-hidden="true" href="#pqserver"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>PQServer</h3>
                                 <h4><a id="user-content-асинхронный-postgresql-сервер" class="anchor" aria-hidden="true" href="#асинхронный-postgresql-сервер"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Асинхронный PostgreSQL сервер</strong>.</h4>
                                 <p>Сервер создаёт пул подключений к СУБД Postgres и позволяет отправлять SQL запросы в <strong>асинхронном</strong> режиме.
                                         Указать диапазон минимального и максимального количества подключений к СУБД можно в файле конфигурации в секции <code>[postgres]</code></p>
-                                <h6><a id="user-content-сервер-построен-на-базе-библиотеки-libpq-с-применением-асинхронных-команд-обработки" class="anchor" aria-hidden="true" href="#сервер-построен-на-базе-библиотеки-libpq-с-применением-асинхронных-команд-обработки"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Сервер построен на базе библиотеки <em><code>libpq</code></em> с применением асинхронных команд обработки.</h6>
-                                <h2><a id="user-content-установка" class="anchor" aria-hidden="true" href="#установка"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>УСТАНОВКА</h2>
+                                <h6><a id="user-content-сервер-построен-на-базе-библиотеки-libpq-с-применением-асинхронных-команд" class="anchor" aria-hidden="true" href="#сервер-построен-на-базе-библиотеки-libpq-с-применением-асинхронных-команд"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Сервер построен на базе библиотеки <code>libpq</code> с применением асинхронных команд.</h6>
+                                <h2><a id="user-content-модули" class="anchor" aria-hidden="true" href="#модули"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>МОДУЛИ</h2>
+                                <p>Апостол спроектирован таким образом, что основной код отвечает:</p>
+                                <ul>
+                                        <li>за работу приложения в качестве системной службы;</li>
+                                        <li>реализацию протоколов TCP/IP, HTTP;</li>
+                                        <li>взаимодействие с СУБД Postgres.</li>
+                                </ul>
+                                <p>Код реализующий логику того или иного сервиса находится отдельно от основного кода в расширениях (модулях).</p>
+                                <p>Модуль - это класс C++ принимающий на входе данные от HTTP-сервера и PQ-сервера (PostgeSQL). Программисту,
+                                        который реализует логику Веб-сервиса, не нужно вникать в особенности работы мультиплексированного ввода-вывода,
+                                        функций обработки сигналов Linux (для построения демона) и тонкостях реализации асинхронной работы с PostgreSQL.
+                                        Апостол всё это скрывает, позволяя разработчику сконцентрировать своё внимание только на реализации логики самого
+                                        Веб-сервиса, разрабатывая код в привычном для него стиле. Точками соприкосновения с Апостол будут только входящие
+                                        и исходящими структуры данных.</p>
                                 <h2><a id="user-content-сборка" class="anchor" aria-hidden="true" href="#сборка"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>СБОРКА</h2>
+                                <p>Для сборки проекта Вам потребуется:</p>
+                                <ol>
+                                        <li><a href="https://cmake.org" rel="nofollow">CMake</a> или интегрированная среда разработки (IDE) с поддержкой <a href="https://cmake.org" rel="nofollow">CMake</a>;</li>
+                                        <li>Библиотека <a href="https://www.postgresql.org/download/" rel="nofollow">libpq-dev</a> (libraries and headers for C language development).</li>
+                                </ol>
+                                <h6><a id="user-content-описание-установки-c-cmake-ide-и-иных-компонентов-необходимых-для-сборки-проекта-не-входит-в-данное-руководство" class="anchor" aria-hidden="true" href="#описание-установки-c-cmake-ide-и-иных-компонентов-необходимых-для-сборки-проекта-не-входит-в-данное-руководство"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство.</h6>
+                                <p>Для сборки Апостол, выполнить:</p>
+                                <ol>
+                                        <li>Скачать Апостол по <a href="https://github.com/ufocomp/apostol/archive/master.zip">ссылке</a>;</li>
+                                        <li>Распаковать;</li>
+                                        <li>Скомпилировать (см. ниже).</li>
+                                </ol>
+                                <p>Для сборки Апостол, с помощью Git выполнить:</p>
+                                <pre><code>git clone https://github.com/ufocomp/apostol.git
+</code></pre>
+                                <p>Скомпилировать:</p>
+                                <pre><code>cd apostol
+cmake --build cmake-build-release --target apostol -- -j 4
+</code></pre>
+                                <h2><a id="user-content-установка" class="anchor" aria-hidden="true" href="#установка"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>УСТАНОВКА</h2>
+                                <p>Для установки <strong>Апостол</strong> нужно выполнить:</p>
+                                <pre><code>sudo cmake --build cmake-build-release --target install -- -j 4
+</code></pre>
+                                <p>По умолчанию <strong>Апостол</strong> будет установлен в:</p>
+                                <pre><code>/usr/sbin
+</code></pre>
+                                <p>Файл конфигурации и необходимые для работы файлы будут расположены в:</p>
+                                <pre><code>/etc/apostol
+</code></pre>
                                 <h2><a id="user-content-запуск" class="anchor" aria-hidden="true" href="#запуск"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ЗАПУСК</h2>
+                                <p>Апостол - системная служба (демон) Linux.
+                                        Для управления Апостол используйте стандартные команды управления службами.</p>
+                                <p>Для запуска Апостол выполните:</p>
+                                <pre><code>sudo systemctl start apostol
+</code></pre>
+                                <p>Для проверки статуса выполните:</p>
+                                <pre><code>sudo systemctl status apostol
+</code></pre>
+                                <p>Результат должен быть примерно таким:</p>
+                                <pre><code>sudo systemctl status apostol
+● apostol.service - LSB: starts the apostol web service
+   Loaded: loaded (/etc/init.d/apostol)
+   Active: active (running) since Sun 2019-04-07 01:42:54 MSK; 21h ago
+   CGroup: /system.slice/apostol.service
+           ├─26772 apostol: master process /usr/sbin/apostol
+           └─26773 apostol: worker process (apostol)
+</code></pre>
                                 <h3><a id="user-content-управление-apostol" class="anchor" aria-hidden="true" href="#управление-apostol"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Управление apostol</strong>.</h3>
                                 <p>Управлять <strong><code>apostol</code></strong> можно с помощью сигналов.
                                         Номер главного процесса по умолчанию записывается в файл <code>/usr/local/apostol/logs/apostol.pid</code>.
@@ -277,7 +353,7 @@
                                         </tbody>
                                 </table>
                         </article>
-                </div></div>
-</div>
+                </div>
+        </div></div>
 </body>
 </html>
