@@ -397,7 +397,9 @@ namespace Apostol {
 
             umask(0);
 
-            chdir("/");
+            if (chdir("/") == -1) {
+                throw EOSError(errno, "chdir(\"/\") failed");
+            }
 
             fd = open("/dev/null", O_RDWR);
             if (fd == -1) {

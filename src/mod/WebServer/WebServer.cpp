@@ -87,9 +87,9 @@ namespace Apostol {
 
         void CWebServer::DoOptions(CHTTPConnection *AConnection) {
 
-            auto LRequest = AConnection->Request();
             auto LReply = AConnection->Reply();
 #ifdef _DEBUG
+            auto LRequest = AConnection->Request();
             if (LRequest->Uri == _T("/quit"))
                 Application::Application->SignalProcess()->Quit();
 #endif

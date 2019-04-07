@@ -21,6 +21,29 @@
             margin-right: auto;
             width: 980px;
     }
+    .Box-header {
+            padding: 8px 16px;
+    }
+    .d-flex {
+            display: flex!important;
+    }
+    .px-2 {
+            padding-right: 8px!important;
+    }
+    .flex-items-center {
+            align-items: center!important;
+    }
+    .flex-justify-between {
+            justify-content: space-between!important;
+    }
+    .Box-header {
+            background-color: #f6f8fa;
+            border: 1px solid #d1d5da;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+            margin: -1px -1px 0;
+            padding: 16px;
+    }
     .Box--condensed {
             line-height: 1.25;
     }
@@ -171,83 +194,90 @@
 </style>
 </head>
 <body>
-<div class="container Box Box-body Box--condensed">
-        <article class="markdown-body entry-content p-5" itemprop="text"><h1><a id="user-content-apostol-web-service" class="anchor" aria-hidden="true" href="#apostol-web-service"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Apostol Web Service</h1>
-<p>Поздравляем, Веб-сервис <strong><code>Апостол</code></strong>, установлен и работает!</p>
-<h2><a id="user-content-описание" class="anchor" aria-hidden="true" href="#описание"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ОПИСАНИЕ</h2>
-<p><code>Apostol Web Service</code> (<code>AWS</code>) - платформа, написанная на C++, для быстрого создания <strong><code>RESTful API</code></strong>
-сервисов под Linux, со встроенной поддержкой СУБД <a href="https://www.postgresql.org/" rel="nofollow">PostgreSQL</a>.</p>
-<p>Платформа <code>AWS</code> построена на базе библиотеки <strong><code>libdelphi</code></strong> с применением <strong>асинхронной</strong> модели программирования.</p>
-<p>Бинарный файл <code>apostol</code> - приложение <code>Linux демон</code> в задачу которого входит запуск и поддержка работоспособности
-двух служб:</p>
-<pre><code>1. HTTP Server;
-2. PostgreSQL Server.
-</code></pre>
-<h6><a id="user-content-при-реализации-демона-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx" class="anchor" aria-hidden="true" href="#при-реализации-демона-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>При реализации "демона" <strong>apostol</strong>, вдохновение черпалось из исходных кодов <a href="http://nginx.org" rel="nofollow">nginx</a>. Поэтому управление <strong>apostol</strong> схоже с <a href="http://nginx.org/ru/docs/control.html#reconfiguration" rel="nofollow">управлением nginx</a>, как следствие производительность и отказоустойчивость <strong>apostol</strong> на уровне <a href="http://nginx.org" rel="nofollow">nginx</a>.</h6>
-<h2><a id="user-content-http-server" class="anchor" aria-hidden="true" href="#http-server"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>HTTP Server</h2>
-<h3><a id="user-content-асинхронный-http-сервер" class="anchor" aria-hidden="true" href="#асинхронный-http-сервер"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Асинхронный HTTP сервер</strong>.</h3>
-<p>Принимает HTTP запросы от клиентов и в зависимости от значения в заголовке <code>User-Agent</code> распределяет их между модулями
-(модификациями). При отсутствии заголовка <code>User-Agent</code> или должного, в нём, значения направляет запрос в модуль
-Web-Server превращая <code>AWS</code> в <code>Веб-сервер</code>.</p>
-<h2><a id="user-content-postgresql-server" class="anchor" aria-hidden="true" href="#postgresql-server"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>PostgreSQL Server</h2>
-<h3><a id="user-content-асинхронный-postgresql-сервер" class="anchor" aria-hidden="true" href="#асинхронный-postgresql-сервер"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Асинхронный PostgreSQL сервер</strong>.</h3>
-<p>Сервер создаёт пул подключений к СУБД Postgres и позволяет отправлять SQL запросы в <strong><code>асинхронном</code></strong> режиме.
-Указать диапазон минимального и максимального количества подключений к СУБД можно в файле конфигурации в секции <code>[postgres]</code></p>
-<h6><a id="user-content-сервер-построен-на-базе-библиотеки-libpq-с-применением-асинхронных-команд-обработки" class="anchor" aria-hidden="true" href="#сервер-построен-на-базе-библиотеки-libpq-с-применением-асинхронных-команд-обработки"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Сервер построен на базе библиотеки <em><code>libpq</code></em> с применением асинхронных команд обработки.</h6>
-<h2><a id="user-content-установка" class="anchor" aria-hidden="true" href="#установка"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>УСТАНОВКА</h2>
-<h2><a id="user-content-сборка" class="anchor" aria-hidden="true" href="#сборка"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>СБОРКА</h2>
-<h2><a id="user-content-запуск" class="anchor" aria-hidden="true" href="#запуск"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ЗАПУСК</h2>
-<h3><a id="user-content-управление-apostol" class="anchor" aria-hidden="true" href="#управление-apostol"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Управление apostol</strong>.</h3>
-<p>Управлять <strong><code>apostol</code></strong> можно с помощью сигналов.
-Номер главного процесса по умолчанию записывается в файл <code>/usr/local/apostol/logs/apostol.pid</code>.
-Изменить имя этого файла можно при конфигурации сборки или же в <code>apostol.conf</code> секция <code>[daemon]</code> ключ <code>pid</code>.</p>
-<p>Главный процесс поддерживает следующие сигналы:</p>
-<table>
-<thead>
-<tr>
-<th>Сигнал</th>
-<th>Действие</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>TERM, INT</td>
-<td>быстрое завершение</td>
-</tr>
-<tr>
-<td>QUIT</td>
-<td>плавное завершение</td>
-</tr>
-<tr>
-<td>HUP</td>
-<td>изменение конфигурации, запуск новых рабочих процессов с новой конфигурацией, плавное завершение старых рабочих процессов</td>
-</tr>
-<tr>
-<td>WINCH</td>
-<td>плавное завершение рабочих процессов</td>
-</tr>
-</tbody>
-</table>
-<p>Управлять рабочими процессами по отдельности не нужно. Тем не менее, они тоже поддерживают некоторые сигналы:</p>
-<table>
-<thead>
-<tr>
-<th>Сигнал</th>
-<th>Действие</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>TERM, INT</td>
-<td>быстрое завершение</td>
-</tr>
-<tr>
-<td>QUIT</td>
-<td>плавное завершение</td>
-</tr>
-</tbody>
-</table>
-</article>
+<div class="container">
+        <div id="readme" class="Box Box--condensed instapaper_body md js-code-block-container">
+        <div class="Box-header d-flex flex-items-center flex-justify-between px-2">
+                <strong>Welcome to apostol!</strong>
+        </div>
+                <div class="Box-body">
+                        <article class="markdown-body entry-content p-5" itemprop="text"><h1><a id="user-content-apostol-web-service" class="anchor" aria-hidden="true" href="#apostol-web-service"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Apostol Web Service</h1>
+                                <p>Поздравляем, Веб-сервис <strong>Апостол</strong>, установлен и работает!</p>
+                                <h2><a id="user-content-описание" class="anchor" aria-hidden="true" href="#описание"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ОПИСАНИЕ</h2>
+                                <p><strong>Apostol Web Service</strong> (AWS) - платформа, написанная на C++, для быстрого создания <strong>RESTful API</strong>
+                                        сервисов под Linux, со встроенной поддержкой СУБД <a href="https://www.postgresql.org/" rel="nofollow">PostgreSQL</a>.</p>
+                                <p>Платформа <strong>AWS</strong> построена на базе библиотеки <strong><code>libdelphi</code></strong> с применением <strong>асинхронной</strong> модели программирования.</p>
+                                <p>Бинарный файл <strong><code>apostol</code></strong> - приложение Linux <em>демон</em> в задачу которого входит запуск и поддержка работоспособности
+                                        двух служб:</p>
+                                <ol>
+                                        <li>HTTP Server;</li>
+                                        <li>PostgreSQL Server.</li>
+                                </ol>
+                                <h6><a id="user-content-при-реализации-демона-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx" class="anchor" aria-hidden="true" href="#при-реализации-демона-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>При реализации <em>демона</em> <strong>apostol</strong>, вдохновение черпалось из исходных кодов <a href="http://nginx.org" rel="nofollow">nginx</a>. Поэтому управление <strong>apostol</strong> схоже с <a href="http://nginx.org/ru/docs/control.html#reconfiguration" rel="nofollow">управлением nginx</a>, как следствие производительность и отказоустойчивость <strong>apostol</strong> на уровне <a href="http://nginx.org" rel="nofollow">nginx</a>.</h6>
+                                <h3><a id="user-content-http-server" class="anchor" aria-hidden="true" href="#http-server"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>HTTP Server</h3>
+                                <h4><a id="user-content-асинхронный-http-сервер" class="anchor" aria-hidden="true" href="#асинхронный-http-сервер"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Асинхронный HTTP сервер</strong>.</h4>
+                                <p>Принимает HTTP запросы от клиентов и в зависимости от значения в заголовке <code>User-Agent</code> распределяет их между модулями
+                                        (модификациями). При отсутствии заголовка <code>User-Agent</code> или должного, в нём, значения направляет запрос в модуль
+                                        <strong><code>Web-Server</code></strong> превращая AWS в <strong>Веб-сервер</strong>.</p>
+                                <h3><a id="user-content-postgresql-server" class="anchor" aria-hidden="true" href="#postgresql-server"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>PostgreSQL Server</h3>
+                                <h4><a id="user-content-асинхронный-postgresql-сервер" class="anchor" aria-hidden="true" href="#асинхронный-postgresql-сервер"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Асинхронный PostgreSQL сервер</strong>.</h4>
+                                <p>Сервер создаёт пул подключений к СУБД Postgres и позволяет отправлять SQL запросы в <strong>асинхронном</strong> режиме.
+                                        Указать диапазон минимального и максимального количества подключений к СУБД можно в файле конфигурации в секции <code>[postgres]</code></p>
+                                <h6><a id="user-content-сервер-построен-на-базе-библиотеки-libpq-с-применением-асинхронных-команд-обработки" class="anchor" aria-hidden="true" href="#сервер-построен-на-базе-библиотеки-libpq-с-применением-асинхронных-команд-обработки"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Сервер построен на базе библиотеки <em><code>libpq</code></em> с применением асинхронных команд обработки.</h6>
+                                <h2><a id="user-content-установка" class="anchor" aria-hidden="true" href="#установка"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>УСТАНОВКА</h2>
+                                <h2><a id="user-content-сборка" class="anchor" aria-hidden="true" href="#сборка"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>СБОРКА</h2>
+                                <h2><a id="user-content-запуск" class="anchor" aria-hidden="true" href="#запуск"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ЗАПУСК</h2>
+                                <h3><a id="user-content-управление-apostol" class="anchor" aria-hidden="true" href="#управление-apostol"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Управление apostol</strong>.</h3>
+                                <p>Управлять <strong><code>apostol</code></strong> можно с помощью сигналов.
+                                        Номер главного процесса по умолчанию записывается в файл <code>/usr/local/apostol/logs/apostol.pid</code>.
+                                        Изменить имя этого файла можно при конфигурации сборки или же в <code>apostol.conf</code> секция <code>[daemon]</code> ключ <code>pid</code>.</p>
+                                <p>Главный процесс поддерживает следующие сигналы:</p>
+                                <table>
+                                        <thead>
+                                        <tr>
+                                                <th>Сигнал</th>
+                                                <th>Действие</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                                <td>TERM, INT</td>
+                                                <td>быстрое завершение</td>
+                                        </tr>
+                                        <tr>
+                                                <td>QUIT</td>
+                                                <td>плавное завершение</td>
+                                        </tr>
+                                        <tr>
+                                                <td>HUP</td>
+                                                <td>изменение конфигурации, запуск новых рабочих процессов с новой конфигурацией, плавное завершение старых рабочих процессов</td>
+                                        </tr>
+                                        <tr>
+                                                <td>WINCH</td>
+                                                <td>плавное завершение рабочих процессов</td>
+                                        </tr>
+                                        </tbody>
+                                </table>
+                                <p>Управлять рабочими процессами по отдельности не нужно. Тем не менее, они тоже поддерживают некоторые сигналы:</p>
+                                <table>
+                                        <thead>
+                                        <tr>
+                                                <th>Сигнал</th>
+                                                <th>Действие</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                                <td>TERM, INT</td>
+                                                <td>быстрое завершение</td>
+                                        </tr>
+                                        <tr>
+                                                <td>QUIT</td>
+                                                <td>плавное завершение</td>
+                                        </tr>
+                                        </tbody>
+                                </table>
+                        </article>
+                </div></div>
 </div>
 </body>
 </html>

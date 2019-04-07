@@ -6,18 +6,11 @@ add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -O0")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
-#set(CMAKE_CXX_LINK_EXECUTABLE “${CMAKE_CXX_LINK_EXECUTABLE} -static-libgcc -static-libgcc++”)
 
 find_library(GCC_LIBRARY libgcc.a)
 find_library(GCC++_LIBRARY libgcc++.a)
 
 ADD_DEFINITIONS(-static-libgcc)
-#ADD_DEFINITIONS(-static-libgcc++)
-
-message(STATUS "CMAKE_EXE_LINKER_FLAGS = ${CMAKE_EXE_LINKER_FLAGS}")
-message(STATUS "CMAKE_CXX_LINK_EXECUTABLE = ${CMAKE_CXX_LINK_EXECUTABLE}")
-
-#find_library(libstdc++ libstdc++.a)
 
 set(PROJECT_NAME "apostol")
 set(PROJECT_DESCRIPTION "Apostol Web Service")
@@ -54,3 +47,15 @@ ADD_CUSTOM_TARGET(
 ADD_DEPENDENCIES(apostol auto_increment_version)
 
 target_link_libraries(apostol pthread pq)
+
+set(INSTALL_PATH "/etc/apostol")
+
+install(TARGETS apostol CONFIGURATIONS Release DESTINATION /usr/sbin)
+install(FILES auto/apostol DESTINATION /etc/init.d PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+install(DIRECTORY DESTINATION ${INSTALL_PATH})
+install(DIRECTORY DESTINATION ${INSTALL_PATH}/logs)
+install(DIRECTORY doc/www/ DESTINATION ${INSTALL_PATH}/www)
+install(FILES conf/apostol.conf DESTINATION ${INSTALL_PATH} RENAME default.conf)
+install(FILES conf/apostol.conf DESTINATION ${INSTALL_PATH})
+install(CODE "execute_process(COMMAND update-rc.d apostol defaults)")
