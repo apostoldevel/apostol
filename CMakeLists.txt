@@ -50,12 +50,13 @@ target_link_libraries(apostol pthread pq)
 
 set(INSTALL_PATH "/etc/apostol")
 
-install(TARGETS apostol CONFIGURATIONS Release DESTINATION /usr/sbin)
+install(TARGETS apostol CONFIGURATIONS Debug DESTINATION /usr/sbin)
 install(FILES auto/apostol DESTINATION /etc/init.d PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 install(DIRECTORY DESTINATION ${INSTALL_PATH})
+install(DIRECTORY DESTINATION ${INSTALL_PATH}/conf)
 install(DIRECTORY DESTINATION ${INSTALL_PATH}/logs)
 install(DIRECTORY doc/www/ DESTINATION ${INSTALL_PATH}/www)
-install(FILES conf/apostol.conf DESTINATION ${INSTALL_PATH} RENAME default.conf)
+install(FILES conf/apostol.conf DESTINATION ${INSTALL_PATH}/conf RENAME default.conf)
 install(FILES conf/apostol.conf DESTINATION ${INSTALL_PATH})
 install(CODE "execute_process(COMMAND update-rc.d apostol defaults)")

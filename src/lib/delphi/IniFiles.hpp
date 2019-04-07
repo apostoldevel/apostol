@@ -143,7 +143,7 @@ namespace Delphi {
 
         private:
 
-            CList **Buckets;
+            CList **m_Buckets;
 
         protected:
 
@@ -151,6 +151,8 @@ namespace Delphi {
             public:
                 CString Key;
                 int Value;
+
+                CHashItem& operator= (const CHashItem& Item) = default;
             };
 
             int Find(const CString &Key, CHashItem* &AItem);

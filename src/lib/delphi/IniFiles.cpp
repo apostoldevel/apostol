@@ -224,18 +224,18 @@ namespace Delphi {
 
         CStringHash::CStringHash(size_t Size): CObject() {
             m_BucketSize = Size;
-            Buckets = new CList* [Size];
+            m_Buckets = new CList* [Size];
             for (int I = 0; I < Size; ++I)
-                Buckets[I] = new CList();
+                m_Buckets[I] = new CList();
         }
         //--------------------------------------------------------------------------------------------------------------
 
         CStringHash::~CStringHash() {
             Clear();
             for (int I = 0; I < m_BucketSize; ++I) {
-                FreeAndNil(Buckets[I]);
+                FreeAndNil(m_Buckets[I]);
             }
-            delete Buckets;
+            delete m_Buckets;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -243,9 +243,9 @@ namespace Delphi {
             int Hash, pos = 0;
             CHashItem *Item;
             Hash = HashOf(Key) % (unsigned) m_BucketSize;
-            if (Buckets[Hash] != nullptr) {
-                while (pos < Buckets[Hash]->Count()) {
-                    Item = (CHashItem *) Buckets[Hash]->Items(pos);
+            if (m_Buckets[Hash] != nullptr) {
+                while (pos < m_Buckets[Hash]->Count()) {
+                    Item = (CHashItem *) m_Buckets[Hash]->Items(pos);
                     if (Item->Key == Key) {
                         AItem = Item;
                         return pos;
@@ -261,9 +261,9 @@ namespace Delphi {
             int Hash, pos = 0;
             CHashItem *Item;
             Hash = HashOf(Key) % (unsigned) m_BucketSize;
-            if (Buckets[Hash] != nullptr) {
-                while (pos < Buckets[Hash]->Count()) {
-                    Item = (CHashItem *) Buckets[Hash]->Items(pos);
+            if (m_Buckets[Hash] != nullptr) {
+                while (pos < m_Buckets[Hash]->Count()) {
+                    Item = (CHashItem *) m_Buckets[Hash]->Items(pos);
                     if (Item->Key == Key) {
                         AItem = Item;
                         return pos;
@@ -300,7 +300,7 @@ namespace Delphi {
             Item = new CHashItem;
             Item->Key = Key;
             Item->Value = Value;
-            Buckets[Hash]->Add(Item);
+            m_Buckets[Hash]->Add(Item);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -311,13 +311,13 @@ namespace Delphi {
             Item = new CHashItem;
             Item->Key = Key;
             Item->Value = Value;
-            Buckets[Hash]->Add(Item);
+            m_Buckets[Hash]->Add(Item);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CStringHash::Clear() {
             for (int I = 0; I < m_BucketSize; ++I) {
-                Buckets[I]->Clear();
+                m_Buckets[I]->Clear();
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -328,7 +328,7 @@ namespace Delphi {
             Pos = Find(Key, Item);
             if (Pos >= 0) {
                 Hash = HashOf(Key) % (unsigned) m_BucketSize;
-                Buckets[Hash]->Delete(Pos);
+                m_Buckets[Hash]->Delete(Pos);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -339,7 +339,7 @@ namespace Delphi {
             Pos = Find(Key, Item);
             if (Pos >= 0) {
                 Hash = HashOf(Key) % (unsigned) m_BucketSize;
-                Buckets[Hash]->Delete(Pos);
+                m_Buckets[Hash]->Delete(Pos);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -351,7 +351,7 @@ namespace Delphi {
             if (Pos >= 0) {
                 Hash = HashOf(Key) % (unsigned) m_BucketSize;
                 Item->Value = Value;
-                Buckets[Hash]->Items(Pos, Item);
+                m_Buckets[Hash]->Items(Pos, Item);
                 return true;
             }
             return false;
@@ -365,7 +365,7 @@ namespace Delphi {
             if (Pos >= 0) {
                 Hash = HashOf(Key) % (unsigned) m_BucketSize;
                 Item->Value = Value;
-                Buckets[Hash]->Items(Pos, Item);
+                m_Buckets[Hash]->Items(Pos, Item);
                 return true;
             }
             return false;
@@ -398,8 +398,8 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CHashedStringList::~CHashedStringList() {
-            m_ValueHash->Free();
-            m_NameHash->Free();
+            delete m_ValueHash;
+            delete m_NameHash;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -491,7 +491,7 @@ namespace Delphi {
         CMemIniFile::~CMemIniFile() {
             if (AutoSave() && Modified())
                 UpdateFile();
-            m_Sections->Free();
+            delete m_Sections;
         }
         //--------------------------------------------------------------------------------------------------------------
 
