@@ -65,30 +65,31 @@ Apostol Web Service
 функций обработки сигналов Linux (для построения демона) и тонкостях реализации асинхронной работы с PostgreSQL. 
 Апостол всё это скрывает, позволяя разработчику сконцентрировать своё внимание только на реализации логики самого 
 Веб-сервиса, разрабатывая код в привычном для него стиле. Точками соприкосновения с Апостол будут только входящие 
-и исходящими структуры данных.
+и исходящие структуры данных.
 
 СБОРКА
 -
 
 Для сборки проекта Вам потребуется:
 
+1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
 1. Библиотека [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development).
 1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development)
 ###### Описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство. 
 
-Для сборки Апостол, выполнить:
+Для сборки Апостол, необходимо:
 
 1. Скачать Апостол по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
 1. Распаковать;
 1. Скомпилировать (см. ниже).
 
-Для сборки Апостол, с помощью Git выполнить:
+Для сборки Апостол, с помощью Git выполните:
 ~~~
 git clone https://github.com/ufocomp/apostol.git
 ~~~
 
-Скомпилировать:
+###### Сборка:
 ~~~
 cd apostol
 cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles" . -B cmake-build-release
