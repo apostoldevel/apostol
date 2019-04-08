@@ -217,7 +217,17 @@
         </div>
                 <div class="Box-body">
                         <article class="markdown-body entry-content p-5" itemprop="text"><h1><a id="user-content-apostol-web-service" class="anchor" aria-hidden="true" href="#apostol-web-service"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Apostol Web Service</h1>
-                                <p>Поздравляем, если Вы видите эту страницу значит Веб-сервис <strong>Апостол</strong>, установлен и работает!</p>
+                                <p>Веб-сервис <strong>Апостол</strong>, исходные коды на C++.</p>
+                                <h2><a id="user-content-структура-каталогов" class="anchor" aria-hidden="true" href="#структура-каталогов"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>СТРУКТУРА КАТАЛОГОВ</h2>
+                                <pre><code>conf/             содержит файлы с настройками
+src/              содержит файлы с исходным кодом
+├─apostol/        содержит файлы с исходным кодом: Apostol Web Service
+├─lib/            содержит файлы с исходным кодом библиотек
+| └─delphi/       содержит файлы с исходным кодом библиотеки: Delphi classes for C++
+└─mod/            содержит файлы с исходным кодом дополнений (модулей)
+  ├─WebServer/    содержит файлы с исходным кодом дополнения: Web-Server
+  └─Client365/    содержит файлы с исходным кодом дополнения: Клиент 365
+</code></pre>
                                 <h2><a id="user-content-описание" class="anchor" aria-hidden="true" href="#описание"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ОПИСАНИЕ</h2>
                                 <p><strong>Apostol Web Service</strong> (AWS) - платформа, написанная на C++, для быстрого создания <strong>RESTful API</strong>
                                         сервисов под Linux, со встроенной поддержкой СУБД <a href="https://www.postgresql.org/" rel="nofollow">PostgreSQL</a>.</p>
@@ -254,6 +264,47 @@
                                         Апостол всё это скрывает, позволяя разработчику сконцентрировать своё внимание только на реализации логики самого
                                         Веб-сервиса, разрабатывая код в привычном для него стиле. Точками соприкосновения с Апостол будут только входящие
                                         и исходящие структуры данных.</p>
+                                <h2><a id="user-content-чтобы-создать-новый-модуль-нужно-выполнить" class="anchor" aria-hidden="true" href="#чтобы-создать-новый-модуль-нужно-выполнить"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Чтобы создать новый модуль нужно выполнить:</h2>
+                                <ol>
+                                        <li>Собрать проект, как описано ниже;</li>
+                                        <li>В директории mod/ создать папку с названием Вашего модуля;</li>
+                                        <li>В директории с названием Вашего модуля создать, с аналогичным названием, файлы MyModuleName.cpp/.hpp;</li>
+                                        <li>В заголовочном файле MyModuleName.hpp объявить класс C++ производный от класса <code>CApostolModule</code>:</li>
+                                        <li>В <code>Mudules.hpp</code>, после класса <code>CApostolModule</code>, добавьте заголовочный файл Вашего модуля <code>#include "MyModuleName/MyModuleName.hpp"</code></li>
+                                        <li>В <code>Mudules.hpp</code> найдите функцию <code>CreateModule</code> и добавьте условие вызова Вашего модуля согласно значения в
+                                                <code>User-Agent</code>.</li>
+                                </ol>
+                                <p>Всё!</p>
+                                <p>Пример объявления класса <code>class MyModuleName</code>:</p>
+                                <pre><code>        class MyModuleName: public CApostolModule {
+        private:
+
+        protected:
+
+            void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) override {
+
+            };
+
+            void DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) override {
+
+            };
+
+        public:
+
+            MyModuleName(): CApostolModule() {};
+
+            ~MyModuleName() override = default;
+
+            static class MyModuleName *CreateModule() {
+                return new MyModuleName();
+            }
+
+            void Execute(CHTTPConnection *AConnection) override {
+
+            };
+
+        };
+</code></pre>
                                 <h2><a id="user-content-сборка" class="anchor" aria-hidden="true" href="#сборка"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>СБОРКА</h2>
                                 <p>Для сборки проекта Вам потребуется:</p>
                                 <ol>
@@ -356,6 +407,5 @@ cmake --build cmake-build-release --target apostol -- -j 4
                                         </tbody>
                                 </table>
                         </article>
-                </div></div>
-</body>
+                </div></body>
 </html>
