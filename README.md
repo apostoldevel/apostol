@@ -67,6 +67,50 @@ Apostol Web Service
 Веб-сервиса, разрабатывая код в привычном для него стиле. Точками соприкосновения с Апостол будут только входящие 
 и исходящие структуры данных.
 
+## Чтобы создать новый модуль нужно выполнить:
+
+1. Собрать проект, как описано ниже;
+1. В директории mod/ создать папку с названием Вашего модуля;
+1. В директории с названием Вашего модуля создать, с аналогичным названием, файлы MyModuleName.cpp/.hpp;
+1. В заголовочном файле MyModuleName.hpp объявить класс C++ производный от класса `CApostolModule`:
+1. В `Mudules.hpp`, после класса `CApostolModule`, добавьте заголовочный файл Вашего модуля `#include "MyModuleName/MyModuleName.hpp"` 
+1. В `Mudules.hpp` найдите функцию `CreateModule` и добавьте условие вызова Вашего модуля согласно значения в 
+`User-Agent`.
+
+Всё!
+
+Пример объявления класса `class MyModuleName`:
+~~~
+        class MyModuleName: public CApostolModule {
+        private:
+
+        protected:
+
+            void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) override {
+            
+            };
+           
+            void DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) override {
+           
+            };
+
+        public:
+
+            MyModuleName(): CApostolModule() {};
+
+            ~MyModuleName() override = default;
+
+            static class MyModuleName *CreateModule() {
+                return new MyModuleName();
+            }
+
+            void Execute(CHTTPConnection *AConnection) override {
+            
+            };
+
+        };
+~~~ 
+
 СБОРКА
 -
 
