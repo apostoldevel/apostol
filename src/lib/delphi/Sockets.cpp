@@ -160,11 +160,11 @@ namespace Delphi {
             name.sin_family = AFamily;
 
             if (AIP[0] == 0)
-                name.sin_addr.s_addr = ::htonl(INADDR_ANY);
+                name.sin_addr.s_addr = htonl(INADDR_ANY);
             else
                 name.sin_addr.s_addr = inet_addr(AIP);
 
-            name.sin_port = ::htons(APort);
+            name.sin_port = htons(APort);
 
             return ::bind(ASocket, (LPSOCKADDR) &name, namelen);
         };
@@ -181,7 +181,7 @@ namespace Delphi {
 
             name.sin_family = AFamily;
             name.sin_addr.s_addr = inet_addr(AIP);
-            name.sin_port = ::htons(APort);
+            name.sin_port = htons(APort);
 
             return ::connect(ASocket, (LPSOCKADDR) &name, namelen);
         };
@@ -193,22 +193,22 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         uint16_t CStack::HToNS(uint16_t AHostShort) {
-            return ::htons(AHostShort);
+            return htons(AHostShort);
         };
         //--------------------------------------------------------------------------------------------------------------
 
         uint16_t CStack::NToHS(uint16_t ANetShort) {
-            return ::ntohs(ANetShort);
+            return ntohs(ANetShort);
         };
         //--------------------------------------------------------------------------------------------------------------
 
         uint32_t CStack::HToNL(uint32_t AHostLong) {
-            return ::htonl(AHostLong);
+            return htonl(AHostLong);
         };
         //--------------------------------------------------------------------------------------------------------------
 
         uint32_t CStack::NToHL(uint32_t ANetLong) {
-            return ::ntohl(ANetLong);
+            return ntohl(ANetLong);
         };
         //--------------------------------------------------------------------------------------------------------------
 
