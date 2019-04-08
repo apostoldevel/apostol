@@ -935,6 +935,8 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CPQConnectPoll::CPQConnectPoll(size_t ASizeMin, size_t ASizeMax): CPQConnectPollEvent(), CCollection(this) {
+            m_Active = false;
+
             m_SizeMin = ASizeMin;
             m_SizeMax = ASizeMax;
 
@@ -1003,6 +1005,18 @@ namespace Delphi {
         void CPQConnectPoll::StopAll() {
             for (int I = m_EventHandlers->Count() - 1; I >= 0; --I) {
                 Stop(m_EventHandlers->Handlers(I));
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CPQConnectPoll::SetActive(bool Value) {
+            if (m_Active != Value) {
+                m_Active = Value;
+                if (Value) {
+                    Start();
+                }  else {
+                    StopAll();
+                }
             }
         }
         //--------------------------------------------------------------------------------------------------------------

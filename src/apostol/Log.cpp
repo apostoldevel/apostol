@@ -214,11 +214,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CLog::CLog(): CSysErrorComponent(), CCollection(this) {
-#ifdef _DEBUG
-            m_uLevel = LOG_DEBUG_ALL;
-#else
-            m_uLevel = LOG_NOTICE;
-#endif
+            m_uLevel = LOG_STDERR;
             m_CurrentIndex = -1;
             m_fUseStdErr = true;
         }
@@ -363,8 +359,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::Message(LPCSTR AFormat, va_list args) {
-            //va_list list;
-            //va_copy(list, args);
             ErrorCore(LOG_NOTICE, 0, AFormat, ltError, args);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -381,8 +375,6 @@ namespace Apostol {
 
         void CLog::Error(u_int ALevel, int AErrNo, LPCSTR AFormat, va_list args) {
             if (m_uLevel >= ALevel) {
-                //va_list list;
-                //va_copy(list, args);
                 ErrorCore(ALevel, AErrNo, AFormat, ltError, args);
             }
         }
@@ -397,8 +389,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::Debug(int AErrNo, LPCSTR AFormat, va_list args) {
-            //va_list list;
-            //va_copy(list, args);
             ErrorCore(LOG_DEBUG, AErrNo, AFormat, ltError, args);
         }
         //--------------------------------------------------------------------------------------------------------------

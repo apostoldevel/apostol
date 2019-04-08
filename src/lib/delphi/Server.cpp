@@ -1175,8 +1175,8 @@ namespace Delphi {
         void CHTTPServer::DoWrite(CPollEventHandler* AHandler) {
             auto LConnection = dynamic_cast<CHTTPConnection *> (AHandler->PollConnection());
             try {
-                if (LConnection->ConnectionStatus() == csReplyReady) {
-                    if (LConnection->WriteAsync()) {
+                if (LConnection->WriteAsync()) {
+                    if (LConnection->ConnectionStatus() == csReplyReady) {
 
                         LConnection->ConnectionStatus(csReplySent);
                         LConnection->Clear();

@@ -341,8 +341,6 @@ namespace Apostol {
         void CApplication::CreateLogFile() {
             CLogFile *LogFile;
 
-            Log()->Level(LOG_STDERR);
-
             u_int Level;
             for (int I = 0; I < Config()->LogFiles().Count(); ++I) {
 
@@ -923,13 +921,13 @@ namespace Apostol {
         void CApplicationProcess::PQServerStart() {
             if (Config()->PostgresConnect()) {
                 PQServer()->ConnInfo().SetParameters(Config()->PostgresConnInfo());
-                PQServer()->Start();
+                PQServer()->Active(true);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::PQServerStop() {
-            PQServer()->StopAll();
+            PQServer()->Active(false);
         }
         //--------------------------------------------------------------------------------------------------------------
 

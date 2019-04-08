@@ -506,8 +506,6 @@ namespace Delphi {
 
             CPollConnection *m_PollConnection;
 
-            CString m_JobId;
-
             COnPQPollQueryExecutedEvent m_OnExecuted;
 
             COnPQPollQueryExceptionEvent m_OnException;
@@ -529,9 +527,6 @@ namespace Delphi {
             void RemoveFromQueue();
 
             CPQConnectPoll *Server() { return m_Server; };
-
-            CString& JobId() { return m_JobId; };
-            const CString& JobId() const { return m_JobId; };
 
             CPollConnection *PollConnection() { return m_PollConnection; };
             void PollConnection(CPollConnection *Value) { m_PollConnection = Value; };
@@ -618,6 +613,8 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         class CPQConnectPoll: public CPQConnectPollEvent, public CCollection {
+            friend CPQPollQuery;
+
         private:
 
             CPQConnInfo m_ConnInfo;
@@ -630,6 +627,8 @@ namespace Delphi {
 
             size_t m_SizeMin;
             size_t m_SizeMax;
+
+            bool m_Active;
 
             bool m_FreePollStack;
 
@@ -647,6 +646,14 @@ namespace Delphi {
 
         protected:
 
+            void Start();
+
+            void Stop(CPollEventHandler *AHandler);
+
+            void StopAll();
+
+            CPQPollConnection *GetReadyConnection();
+
             bool NewConnection();
 
             void DoTimeOutEvent(CPollEventHandler *AHandler);
@@ -656,6 +663,8 @@ namespace Delphi {
             void DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException);
 
             void CreatePollEventHandlers();
+
+            void SetActive(bool Value);
 
         public:
 
@@ -673,15 +682,10 @@ namespace Delphi {
             CPollStack *PollStack() { return m_PollStack; };
             void PollStack(CPollStack *Value) { SetPollStack(Value); };
 
-            CPQPollConnection *GetReadyConnection();
+            bool Active() { return m_Active; };
+            void Active(bool Value) { SetActive(Value); };
 
             CQueue *Queue() { return m_Queue; };
-
-            void Start();
-
-            void Stop(CPollEventHandler *AHandler);
-
-            void StopAll();
 
             int QueryCount() { return CCollection::Count(); };
 
