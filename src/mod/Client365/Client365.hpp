@@ -98,6 +98,9 @@ namespace Apostol {
             void ResultToJson(const CQueryResult& Result, CString& Json);
             void RowToJson(const CStringList& Row, CString& Json);
 
+            void PQResultToJson(CPQResult *Result, CString& Json);
+            void QueryToReply(CPQPollQuery *APollQuery, CReply *AReply);
+
         protected:
 
             void Post(CHTTPConnection *AConnection);

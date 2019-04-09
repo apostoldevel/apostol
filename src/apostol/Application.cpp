@@ -411,12 +411,12 @@ namespace Apostol {
             if (dup2(fd, STDOUT_FILENO) == -1) {
                 throw EOSError(errno, "dup2(STDOUT) failed");
             }
-/*
+
+#ifndef _DEBUG
             if (dup2(fd, STDERR_FILENO) == -1) {
                 throw EOSError(errno, "dup2(STDERR) failed");
             }
-*/
-
+#endif
             if (close(fd) == -1) {
                 throw EOSError(errno, "close(\"/dev/null\") failed");
             }

@@ -199,7 +199,6 @@ namespace Delphi {
                         break;
                     }
 
-
                     switch (*fmt) {
 
                         case 'V':
@@ -243,16 +242,16 @@ namespace Delphi {
                             sign = 1;
                             break;
 
-                case 'M':
-                    ms = (uintptr_t) va_arg(args, uintptr_t);
-                    if ((uintptr_t) ms == -1) {
-                        sign = 1;
-                        i64 = -1;
-                    } else {
-                        sign = 0;
-                         ui64 = (uint64_t) ms;
-                    }
-                    break;
+                        case 'M':
+                            ms = (uintptr_t) va_arg(args, uintptr_t);
+                            if ((uintptr_t) ms == -1) {
+                                sign = 1;
+                                i64 = -1;
+                            } else {
+                                sign = 0;
+                                ui64 = (uint64_t) ms;
+                            }
+                            break;
 
                         case 'z':
                             if (sign) {

@@ -513,7 +513,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::RedirectStdErr() {
-
+#ifdef _DEBUG
             CLogFile *log = First();
             while (log && log->Handle() == STDERR_FILENO) {
                 log = Next();
@@ -524,8 +524,8 @@ namespace Apostol {
                     throw EOSError(errno, "dup2(STDERR) failed");
                 }
             }
+#endif
         }
-
     }
 }
 }

@@ -176,6 +176,45 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CClient365::PQResultToJson(CPQResult *Result, CString &Json) {
+            Json = "{";
+
+            for (int I = 0; I < Result->nFields(); ++I) {
+                if (I > 0) {
+                    Json += ", ";
+                }
+
+                Json += "\"";
+                Json += Result->fName(I);
+                Json += "\"";
+
+                if (SameText(Result->fName(I),_T("session"))) {
+                    Json += ": ";
+                    if (Result->GetIsNull(0, I)) {
+                        Json += _T("null");
+                    } else {
+                        Json += "\"";
+                        Json += Result->GetValue(0, I);
+                        Json += "\"";
+                    }
+                } else if (SameText(Result->fName(I),_T("result"))) {
+                    Json += ": ";
+                    if (SameText(Result->GetValue(0, I), _T("t"))) {
+                        Json += _T("true");
+                    } else {
+                        Json += _T("false");
+                    }
+                } else {
+                    Json += ": \"";
+                    Json += Result->GetValue(0, I);
+                    Json += "\"";
+                }
+            }
+
+            Json += "}";
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CClient365::ResultToJson(const CQueryResult &Result, CString &Json) {
 
             if ((Result.Count() > 0) && (Result.Count() <= 2)) {
@@ -272,6 +311,70 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CClient365::QueryToReply(CPQPollQuery *APollQuery, CReply *AReply) {
+
+            CPQResult *Login = nullptr;
+            CPQResult *Run = nullptr;
+
+            if ((APollQuery->ResultCount() > 0) && (APollQuery->ResultCount() <= 2)) {
+
+                CString Session;
+                CString LoginResult;
+
+                Login = APollQuery->Results(0);
+                if (Login->ExecStatus() == PGRES_TUPLES_OK) {
+
+                    LoginResult = Login->GetValue(0, 1);
+
+                    if (LoginResult.IsEmpty()) {
+                        throw Delphi::Exception::EDBError(_T("Login Result Is Empty!"));
+                    }
+
+                    Session = Login->GetValue(0, 0);
+
+                    if (!Session.IsEmpty()) {
+                        AReply->AddHeader(_T("Authenticate"), _T("SESSION="));
+                        AReply->Headers.Last().Value += Session;
+                    }
+
+                    if (APollQuery->ResultCount() == 2) {
+                        Run = APollQuery->Results(1);
+
+                        if (Run->ExecStatus() == PGRES_TUPLES_OK) {
+                            if (LoginResult == "t") {
+
+                                AReply->Content = "{\"result\": [";
+
+                                for (int Row = 0; Row < Run->nTuples(); ++Row) {
+                                    for (int Col = 0; Col < Run->nFields(); ++Col) {
+                                        if (Row != 0)
+                                            AReply->Content += ", ";
+                                        AReply->Content += Run->GetValue(Row, Col);
+                                    }
+                                }
+
+                                AReply->Content += "]}";
+
+                            } else {
+                                Log()->Error(LOG_EMERG, 0, Login->GetValue(0, 2));
+                                PQResultToJson(Login, AReply->Content);
+                            }
+                        } else {
+                            throw Delphi::Exception::EDBError(Run->GetErrorMessage());
+                        }
+                    } else {
+                        Log()->Error(LOG_EMERG, 0, Login->GetValue(0, 2));
+                        PQResultToJson(Login, AReply->Content);
+                    }
+                } else {
+                    throw Delphi::Exception::EDBError(Login->GetErrorMessage());
+                }
+            } else {
+                throw Delphi::Exception::EDBError(_T("Invalid record count!"));
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CClient365::ExceptionToJson(Delphi::Exception::Exception *AException, CString &Json) {
             Json.Format(
                     _T("{\"error\": {\"errors\": [{\"domain\": \"%s\", \"reason\": \"%s\", \"message\": "
@@ -285,6 +388,10 @@ namespace Apostol {
             auto LConnection = dynamic_cast<CHTTPConnection *> (APollQuery->PollConnection());
             CQueryResult LResult;
 
+            clock_t start = 0;
+            clock_t end = 0;
+            clock_t delta = 0;
+
             if (LConnection != nullptr) {
 
                 auto LReply = LConnection->Reply();
@@ -292,20 +399,16 @@ namespace Apostol {
                 CReply::status_type LStatus = CReply::internal_server_error;
 
                 try {
-                    InitResult(APollQuery, LResult);
+                    start = clock();
 
-                    const CString &Session = LResult[0][0].Values("session");
+                    QueryToReply(APollQuery, LReply);
 
-                    if (!Session.IsEmpty()) {
-                        LReply->AddHeader(_T("Authenticate"), _T("SESSION="));
-                        LReply->Headers.Last().Value += Session;
-                    }
+                    end = clock();
+                    delta = (end - start);
+
+                    log_debug2(LOG_DEBUG_CORE, Log(), 0, _T("Runtime: %d tick, %0.2f ms."), delta, (double) (delta / (double) CLOCKS_PER_SEC * 1000));
 
                     LStatus = CReply::ok;
-
-                    ResultToJson(LResult, LReply->Content);
-
-                    Log()->Debug(0, LReply->Content.c_str());
 
                 } catch (Delphi::Exception::Exception &E) {
                     ExceptionToJson(&E, LReply->Content);
@@ -324,7 +427,7 @@ namespace Apostol {
 
                         ResultToJson(LResult, LJob->Result());
 
-                        Log()->Debug(0, LJob->Result().c_str());
+                        //Log()->Debug(0, LJob->Result().c_str());
 
                     } catch (Delphi::Exception::Exception &E) {
                         ExceptionToJson(&E, LJob->Result());
