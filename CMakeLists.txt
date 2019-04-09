@@ -50,6 +50,8 @@ target_link_libraries(apostol pthread pq)
 
 set(INSTALL_PATH "/etc/apostol")
 
+add_definitions(-DAWS_PREFIX="${INSTALL_PATH}")
+
 install(TARGETS apostol CONFIGURATIONS Release DESTINATION /usr/sbin)
 install(FILES auto/apostol DESTINATION /etc/init.d PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 

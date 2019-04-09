@@ -142,6 +142,50 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        LIB_DELPHI bool CreateDir(LPCSTR lpPathName, mode_t Mode) {
+            return mkdir(lpPathName, Mode) == 0;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI bool ForceDirectories(LPCSTR lpPathName, mode_t Mode) {
+            LPSTR   p;
+            char    ch;
+            int     err;
+
+            err = 0;
+
+            p = (LPSTR) lpPathName + 1;
+
+            for ( /* void */ ; *p; p++) {
+                ch = *p;
+
+                if (ch != '/') {
+                    continue;
+                }
+
+                *p = '\0';
+
+                if (!CreateDir(lpPathName, Mode)) {
+                    err = errno;
+
+                    switch (err) {
+                        case EEXIST:
+                            err = 0;
+                        case EACCES:
+                            break;
+
+                        default:
+                            return err;
+                    }
+                }
+
+                *p = '/';
+            }
+
+            return err == 0;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         LIB_DELPHI int AnsiCompareText(LPCSTR S1, LPCSTR S2) {
             return strcmp(S1, S2);
         };
@@ -367,14 +411,14 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI CDateTime SystemTimeToDateTime(const struct tm *tm, struct timeval *tv) {
+        LIB_DELPHI CDateTime SystemTimeToDateTime(const struct tm *tm, int msec) {
 
             CDateTime Result = EncodeDate(tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
 
             if (Result >= 0)
-                Result = Result + EncodeTime(tm->tm_hour, tm->tm_min, tm->tm_sec, (int) (tv->tv_usec / 1000));
+                Result = Result + EncodeTime(tm->tm_hour, tm->tm_min, tm->tm_sec, msec);
             else
-                Result = Result - EncodeTime(tm->tm_hour, tm->tm_min, tm->tm_sec, (int) (tv->tv_usec / 1000));
+                Result = Result - EncodeTime(tm->tm_hour, tm->tm_min, tm->tm_sec, msec);
 
             return Result;
         }
@@ -382,31 +426,21 @@ namespace Delphi {
 
         LIB_DELPHI CDateTime Now() {
 
-            time_t T;
             struct timeval TV = {0};
             struct tm UT = {0};
 
             gettimeofday(&TV, nullptr);
 
-            T = TV.tv_sec;
-            localtime_r(&T, &UT);
+            localtime_r(&TV.tv_sec, &UT);
 
-            return SystemTimeToDateTime(&UT, &TV);
-/*
-            struct timespec  ts = {0,0};
-            struct tm       *tm;
-
-            clock_gettime(CLOCK_REALTIME, &ts);
-
-            time_t itime = ts.tv_sec;
-            tm = localtime(&itime);
-
-            return SystemTimeToDateTime(tm, &ts);
-*/
+            return SystemTimeToDateTime(&UT, (int) (TV.tv_usec / 1000));
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI int FileAge(LPCTSTR lpszFileName) {
+        LIB_DELPHI time_t FileAge(LPCTSTR lpszFileName) {
+            struct stat sb = {0};
+            if (stat(lpszFileName, &sb) == 0)
+                return sb.st_mtime;
             return -1;
         };
         //--------------------------------------------------------------------------------------------------------------
@@ -849,8 +883,6 @@ namespace Delphi {
                 return Default;
             return SystemTimeToDateTime(&TM, &TS);
         }
-        //--------------------------------------------------------------------------------------------------------------
-
     }
 }
 }

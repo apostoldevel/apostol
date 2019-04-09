@@ -311,17 +311,18 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CClient365::QueryToReply(CPQPollQuery *APollQuery, CReply *AReply) {
+        void CClient365::QueryToJson(CPQPollQuery *Query, CString& Json, CString &Session) {
 
             CPQResult *Login = nullptr;
             CPQResult *Run = nullptr;
 
-            if ((APollQuery->ResultCount() > 0) && (APollQuery->ResultCount() <= 2)) {
+            clock_t start = clock();
 
-                CString Session;
+            if ((Query->ResultCount() > 0) && (Query->ResultCount() <= 2)) {
+
                 CString LoginResult;
 
-                Login = APollQuery->Results(0);
+                Login = Query->Results(0);
                 if (Login->ExecStatus() == PGRES_TUPLES_OK) {
 
                     LoginResult = Login->GetValue(0, 1);
@@ -332,39 +333,34 @@ namespace Apostol {
 
                     Session = Login->GetValue(0, 0);
 
-                    if (!Session.IsEmpty()) {
-                        AReply->AddHeader(_T("Authenticate"), _T("SESSION="));
-                        AReply->Headers.Last().Value += Session;
-                    }
-
-                    if (APollQuery->ResultCount() == 2) {
-                        Run = APollQuery->Results(1);
+                    if (Query->ResultCount() == 2) {
+                        Run = Query->Results(1);
 
                         if (Run->ExecStatus() == PGRES_TUPLES_OK) {
                             if (LoginResult == "t") {
 
-                                AReply->Content = "{\"result\": [";
+                                Json = "{\"result\": [";
 
                                 for (int Row = 0; Row < Run->nTuples(); ++Row) {
                                     for (int Col = 0; Col < Run->nFields(); ++Col) {
                                         if (Row != 0)
-                                            AReply->Content += ", ";
-                                        AReply->Content += Run->GetValue(Row, Col);
+                                            Json += ", ";
+                                        Json += Run->GetValue(Row, Col);
                                     }
                                 }
 
-                                AReply->Content += "]}";
+                                Json += "]}";
 
                             } else {
                                 Log()->Error(LOG_EMERG, 0, Login->GetValue(0, 2));
-                                PQResultToJson(Login, AReply->Content);
+                                PQResultToJson(Login, Json);
                             }
                         } else {
                             throw Delphi::Exception::EDBError(Run->GetErrorMessage());
                         }
                     } else {
                         Log()->Error(LOG_EMERG, 0, Login->GetValue(0, 2));
-                        PQResultToJson(Login, AReply->Content);
+                        PQResultToJson(Login, Json);
                     }
                 } else {
                     throw Delphi::Exception::EDBError(Login->GetErrorMessage());
@@ -372,6 +368,8 @@ namespace Apostol {
             } else {
                 throw Delphi::Exception::EDBError(_T("Invalid record count!"));
             }
+
+            log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Query parse runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -386,27 +384,37 @@ namespace Apostol {
 
         void CClient365::DoPostgresQueryExecuted(CPQPollQuery *APollQuery) {
             auto LConnection = dynamic_cast<CHTTPConnection *> (APollQuery->PollConnection());
-            CQueryResult LResult;
 
-            clock_t start = 0;
-            clock_t end = 0;
-            clock_t delta = 0;
+            CString Session;
+            CString CacheFile;
 
             if (LConnection != nullptr) {
 
+                auto LRequest = LConnection->Request();
                 auto LReply = LConnection->Reply();
 
                 CReply::status_type LStatus = CReply::internal_server_error;
 
                 try {
-                    start = clock();
+                    QueryToJson(APollQuery, LReply->Content, Session);
 
-                    QueryToReply(APollQuery, LReply);
+                    if (!Session.IsEmpty()) {
+                        LReply->AddHeader(_T("Authenticate"), _T("SESSION="));
+                        LReply->Headers.Last().Value += Session;
+                    }
 
-                    end = clock();
-                    delta = (end - start);
+                    clock_t start = clock();
 
-                    log_debug2(LOG_DEBUG_CORE, Log(), 0, _T("Runtime: %d tick, %0.2f ms."), delta, (double) (delta / (double) CLOCKS_PER_SEC * 1000));
+                    CacheFile = Config()->CachePrefix();
+                    CacheFile += LRequest->Uri.SubString(1);
+                    CacheFile += _T("/");
+
+                    if (ForceDirectories(CacheFile.c_str())) {
+                        CacheFile += Session;
+                        LReply->Content.SaveToFile(CacheFile.c_str());
+                    }
+
+                    log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
 
                     LStatus = CReply::ok;
 
@@ -423,11 +431,19 @@ namespace Apostol {
 
                 if (LJob != nullptr) {
                     try {
-                        InitResult(APollQuery, LResult);
+                        QueryToJson(APollQuery, LJob->Result(), Session);
+                        clock_t start = clock();
 
-                        ResultToJson(LResult, LJob->Result());
+                        CacheFile = Config()->CachePrefix();
+                        CacheFile += LJob->Uri().SubString(1);
+                        CacheFile += _T("/");
 
-                        //Log()->Debug(0, LJob->Result().c_str());
+                        if (ForceDirectories(CacheFile.c_str())) {
+                            CacheFile += Session;
+                            LJob->Result().SaveToFile(CacheFile.c_str());
+                        }
+
+                        log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
 
                     } catch (Delphi::Exception::Exception &E) {
                         ExceptionToJson(&E, LJob->Result());
@@ -452,6 +468,20 @@ namespace Apostol {
             }
 
             Log()->Error(LOG_EMERG, 0, AException->what());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CClient365::CheckCache(const CString &FileName) {
+            if (!FileExists(FileName.c_str()))
+                return false;
+
+            time_t age = FileAge(FileName.c_str());
+            if (age == -1)
+                return false;
+
+            time_t now = time(nullptr);
+
+            return (now - age) <= 3 * 60; // 3 min
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -517,7 +547,8 @@ namespace Apostol {
 
             CString LRoute;
             for (int I = 3; I < LUri.Count(); ++I) {
-                LRoute += '/' + LUri[I];
+                LRoute.Append('/');
+                LRoute.Append(LUri[I]);
             }
 
             auto LQuery = GetQuery(AConnection);
@@ -568,6 +599,8 @@ namespace Apostol {
                     return;
                 }
 
+                CString LSession;
+
                 if (!LAuthenticate.IsEmpty()) {
                     size_t Pos = LAuthenticate.Find('=');
                     if (Pos == CString::npos) {
@@ -575,15 +608,31 @@ namespace Apostol {
                         return;
                     }
 
-                    m_Session = LAuthenticate.SubString(Pos + 1);
+                    LSession = LAuthenticate.SubString(Pos + 1);
                 }
 
-                if (m_Session.Length() != 40) {
+                if (LSession.Length() != 40) {
                     AConnection->SendStockReply(CReply::bad_request);
                     return;
                 }
 
-                LQuery->SQL().Add("SELECT * FROM apis.slogin('" + m_Session + "');");
+                CString CacheFile;
+
+                CacheFile = Config()->CachePrefix();
+                CacheFile += LRequest->Uri.SubString(1);
+                CacheFile += _T("/");
+                CacheFile += LSession;
+
+                if (CheckCache(CacheFile)) {
+                    auto LReply = AConnection->Reply();
+
+                    LReply->Content.LoadFromFile(CacheFile);
+
+                    AConnection->SendReply(CReply::ok);
+                    return;
+                }
+
+                LQuery->SQL().Add("SELECT * FROM apis.slogin('" + LSession + "');");
                 LQuery->SQL().Add("SELECT * FROM api.run('" + LRoute);
 
                 if (!LRequest->Content.IsEmpty()) {
@@ -598,6 +647,8 @@ namespace Apostol {
                 if (LVersion == 1) {
                     auto LJob = m_Jobs->Add(LQuery);
                     auto LReply = AConnection->Reply();
+
+                    LJob->Uri() = LRequest->Uri;
 
                     LReply->Content = "{\"jobid\":" "\"" + LJob->JobId() + "\"}";
 

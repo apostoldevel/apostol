@@ -39,6 +39,8 @@ namespace Apostol {
 
             CString m_JobId;
 
+            CString m_Uri;
+
             CString m_Result;
 
             CPQPollQuery *m_PollQuery;
@@ -51,6 +53,9 @@ namespace Apostol {
 
             CString& JobId() { return m_JobId; };
             const CString& JobId() const { return m_JobId; };
+
+            CString& Uri() { return m_Uri; };
+            const CString& Uri() const { return m_Uri; };
 
             CString& Result() { return m_Result; }
             const CString& Result() const { return m_Result; }
@@ -87,8 +92,6 @@ namespace Apostol {
         class CClient365: public CApostolModule {
         private:
 
-            CString m_Session;
-
             CJobManager *m_Jobs;
 
             void InitResult(CPQPollQuery *APollQuery, CQueryResult& AResult);
@@ -99,7 +102,7 @@ namespace Apostol {
             void RowToJson(const CStringList& Row, CString& Json);
 
             void PQResultToJson(CPQResult *Result, CString& Json);
-            void QueryToReply(CPQPollQuery *APollQuery, CReply *AReply);
+            void QueryToJson(CPQPollQuery *Query, CString& Json, CString &Session);
 
         protected:
 
@@ -121,7 +124,7 @@ namespace Apostol {
 
             void Execute(CHTTPConnection *AConnection) override;
 
-            const CString &Session() const { return m_Session; };
+            bool CheckCache(const CString &FileName);
 
         };
 

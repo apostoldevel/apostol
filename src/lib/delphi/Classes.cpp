@@ -1372,6 +1372,11 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
+        void CStringStream::LoadFromFile(const CString& FileName) {
+            LoadFromFile(FileName.c_str());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CStringStream::SetCapacity(size_t NewCapacity) {
             SetData(Realloc(NewCapacity), m_Size);
             m_Capacity = NewCapacity;

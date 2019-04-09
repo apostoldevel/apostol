@@ -62,6 +62,10 @@ namespace Delphi {
         } CTimeStamp;
         //--------------------------------------------------------------------------------------------------------------
 
+        LIB_DELPHI bool CreateDir(LPCSTR lpPathName, mode_t Mode = 0700);
+        LIB_DELPHI bool ForceDirectories(LPCSTR lpPatchName, mode_t Mode = 0700);
+        //--------------------------------------------------------------------------------------------------------------
+
         LIB_DELPHI void DebugSystemError(LPCTSTR lpFunctionName);
         LIB_DELPHI void DebugMessage(LPCTSTR lpValue, ...);
         //--------------------------------------------------------------------------------------------------------------
@@ -104,12 +108,12 @@ namespace Delphi {
         LIB_DELPHI CDateTime EncodeTime(int Hour, int Min, int Sec, int MSec);
         LIB_DELPHI bool TryEncodeDate(int Year, int Month, int Day, CDateTime &Date);
         LIB_DELPHI CDateTime EncodeDate(int Year, int Month, int Day);
-        LIB_DELPHI CDateTime SystemTimeToDateTime(const struct tm *tm, struct timespec *ts);
-        LIB_DELPHI CDateTime SystemTimeToDateTime(const struct tm *tm, struct timeval *tv);
+        //LIB_DELPHI CDateTime SystemTimeToDateTime(const struct tm *tm, struct timespec *ts);
+        LIB_DELPHI CDateTime SystemTimeToDateTime(const struct tm *tm, int msec);
         LIB_DELPHI CDateTime Now();
         //--------------------------------------------------------------------------------------------------------------
 
-        //LIB_DELPHI int FileAge(LPCTSTR lpszFileName);
+        LIB_DELPHI time_t FileAge(LPCTSTR lpszFileName);
         LIB_DELPHI bool DirectoryExists(LPCTSTR lpszDirectory);
         LIB_DELPHI bool FileExists(LPCTSTR lpszFileName, bool FollowLink = true);
 

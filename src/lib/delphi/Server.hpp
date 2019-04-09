@@ -319,7 +319,7 @@ namespace Delphi {
         class CHTTPServer;
         //--------------------------------------------------------------------------------------------------------------
 
-        enum CHTTPConnectionStatus { csConnected, csWaitRequest, csRequestOk, csRequestError, csReplyReady, csReplySent };
+        enum CHTTPConnectionStatus { csConnected = 0, csWaitRequest, csRequestOk, csRequestError, csReplyReady, csReplySent };
         //--------------------------------------------------------------------------------------------------------------
 
         class CHTTPConnection: public CTCPServerConnection {

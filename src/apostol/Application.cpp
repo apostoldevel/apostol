@@ -341,6 +341,8 @@ namespace Apostol {
         void CApplication::CreateLogFile() {
             CLogFile *LogFile;
 
+            Log()->Level(LOG_STDERR);
+
             u_int Level;
             for (int I = 0; I < Config()->LogFiles().Count(); ++I) {
 
@@ -484,6 +486,22 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CApplication::MkDir(const CString &Dir) {
+            if (!DirectoryExists(Dir.c_str()))
+                if (!CreateDir(Dir.c_str(), 0700))
+                    throw EOSError(errno, _T("mkdir \"%s\" failed "), Dir.c_str());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApplication::CreateDirectories() {
+            MkDir(Config()->Prefix());
+            MkDir(Config()->Prefix() + _T("logs/"));
+            //MkDir(Config()->ConfPrefix());
+            MkDir(Config()->CachePrefix());
+            //MkDir(Config()->DocRoot());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CApplication::StartProcess() {
             CPollStack *LPollStack = nullptr;
 
@@ -549,6 +567,8 @@ namespace Apostol {
                 Log()->Error(LOG_EMERG, 0, "configuration file %s test failed", Config()->ConfFile().c_str());
                 ExitRun(1);
             }
+
+            CreateDirectories();
 
             DefaultLocale.SetLocale(Config()->Locale().c_str());
 

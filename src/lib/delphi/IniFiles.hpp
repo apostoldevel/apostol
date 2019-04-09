@@ -64,7 +64,7 @@ namespace Delphi {
             const TCHAR SectionNameSeparator = '\\';
 
             virtual void InternalReadSections(LPCTSTR lpszSectionName, CStrings *Strings,
-                    bool SubSectionNamesOnly, bool Recurse);
+                                              bool SubSectionNamesOnly, bool Recurse);
 
             virtual int GetKeyLine(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName) abstract;
 

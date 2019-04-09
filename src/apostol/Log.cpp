@@ -214,9 +214,10 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CLog::CLog(): CSysErrorComponent(), CCollection(this) {
-            m_uLevel = LOG_STDERR;
+            m_uLevel = LOG_NOTICE;
             m_CurrentIndex = -1;
             m_fUseStdErr = true;
+            m_DiskFullTime = time(nullptr);
         }
         //--------------------------------------------------------------------------------------------------------------
 

@@ -201,6 +201,9 @@ namespace Apostol {
 
         protected:
 
+            void MkDir(const CString &Dir);
+            void CreateDirectories();
+
             void DoBeforeStartProcess(CApplicationProcess *AProcess) override;
             void DoAfterStartProcess(CApplicationProcess *AProcess) override;
 

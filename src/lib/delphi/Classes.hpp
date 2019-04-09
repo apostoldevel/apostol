@@ -717,6 +717,7 @@ namespace Delphi {
 
             void LoadFromStream(CStream *Stream);
             void LoadFromFile(LPCTSTR lpszFileName);
+            void LoadFromFile(const CString& FileName);
 
             size_t Write(const void *Buffer, size_t Count) override;
 

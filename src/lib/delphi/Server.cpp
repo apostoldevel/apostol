@@ -981,16 +981,19 @@ namespace Delphi {
                 LStream->SetSize((size_t) ReadAsync());
                 try {
                     if (LStream->Size() > 0) {
+
                         InputBuffer()->Extract(LStream->Memory(), LStream->Size());
                         LResult = m_RequestParser->Parse(GetRequest(), (LPTSTR) LStream->Memory(),
                                                (LPCTSTR) LStream->Memory() + LStream->Size());
 
                         switch (LResult) {
                             case 0:
+                                Tag(clock());
                                 m_ConnectionStatus = csRequestError;
                                 break;
 
                             case 1:
+                                Tag(clock());
                                 m_ConnectionStatus = csRequestOk;
                                 break;
 
@@ -1105,10 +1108,12 @@ namespace Delphi {
         void CHTTPServer::DoTimeOut(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CHTTPConnection *> (AHandler->PollConnection());
             try {
-                if (LConnection->ConnectionStatus() == csRequestOk) {
-                    LConnection->SendStockReply(CReply::gateway_timeout, true);
+                if (LConnection->ConnectionStatus() >= csRequestOk) {
+                    if (LConnection->ConnectionStatus() == csRequestOk) {
+                        LConnection->SendStockReply(CReply::gateway_timeout, true);
+                    }
+                    LConnection->Disconnect();
                 }
-                LConnection->Disconnect();
             } catch (Delphi::Exception::Exception &E) {
                 DoException(LConnection, &E);
                 LConnection->Disconnect();

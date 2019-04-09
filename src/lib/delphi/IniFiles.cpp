@@ -37,14 +37,14 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CCustomIniFile::CCustomIniFile(LPCTSTR lpszFileName): CObject() {
+        CCustomIniFile::CCustomIniFile(LPCTSTR lpszFileName): CObject()  {
+            m_nKeyLine = 0;
             m_pszFileName = lpszFileName;
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CCustomIniFile::InternalReadSections(LPCTSTR lpszSectionName, CStrings *Strings,
-                bool SubSectionNamesOnly, bool Recurse) {
-
+        void CCustomIniFile::InternalReadSections(LPCTSTR lpszSectionName, CStrings *Strings, bool SubSectionNamesOnly,
+                                                  bool Recurse) {
             size_t SLen, SectionLen, SectionEndOfs, I;
             CString SubSectionName;
             CStringList AllSections;

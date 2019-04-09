@@ -789,11 +789,8 @@ namespace Apostol {
 
             TCHAR szTime[PATH_MAX / 4] = {0};
 
-            time_t wtime;
-            struct tm *wtm;
-
-            wtime = time(&wtime);
-            wtm = localtime(&wtime);
+            time_t wtime = time(nullptr);
+            struct tm *wtm = localtime(&wtime);
 
             if ((wtm != nullptr) && (strftime(szTime, sizeof(szTime), "%d/%b/%Y:%T %z", wtm) != 0)) {
 
@@ -805,9 +802,11 @@ namespace Apostol {
                 if (!UserAgent.IsEmpty()) lpUserAgent = UserAgent.c_str(); else lpUserAgent = _T("-");
                 //if (!ContentLength.IsEmpty()) lpContentLength = ContentLength.c_str(); else lpContentLength = _T("-");
 
-                Log()->Access(_T("%s %s %s [%s] \"%s %s HTTP/%d.%d\" %d %d \"%s\" \"%s\"\r\n"), AConnection->Socket()->Binding()->PeerIP(),
-                        _T("-"), _T("-"), szTime, LRequest->Method.c_str(), LRequest->Uri.c_str(), LRequest->VMajor,
-                        LRequest->VMinor, LReply->Status, LReply->Content.Size(), lpReferer, lpUserAgent);
+                Log()->Access(_T("%s %d %8.2f ms [%s] \"%s %s HTTP/%d.%d\" %d %d \"%s\" \"%s\"\r\n"),
+                        AConnection->Socket()->Binding()->PeerIP(), AConnection->Socket()->Binding()->PeerPort(),
+                        double((clock() - AConnection->Tag()) / (double) CLOCKS_PER_SEC * 1000), szTime,
+                        LRequest->Method.c_str(), LRequest->Uri.c_str(), LRequest->VMajor, LRequest->VMinor,
+                        LReply->Status, LReply->Content.Size(), lpReferer, lpUserAgent);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -922,7 +921,11 @@ namespace Apostol {
             }
 
             try {
+                clock_t start = clock();
+
                 LModule->Execute(LConnection);
+
+                log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Execute runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
             } catch (Delphi::Exception::Exception &E) {
                 DoServerException(LConnection, &E);
                 LConnection->SendStockReply(CReply::internal_server_error);

@@ -29,13 +29,15 @@ Author:
 #endif
 
 #ifndef AWS_PREFIX
-//#define AWS_PREFIX  "/usr/local/apostol/"
-#define AWS_PREFIX  "/etc/apostol/"
+#define AWS_PREFIX  "/usr/local/apostol/"
 #endif
 
 #ifndef AWS_CONF_PREFIX
-//#define AWS_CONF_PREFIX  "conf/"
-#define AWS_CONF_PREFIX  "/"
+#define AWS_CONF_PREFIX  "conf/"
+#endif
+
+#ifndef AWS_CACHE_PREFIX
+#define AWS_CACHE_PREFIX  "cache/"
 #endif
 
 #ifndef AWS_SBIN_PATH
@@ -43,7 +45,6 @@ Author:
 #endif
 
 #ifndef AWS_CONF_FILE
-//#define AWS_CONF_FILE  "conf/apostol.conf"
 #define AWS_CONF_FILE  "apostol.conf"
 #endif
 
@@ -88,7 +89,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         typedef std::function<void (LPCTSTR lpValue)> COnConfigSetEvent;
-        //typedef void (* COnConfigSetEvent) (LPCTSTR lpValue);
         //--------------------------------------------------------------------------------------------------------------
 
         class CConfigCommand: public CObject {
@@ -317,6 +317,7 @@ namespace Apostol {
 
             CString m_sPrefix;
             CString m_sConfPrefix;
+            CString m_sCachePrefix;
             CString m_sConfFile;
             CString m_sConfParam;
             CString m_sSignal;
@@ -351,6 +352,7 @@ namespace Apostol {
             void SetPidFile(LPCTSTR AValue);
             void SetLockFile(LPCTSTR AValue);
             void SetDocRoot(LPCTSTR AValue);
+            void SetCachePrefix(LPCTSTR AValue);
 
             void SetErrorLog(LPCTSTR AValue);
             void SetAccessLog(LPCTSTR AValue);
@@ -407,6 +409,10 @@ namespace Apostol {
             const CString& ConfPrefix() const { return m_sConfPrefix; };
             void ConfPrefix(const CString& AValue) { SetConfPrefix(AValue.c_str()); };
             void ConfPrefix(LPCTSTR AValue) { SetConfPrefix(AValue); };
+
+            const CString& CachePrefix() const { return m_sCachePrefix; };
+            void CachePrefix(const CString& AValue) { SetCachePrefix(AValue.c_str()); };
+            void CachePrefix(LPCTSTR AValue) { SetCachePrefix(AValue); };
 
             const CString& ConfFile() const { return m_sConfFile; };
             void ConfFile(const CString& AValue) { SetConfFile(AValue.c_str()); };

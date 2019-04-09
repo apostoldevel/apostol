@@ -171,6 +171,8 @@ namespace Apostol {
                 if (!path_separator(m_sPrefix.back())) {
                     m_sPrefix += '/';
                 }
+
+                m_sConfPrefix = m_sPrefix;
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -194,6 +196,30 @@ namespace Apostol {
 
                 if (!path_separator(m_sConfPrefix.back())) {
                     m_sConfPrefix += '/';
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CConfig::SetCachePrefix(LPCTSTR AValue) {
+
+            if (m_sCachePrefix != AValue) {
+
+                if (AValue != nullptr)
+                    m_sCachePrefix = AValue;
+                else
+                    m_sCachePrefix = m_sPrefix;
+
+                if (m_sCachePrefix.empty()) {
+                    m_sCachePrefix = GetCwd();
+                }
+
+                if (!path_separator(m_sCachePrefix.front())) {
+                    m_sCachePrefix = m_sPrefix + m_sCachePrefix;
+                }
+
+                if (!path_separator(m_sCachePrefix.back())) {
+                    m_sCachePrefix += '/';
                 }
             }
         }
@@ -327,7 +353,8 @@ namespace Apostol {
             SetLocale(m_sLocale.empty() ? AWS_DEFAULT_LOCALE : m_sLocale.c_str());
 
             SetPrefix(m_sPrefix.empty() ? AWS_PREFIX : m_sPrefix.c_str());
-            SetConfPrefix(m_sPrefix.empty() ? AWS_CONF_PREFIX : m_sPrefix.c_str());
+            SetConfPrefix(m_sConfPrefix.empty() ? AWS_CONF_PREFIX : m_sConfPrefix.c_str());
+            SetCachePrefix(m_sCachePrefix.empty() ? AWS_CACHE_PREFIX : m_sCachePrefix.c_str());
             SetConfFile(m_sConfFile.empty() ? AWS_CONF_FILE : m_sConfFile.c_str());
             SetDocRoot(m_sDocRoot.empty() ? AWS_DOC_ROOT : m_sDocRoot.c_str());
 
@@ -349,12 +376,13 @@ namespace Apostol {
             Add(new CConfigCommand(_T("main"), _T("locale"), m_sLocale.c_str(), std::bind(&CConfig::SetLocale, this, _1)));
 
             Add(new CConfigCommand(_T("daemon"), _T("daemon"), &m_fDaemon));
+            Add(new CConfigCommand(_T("daemon"), _T("pid"), m_sPidFile.c_str(), std::bind(&CConfig::SetPidFile, this, _1)));
 
             Add(new CConfigCommand(_T("server"), _T("listen"), &m_nListen));
             Add(new CConfigCommand(_T("server"), _T("timeout"), &m_nTimeOut));
             Add(new CConfigCommand(_T("server"), _T("root"), m_sDocRoot.c_str(), std::bind(&CConfig::SetDocRoot, this, _1)));
 
-            Add(new CConfigCommand(_T("daemon"), _T("pid"), m_sPidFile.c_str(), std::bind(&CConfig::SetPidFile, this, _1)));
+            Add(new CConfigCommand(_T("cache"), _T("prefix"), m_sCachePrefix.c_str(), std::bind(&CConfig::SetCachePrefix, this, _1)));
 
             Add(new CConfigCommand(_T("log"), _T("error"), m_sErrorLog.c_str(), std::bind(&CConfig::SetErrorLog, this, _1)));
             Add(new CConfigCommand(_T("server"), _T("log"), m_sAccessLog.c_str(), std::bind(&CConfig::SetAccessLog, this, _1)));
