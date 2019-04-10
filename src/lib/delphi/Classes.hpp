@@ -1019,6 +1019,25 @@ namespace Delphi {
                 return *this;
             };
 
+            CString& operator<< (const std::string& s) {
+                Append(s.c_str());
+                return *this;
+            };
+
+            CString& operator<< (int Value) {
+                TCHAR szValue[_INT_T_LEN + 1] = {0};
+                IntToStr(Value, szValue, _INT_T_LEN);
+                Append(szValue);
+                return *this;
+            };
+
+            CString& operator<< (size_t Value) {
+                TCHAR szValue[_INT_T_LEN + 1] = {0};
+                IntToStr(Value, szValue, _INT_T_LEN, 16);
+                Append(szValue);
+                return *this;
+            };
+
             template <class T>
             CString& operator<< (T Value) {
                 Append(Value);

@@ -288,6 +288,9 @@ namespace Delphi {
             /// The content to be sent in the reply.
             CString Content;
 
+            /// The cache file.
+            CString CacheFile;
+
             /// Clear content and headers.
             void Clear();
 

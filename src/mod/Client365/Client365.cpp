@@ -126,6 +126,7 @@ namespace Apostol {
 
         CClient365::CClient365() : CApostolModule() {
             m_Jobs = new CJobManager();
+            UpdateCacheList();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -386,7 +387,6 @@ namespace Apostol {
             auto LConnection = dynamic_cast<CHTTPConnection *> (APollQuery->PollConnection());
 
             CString Session;
-            CString CacheFile;
 
             if (LConnection != nullptr) {
 
@@ -403,18 +403,11 @@ namespace Apostol {
                         LReply->Headers.Last().Value += Session;
                     }
 
-                    clock_t start = clock();
-
-                    CacheFile = Config()->CachePrefix();
-                    CacheFile += LRequest->Uri.SubString(1);
-                    CacheFile += _T("/");
-
-                    if (ForceDirectories(CacheFile.c_str())) {
-                        CacheFile += Session;
-                        LReply->Content.SaveToFile(CacheFile.c_str());
+                    if (!LReply->CacheFile.IsEmpty()) {
+                        clock_t start = clock();
+                        LReply->Content.SaveToFile(LReply->CacheFile.c_str());
+                        log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
                     }
-
-                    log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
 
                     LStatus = CReply::ok;
 
@@ -432,18 +425,11 @@ namespace Apostol {
                 if (LJob != nullptr) {
                     try {
                         QueryToJson(APollQuery, LJob->Result(), Session);
-                        clock_t start = clock();
-
-                        CacheFile = Config()->CachePrefix();
-                        CacheFile += LJob->Uri().SubString(1);
-                        CacheFile += _T("/");
-
-                        if (ForceDirectories(CacheFile.c_str())) {
-                            CacheFile += Session;
-                            LJob->Result().SaveToFile(CacheFile.c_str());
+                        if (!LJob->CacheFile().IsEmpty()) {
+                            clock_t start = clock();
+                            LJob->Result().SaveToFile(LJob->CacheFile().c_str());
+                            log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
                         }
-
-                        log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
 
                     } catch (Delphi::Exception::Exception &E) {
                         ExceptionToJson(&E, LJob->Result());
@@ -471,6 +457,21 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CClient365::UpdateCacheList() {
+            CString LFile;
+            LFile = Config()->Prefix() + _T("client365.cache");
+            if (FileExists(LFile.c_str())) {
+                m_CacheList.LoadFromFile(LFile.c_str());
+                for (int I = m_CacheList.Count() - 1; I >= 0; --I) {
+                    LFile = Config()->CachePrefix() + m_CacheList[I].SubString(1) + __T("/");
+                    if (!ForceDirectories(LFile.c_str())) {
+                        m_CacheList.Delete(I);
+                    }
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         bool CClient365::CheckCache(const CString &FileName) {
             if (!FileExists(FileName.c_str()))
                 return false;
@@ -481,7 +482,7 @@ namespace Apostol {
 
             time_t now = time(nullptr);
 
-            return (now - age) <= 3 * 60; // 3 min
+            return (now - age) <= 1 * 60; // 1 min
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -520,6 +521,8 @@ namespace Apostol {
         void CClient365::Post(CHTTPConnection *AConnection) {
             auto LRequest = AConnection->Request();
             int LVersion = -1;
+
+            CString LCacheFile;
 
             CStringList LUri;
             SplitColumns(LRequest->Uri.c_str(), LRequest->Uri.Size(), &LUri, '/');
@@ -616,20 +619,38 @@ namespace Apostol {
                     return;
                 }
 
-                CString CacheFile;
+                //int Index = m_CacheList.IndexOf(LRoute);
+                //if (Index != -1)
+                {
 
-                CacheFile = Config()->CachePrefix();
-                CacheFile += LRequest->Uri.SubString(1);
-                CacheFile += _T("/");
-                CacheFile += LSession;
+                    LCacheFile = Config()->CachePrefix();
+                    LCacheFile += LRoute.SubString(1);
+                    LCacheFile += _T("/");
 
-                if (CheckCache(CacheFile)) {
+                    if (!DirectoryExists(LCacheFile.c_str())) {
+                        if (!ForceDirectories(LCacheFile.c_str())) {
+                            AConnection->SendStockReply(CReply::internal_server_error);
+                            return;
+                        }
+                    }
+
+                    LCacheFile += LSession;
+                    if (!LRequest->Content.IsEmpty()) {
+                        std::hash<std::string> ContentHash;
+                        std::string Content(LRequest->Content.c_str());
+                        LCacheFile.Append('.');
+                        LCacheFile << (size_t) ContentHash(Content);
+                    }
+                }
+
+                if (!LCacheFile.IsEmpty()) {
                     auto LReply = AConnection->Reply();
-
-                    LReply->Content.LoadFromFile(CacheFile);
-
-                    AConnection->SendReply(CReply::ok);
-                    return;
+                    LReply->CacheFile = LCacheFile;
+                    if (CheckCache(LReply->CacheFile)) {
+                        LReply->Content.LoadFromFile(LReply->CacheFile);
+                        AConnection->SendReply(CReply::ok);
+                        return;
+                    }
                 }
 
                 LQuery->SQL().Add("SELECT * FROM apis.slogin('" + LSession + "');");
@@ -648,7 +669,7 @@ namespace Apostol {
                     auto LJob = m_Jobs->Add(LQuery);
                     auto LReply = AConnection->Reply();
 
-                    LJob->Uri() = LRequest->Uri;
+                    LJob->CacheFile() = LCacheFile;
 
                     LReply->Content = "{\"jobid\":" "\"" + LJob->JobId() + "\"}";
 

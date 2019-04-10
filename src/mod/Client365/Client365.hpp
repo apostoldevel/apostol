@@ -39,9 +39,9 @@ namespace Apostol {
 
             CString m_JobId;
 
-            CString m_Uri;
-
             CString m_Result;
+
+            CString m_CacheFile;
 
             CPQPollQuery *m_PollQuery;
 
@@ -54,8 +54,8 @@ namespace Apostol {
             CString& JobId() { return m_JobId; };
             const CString& JobId() const { return m_JobId; };
 
-            CString& Uri() { return m_Uri; };
-            const CString& Uri() const { return m_Uri; };
+            CString& CacheFile() { return m_CacheFile; };
+            const CString& CacheFile() const { return m_CacheFile; };
 
             CString& Result() { return m_Result; }
             const CString& Result() const { return m_Result; }
@@ -94,6 +94,8 @@ namespace Apostol {
 
             CJobManager *m_Jobs;
 
+            CStringList m_CacheList;
+
             void InitResult(CPQPollQuery *APollQuery, CQueryResult& AResult);
 
             void ExceptionToJson(Delphi::Exception::Exception *AException, CString& Json);
@@ -125,6 +127,11 @@ namespace Apostol {
             void Execute(CHTTPConnection *AConnection) override;
 
             bool CheckCache(const CString &FileName);
+
+            void UpdateCacheList();
+
+            CStringList &CacheList() { return m_CacheList; };
+            const CStringList &CacheList() const { return m_CacheList; };
 
         };
 
