@@ -2714,7 +2714,7 @@ namespace Delphi {
 
         CPollEventHandler::~CPollEventHandler() {
             Close();
-            m_PollConnection->Free();
+            delete m_PollConnection;
         }
         //--------------------------------------------------------------------------------------------------------------
 

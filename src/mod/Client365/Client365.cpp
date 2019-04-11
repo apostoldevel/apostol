@@ -342,12 +342,20 @@ namespace Apostol {
 
                                 Json = "{\"result\": [";
 
-                                for (int Row = 0; Row < Run->nTuples(); ++Row) {
-                                    for (int Col = 0; Col < Run->nFields(); ++Col) {
-                                        if (Row != 0)
-                                            Json += ", ";
-                                        Json += Run->GetValue(Row, Col);
+                                if (Run->nTuples() > 0) {
+                                    for (int Row = 0; Row < Run->nTuples(); ++Row) {
+                                        for (int Col = 0; Col < Run->nFields(); ++Col) {
+                                            if (Row != 0)
+                                                Json += ", ";
+                                            if (Run->GetIsNull(Row, Col)) {
+                                                Json += "null";
+                                            } else {
+                                                Json += Run->GetValue(Row, Col);
+                                            }
+                                        }
                                     }
+                                } else {
+                                    Json += "null";
                                 }
 
                                 Json += "]}";
@@ -390,7 +398,6 @@ namespace Apostol {
 
             if (LConnection != nullptr) {
 
-                auto LRequest = LConnection->Request();
                 auto LReply = LConnection->Reply();
 
                 CReply::status_type LStatus = CReply::internal_server_error;
@@ -554,11 +561,7 @@ namespace Apostol {
                 LRoute.Append(LUri[I]);
             }
 
-            auto LQuery = GetQuery(AConnection);
-            if (LQuery == nullptr) {
-                AConnection->SendStockReply(CReply::internal_server_error);
-                return;
-            }
+            CStringList LSQL;
 
             if (LUri[3] == _T("login")) {
 
@@ -571,26 +574,32 @@ namespace Apostol {
 
                 Login << LRequest->Content;
 
-                const CString &UserName = Login["username"].AsSiring();
-                const CString &Password = Login["password"].AsSiring();
-
-                if (UserName.IsEmpty() && Password.IsEmpty()) {
-                    AConnection->SendStockReply(CReply::bad_request);
-                    return;
-                }
-
                 CString Host(Login["host"].AsSiring());
                 if (Host.IsEmpty()) {
                     Host = AConnection->Socket()->Binding()->PeerIP();
                 }
 
-                LQuery->SQL().Add(CString());
+                LSQL.Add("SELECT * FROM apis.login('");
 
-                LQuery->SQL().Last() = "SELECT * FROM apis.login('";
-                LQuery->SQL().Last() += UserName;
-                LQuery->SQL().Last() += "', '" + Password;
-                LQuery->SQL().Last() += "', '" + Host;
-                LQuery->SQL().Last() += "');";
+                const CString &Session = Login["session"].AsSiring();
+                if (Session.IsEmpty()) {
+                    const CString &UserName = Login["username"].AsSiring();
+                    const CString &Password = Login["password"].AsSiring();
+
+                    if (UserName.IsEmpty() && Password.IsEmpty()) {
+                        AConnection->SendStockReply(CReply::bad_request);
+                        return;
+                    }
+
+                    LSQL.Last() += UserName;
+                    LSQL.Last() += "', '" + Password;
+
+                } else {
+                    LSQL.Last() += Session;
+                }
+
+                LSQL.Last() += "', '" + Host;
+                LSQL.Last() += "');";
 
             } else {
 
@@ -653,23 +662,36 @@ namespace Apostol {
                     }
                 }
 
-                LQuery->SQL().Add("SELECT * FROM apis.slogin('" + LSession + "');");
-                LQuery->SQL().Add("SELECT * FROM api.run('" + LRoute);
+                LSQL.Add("SELECT * FROM apis.slogin('" + LSession + "');");
+                LSQL.Add("SELECT * FROM api.run('" + LRoute);
 
                 if (!LRequest->Content.IsEmpty()) {
-                    LQuery->SQL().back() += "', '" + LRequest->Content;
+                    LSQL.Last() += "', '" + LRequest->Content;
                 }
 
-                LQuery->SQL().back() += "');";
+                LSQL.Last() += "');";
             }
 
-            if (LQuery->QueryStart() != POLL_QUERY_START_ERROR) {
+            QueryStart(AConnection, LSQL, LCacheFile);
+        }
+        //--------------------------------------------------------------------------------------------------------------
 
-                if (LVersion == 1) {
+        bool CClient365::QueryStart(CHTTPConnection *AConnection, const CStringList& ASQL, const CString& ACacheFile) {
+            auto LQuery = GetQuery(AConnection);
+
+            if (LQuery == nullptr) {
+                AConnection->SendStockReply(CReply::internal_server_error);
+                return false;
+            }
+
+            LQuery->SQL() = ASQL;
+
+            if (LQuery->QueryStart() != POLL_QUERY_START_ERROR) {
+                if (m_Version == 1) {
                     auto LJob = m_Jobs->Add(LQuery);
                     auto LReply = AConnection->Reply();
 
-                    LJob->CacheFile() = LCacheFile;
+                    LJob->CacheFile() = ACacheFile;
 
                     LReply->Content = "{\"jobid\":" "\"" + LJob->JobId() + "\"}";
 
@@ -678,9 +700,13 @@ namespace Apostol {
                     // Wait query result...
                     AConnection->CloseConnection(false);
                 }
+
+                return true;
             } else {
                 delete LQuery;
             }
+
+            return false;
         }
         //--------------------------------------------------------------------------------------------------------------
 

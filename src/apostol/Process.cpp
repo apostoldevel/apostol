@@ -932,7 +932,7 @@ namespace Apostol {
             }
 
             if (LModule->FreeAfterExecute()) {
-                LModule->Free();
+                delete LModule;
             }
         }
         //--------------------------------------------------------------------------------------------------------------

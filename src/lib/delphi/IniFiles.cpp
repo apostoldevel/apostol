@@ -500,7 +500,7 @@ namespace Delphi {
             try {
                 m_Sections->AddObject(lpszSectionName, Result);
             } catch (...) {
-                Result->Free();
+                delete Result;
                 throw;
             };
             return Result;
@@ -524,10 +524,10 @@ namespace Delphi {
                         List->LoadFromFile(FileName().c_str());
                         SetStrings(List);
                     } catch (...) {
-                        List->Free();
+                        delete List;
                         throw;
                     }
-                    List->Free();
+                    delete List;
                 } else
                     Clear();
             } catch (...) {
@@ -772,7 +772,7 @@ namespace Delphi {
                 List->SaveToFile(FileName().c_str());
             } catch (...) {
             }
-            List->Free();
+            delete List;
             Modified(false);
         }
         //--------------------------------------------------------------------------------------------------------------

@@ -92,6 +92,8 @@ namespace Apostol {
         class CClient365: public CApostolModule {
         private:
 
+            int m_Version;
+
             CJobManager *m_Jobs;
 
             CStringList m_CacheList;
@@ -105,6 +107,8 @@ namespace Apostol {
 
             void PQResultToJson(CPQResult *Result, CString& Json);
             void QueryToJson(CPQPollQuery *Query, CString& Json, CString &Session);
+
+            bool QueryStart(CHTTPConnection *AConnection, const CStringList& ASQL, const CString& ACacheFile);
 
         protected:
 
