@@ -340,9 +340,11 @@ namespace Apostol {
                         if (Run->ExecStatus() == PGRES_TUPLES_OK) {
                             if (LoginResult == "t") {
 
-                                Json = "{\"result\": [";
+                                Json = "{\"result\": ";
 
                                 if (Run->nTuples() > 0) {
+
+                                    Json += "[";
                                     for (int Row = 0; Row < Run->nTuples(); ++Row) {
                                         for (int Col = 0; Col < Run->nFields(); ++Col) {
                                             if (Row != 0)
@@ -354,11 +356,13 @@ namespace Apostol {
                                             }
                                         }
                                     }
+                                    Json += "]";
+
                                 } else {
-                                    Json += "null";
+                                    Json += "{}";
                                 }
 
-                                Json += "]}";
+                                Json += "}";
 
                             } else {
                                 Log()->Error(LOG_EMERG, 0, Login->GetValue(0, 2));
@@ -579,10 +583,10 @@ namespace Apostol {
                     Host = AConnection->Socket()->Binding()->PeerIP();
                 }
 
-                LSQL.Add("SELECT * FROM apis.login('");
-
                 const CString &Session = Login["session"].AsSiring();
                 if (Session.IsEmpty()) {
+                    LSQL.Add("SELECT * FROM apis.login('");
+
                     const CString &UserName = Login["username"].AsSiring();
                     const CString &Password = Login["password"].AsSiring();
 
@@ -593,12 +597,21 @@ namespace Apostol {
 
                     LSQL.Last() += UserName;
                     LSQL.Last() += "', '" + Password;
-
                 } else {
+                    LSQL.Add("SELECT * FROM apis.slogin('");
                     LSQL.Last() += Session;
                 }
 
                 LSQL.Last() += "', '" + Host;
+
+                const CString &Department = Login["department"].AsSiring();
+                if (!Department.IsEmpty())
+                    LSQL.Last() += "', '" + Department;
+
+                const CString &WorkPlace = Login["workplace"].AsSiring();
+                if (!WorkPlace.IsEmpty())
+                    LSQL.Last() += "', '" + WorkPlace;
+
                 LSQL.Last() += "');";
 
             } else {
@@ -664,6 +677,9 @@ namespace Apostol {
 
                 LSQL.Add("SELECT * FROM apis.slogin('" + LSession + "');");
                 LSQL.Add("SELECT * FROM api.run('" + LRoute);
+
+                if (LRequest->Content == "{}" || LRequest->Content == "[]")
+                    LRequest->Content.Clear();
 
                 if (!LRequest->Content.IsEmpty()) {
                     LSQL.Last() += "', '" + LRequest->Content;
