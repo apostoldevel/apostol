@@ -25,16 +25,21 @@ Author:
 #include "Process.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
+#define BT_BUF_SIZE 255
+//----------------------------------------------------------------------------------------------------------------------
+
 void
 signal_error(int signo, siginfo_t *siginfo, void *ucontext)
 {
     void*       addr;
-    void*       trace[16];
+    void*       trace[BT_BUF_SIZE];
     int         i;
     int         size;
     char      **msg;
 
     GLog->Error(LOG_CRIT, 0, "signal: %d (%s), addr: 0x%xL", signo, sys_siglist[signo], siginfo->si_addr);
+
+#ifdef __x86_64__
 
 #if __WORDSIZE == 64
     addr = (void*)((ucontext_t*)ucontext)->uc_mcontext.gregs[REG_RIP];
@@ -42,15 +47,18 @@ signal_error(int signo, siginfo_t *siginfo, void *ucontext)
     addr = (void*)((ucontext_t*)ucontext)->uc_mcontext.gregs[REG_EIP];
 #endif
 
-    size = backtrace(trace, 16);
-    trace[1] = addr;
+    size = backtrace(trace, BT_BUF_SIZE);
+
+    GLog->Error(LOG_CRIT, 0, "backtrace() returned %d addresses", size);
+
+    //trace[0] = addr;
 
     msg = backtrace_symbols(trace, size);
     if (msg)
     {
         GLog->Error(LOG_DEBUG, 0, "-= backtrace log =-");
 
-        for (i = 1; i < size; ++i)
+        for (i = 0; i < size; ++i)
         {
             GLog->Error(LOG_DEBUG, 0, "%s", msg[i]);
         }
@@ -58,7 +66,7 @@ signal_error(int signo, siginfo_t *siginfo, void *ucontext)
         GLog->Error(LOG_DEBUG, 0, "-= backtrace log =-");
         free(msg);
     }
-
+#endif
     //sig_fatal = 1;
     exit(2);
 }
