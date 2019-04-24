@@ -335,7 +335,7 @@ namespace Apostol {
             m_uErrorCount = 0;
 
             m_nWorkers = 1;
-            m_nListen = 5477;
+            m_nListen = 4977;
 
 //            m_nTimeOut = INFINITE;
             m_nTimeOut = 5000;
