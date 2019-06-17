@@ -817,9 +817,9 @@ namespace Delphi {
 
             CString(const CString& S): CString() { Create(S); };
 
-            explicit CString(LPCTSTR Str, size_t Length = 0): CString() { Create(Str, Length); };
+            CString(LPCTSTR Str, size_t Length = 0): CString() { Create(Str, Length); };
 
-            explicit CString(TCHAR C): CString() { Create(C); };
+            CString(TCHAR C): CString() { Create(C); };
 
             explicit CString(size_t Length, TCHAR C): CString() { Create(Length, C); };
 
@@ -1159,6 +1159,8 @@ namespace Delphi {
             virtual int AddObject(TCHAR C, CObject* AObject);
             virtual int AddPair(const CString &Name, const CString &Value);
             virtual int AddPair(reference Name, reference Value);
+            virtual int AddPair(reference Name, const CString &Value);
+            virtual int AddPair(const CString &Name, reference Value);
             void Append(const CString &S);
             void Append(reference Str);
             virtual void AddStrings(const CStrings& Strings);

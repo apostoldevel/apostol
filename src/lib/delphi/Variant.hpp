@@ -51,27 +51,27 @@ Author:
 #define varCString              VarRec.VString
 #endif
 
-#define asInteger               varInteger
-#define asBoolean               varBoolean
-#define asChar                  varChar
-#define asDouble                varDouble
-#define asString                varString
-#define asPointer               varPointer
-#define asPChar                 varPChar
-#define asObject                varObject
-#define asUnsigned              varUnsigned
-#define asWideChar              varWideChar
-#define asPWideChar             varPWideChar
-#define asAnsiString            varAnsiString
-#define asFloat                 varFloat
-#define asVariant               varVariant
-#define asUInt64                varUInt64
-#define asWideString            varWideString
-#define asInt64                 varInt64
-#define asUnicodeString         varUnicodeString
+#define vasInteger               varInteger
+#define vasBoolean               varBoolean
+#define vasChar                  varChar
+#define vasDouble                varDouble
+#define vasString                varString
+#define vasPointer               varPointer
+#define vasPChar                 varPChar
+#define vasObject                varObject
+#define vasUnsigned              varUnsigned
+#define vasWideChar              varWideChar
+#define vasPWideChar             varPWideChar
+#define vasAnsiString            varAnsiString
+#define vasFloat                 varFloat
+#define vasVariant               varVariant
+#define vasUInt64                varUInt64
+#define vasWideString            varWideString
+#define vasInt64                 varInt64
+#define vasUnicodeString         varUnicodeString
 
-#define asStr                   varStr
-#define asCString               varCString
+#define vasStr                   varStr
+#define vasCString               varCString
 
 extern "C++" {
 

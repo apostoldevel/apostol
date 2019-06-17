@@ -72,6 +72,7 @@ using namespace Apostol::Modules;
 
 #include "WebServer/WebServer.hpp"
 #include "Client365/Client365.hpp"
+#include "Exchange/Exchange.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 static CApostolModule* CreateModule(const CString &UserAgent) {
@@ -79,6 +80,10 @@ static CApostolModule* CreateModule(const CString &UserAgent) {
     if (!UserAgent.IsEmpty()) {
         if ((UserAgent.Find(_T("Client365/")) != CString::npos)) {
             return CClient365::CreateModule();
+        }
+
+        if ((UserAgent.Find(_T("Exchange/")) != CString::npos)) {
+            return CExchange::CreateModule();
         }
     }
 

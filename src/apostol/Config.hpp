@@ -125,20 +125,20 @@ namespace Apostol {
 
                 switch (m_Value.VType) {
                     case vtInteger:
-                        *((int *) m_pPtr) = m_Value.asInteger;
+                        *((int *) m_pPtr) = m_Value.vasInteger;
                         break;
 
                     case vtDouble:
-                        *((double *) m_pPtr) = m_Value.asDouble;
+                        *((double *) m_pPtr) = m_Value.vasDouble;
                         break;
 
                     case vtBoolean:
-                        *((bool *) m_pPtr) = m_Value.asBoolean;
+                        *((bool *) m_pPtr) = m_Value.vasBoolean;
                         break;
 
                     case vtString:
-                        m_OnSetString(m_Value.asCString->c_str());
-                        delete m_Value.asCString;
+                        m_OnSetString(m_Value.vasCString->c_str());
+                        delete m_Value.vasCString;
                         break;
 
                     default:

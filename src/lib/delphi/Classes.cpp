@@ -2013,6 +2013,22 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        int CStrings::AddPair(CStrings::reference Name, const CString &Value) {
+            CString LName(Name);
+            int Result = GetCount();
+            Insert(Result, LName + NameValueSeparator() + Value);
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CStrings::AddPair(const CString &Name, CStrings::reference Value) {
+            CString LValue(Value);
+            int Result = GetCount();
+            Insert(Result, Name + NameValueSeparator() + LValue);
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CStrings::Append(const CString &S) {
             Add(S);
         }

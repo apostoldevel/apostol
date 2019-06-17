@@ -30,11 +30,11 @@ add_definitions(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
 find_package(PostgreSQL REQUIRED)
 
-include_directories(src/apostol src/lib/delphi src/mod)
+include_directories(src/apostol src/lib/delphi src/lib/jsoncpp-1.8.3/include src/mod)
 
 file(GLOB apostol_files version.h src/apostol/*.hpp src/apostol/*.cpp)
-file(GLOB lib_files src/lib/*/*.hpp src/lib/*/*.cpp )
-file(GLOB mod_files src/mod/Modules.* src/mod/*/*.hpp src/mod/*/*.cpp )
+file(GLOB lib_files src/lib/*/*.hpp src/lib/*/*.cpp)
+file(GLOB mod_files src/mod/Modules.* src/mod/*/*.hpp src/mod/*/*.cpp)
 
 add_executable(apostol ${apostol_files} ${lib_files} ${mod_files})
 
@@ -46,7 +46,7 @@ ADD_CUSTOM_TARGET(
 )
 ADD_DEPENDENCIES(apostol auto_increment_version)
 
-target_link_libraries(apostol pthread pq)
+target_link_libraries(apostol pthread pq curl crypto)
 
 set(INSTALL_PATH "/etc/apostol")
 

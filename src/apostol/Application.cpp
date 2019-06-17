@@ -496,7 +496,7 @@ namespace Apostol {
         void CApplication::CreateDirectories() {
             MkDir(Config()->Prefix());
             MkDir(Config()->Prefix() + _T("logs/"));
-            //MkDir(Config()->ConfPrefix());
+            MkDir(Config()->ConfPrefix());
             MkDir(Config()->CachePrefix());
             //MkDir(Config()->DocRoot());
         }

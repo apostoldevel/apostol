@@ -172,7 +172,7 @@ namespace Apostol {
                     m_sPrefix += '/';
                 }
 
-                m_sConfPrefix = m_sPrefix;
+                //m_sConfPrefix = m_sPrefix;
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -426,23 +426,23 @@ namespace Apostol {
 
                     switch (C->Type()) {
                         case ctInteger:
-                            V = F.ReadInteger(C->Section(), C->Ident(), C->Default().asInteger);
+                            V = F.ReadInteger(C->Section(), C->Ident(), C->Default().vasInteger);
                             break;
 
                         case ctDouble:
-                            V = F.ReadFloat(C->Section(), C->Ident(), C->Default().asDouble);
+                            V = F.ReadFloat(C->Section(), C->Ident(), C->Default().vasDouble);
                             break;
 
                         case ctBoolean:
-                            V = F.ReadBool(C->Section(), C->Ident(), C->Default().asBoolean);
+                            V = F.ReadBool(C->Section(), C->Ident(), C->Default().vasBoolean);
                             break;
 
                         case ctDateTime:
-                            V = F.ReadDateTime(C->Section(), C->Ident(), C->Default().asDouble);
+                            V = F.ReadDateTime(C->Section(), C->Ident(), C->Default().vasDouble);
                             break;
 
                         default:
-                            V = F.ReadString(C->Section(), C->Ident(), C->Default().asStr, new CString());
+                            V = F.ReadString(C->Section(), C->Ident(), C->Default().vasStr, new CString());
                             break;
                     }
 
