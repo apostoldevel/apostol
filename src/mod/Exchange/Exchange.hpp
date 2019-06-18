@@ -33,10 +33,12 @@ namespace Apostol {
 
     namespace Exchange {
 
-        enum CExchangeType { etBinance, etPoloniex, etBitfinex };
+        class CExchangeHandler;
 
-        typedef std::function<void (const CStringList& Params, CString &Result)> COnQuoteHandlerEvent;
-        typedef std::function<void (const CStringList& Params, CString &Result)> COnTradeHandlerEvent;
+        enum CExchangeType { etBinance = 0, etPoloniex, etBitfinex };
+
+        typedef std::function<void (CExchangeHandler *Header, const CStringList& Params, CString &Result)> COnQuoteHandlerEvent;
+        typedef std::function<void (CExchangeHandler *Header, const CStringList& Params, CString &Result)> COnTradeHandlerEvent;
         //--------------------------------------------------------------------------------------------------------------
 
         class CExchangeHandler: CObject {
@@ -67,14 +69,14 @@ namespace Apostol {
 
             bool Enabled() { return m_Enabled; };
 
-            void QuoteHandler(const CStringList& Params, CString &Result) {
+            void QuoteHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result) {
                 if (m_Enabled && m_QuoteHandler)
-                    m_QuoteHandler(Params, Result);
+                    m_QuoteHandler(Header, Params, Result);
             }
 
-            void TradeHandler(const CStringList& Params, CString &Result) {
+            void TradeHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result) {
                 if (m_Enabled && m_TradeHandler)
-                    m_TradeHandler(Params, Result);
+                    m_TradeHandler(Header, Params, Result);
             }
 
             const CString& Uri() const { return m_Uri; };
@@ -135,14 +137,14 @@ namespace Apostol {
 
             void Cleanup();
 
-            void BinanceQuoteHandler(const CStringList& Params, CString &Result);
-            void BinanceTradeHandler(const CStringList& Params, CString &Result);
+            void BinanceQuoteHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
+            void BinanceTradeHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
 
-            void PoloniexQuoteHandler(const CStringList& Params, CString &Result);
-            void PoloniexTradeHandler(const CStringList& Params, CString &Result);
+            void PoloniexQuoteHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
+            void PoloniexTradeHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
 
-            void BitfinexQuoteHandler(const CStringList& Params, CString &Result);
-            void BitfinexTradeHandler(const CStringList& Params, CString &Result);
+            void BitfinexQuoteHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
+            void BitfinexTradeHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
 
         };
     }

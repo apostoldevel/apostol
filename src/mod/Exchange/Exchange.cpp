@@ -38,6 +38,8 @@ namespace Apostol {
 
     namespace Exchange {
 
+        const TCHAR *EXCHANGE_NAME[] = {"Binance", "Poloniex", "Bitfinex"};
+
         CExchange::CExchange() : CApostolModule() {
             curl_global_init(CURL_GLOBAL_DEFAULT);
             m_curl = curl_easy_init();
@@ -84,20 +86,26 @@ namespace Apostol {
 
                     if (Sections[i].Lower() == "binance") {
                         Handler = new CExchangeHandler(etBinance, uri.IsEmpty() ? BINANCE_HOST : uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
-                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::BinanceQuoteHandler, this, _1, _2));
-                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::BinanceTradeHandler, this, _1, _2));
+                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::BinanceQuoteHandler, this, _1, _2, _3));
+                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::BinanceTradeHandler, this, _1, _2, _3));
+
+                        m_Exchanges->AddObject(Sections[i], (CObject *) Handler);
                     }
 
                     if (Sections[i].Lower() == "poloniex") {
                         Handler = new CExchangeHandler(etPoloniex, uri.IsEmpty() ? POLONIEX_HOST : uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
-                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::PoloniexQuoteHandler, this, _1, _2));
-                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::PoloniexTradeHandler, this, _1, _2));
+                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::PoloniexQuoteHandler, this, _1, _2, _3));
+                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::PoloniexTradeHandler, this, _1, _2, _3));
+
+                        m_Exchanges->AddObject(Sections[i], (CObject *) Handler);
                     }
 
                     if (Sections[i].Lower() == "bitfinex") {
                         Handler = new CExchangeHandler(etBitfinex, uri.IsEmpty() ? BITFINEX_HOST : uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
-                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::BitfinexQuoteHandler, this, _1, _2));
-                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::BitfinexTradeHandler, this, _1, _2));
+                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::BitfinexQuoteHandler, this, _1, _2, _3));
+                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::BitfinexTradeHandler, this, _1, _2, _3));
+
+                        m_Exchanges->AddObject(Sections[i], (CObject *) Handler);
                     }
                 }
             }
@@ -218,44 +226,222 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::BinanceQuoteHandler(const CStringList &Params, CString &Result) {
+        void CExchange::BinanceQuoteHandler(CExchangeHandler *Header, const CStringList &Params, CString &Result) {
+
+            Log()->Debug(0, "[%s] Order book", EXCHANGE_NAME[Header->Type()]);
+
+            CString url(Header->Uri());
+            url += "/api/v1/depth?";
+
+            const CString &Pair = Params.Values("pair");
+            size_t Pos = Pair.Find("-");
+
+            if (Pos == CString::npos) {
+                throw Delphi::Exception::ExceptionFrm(_T("Invalid format Pair: \"%s\""), Pair.c_str());
+            }
+
+            CString Symbol;
+
+            Symbol = Pair.SubString(0, Pos);
+            Symbol += Pair.SubString(Pos + 1);
+
+            CString querystring("symbol=");
+
+            querystring.Append(Symbol);
+            querystring.Append("&limit=1000");
+
+            url.Append(querystring);
+
+            Log()->Debug(0, "[%s] Order book: uri = |%s|", EXCHANGE_NAME[Header->Type()], url.c_str());
+
+            curl_api(url, Result);
+
+            if (!Result.IsEmpty()) {
+                Log()->Debug(0, "[%s] Order book: Done.", EXCHANGE_NAME[Header->Type()]);
+            } else {
+                Log()->Debug(0, "[%s] Order book: Failed to get anything", EXCHANGE_NAME[Header->Type()]);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CExchange::BinanceTradeHandler(CExchangeHandler *Header, const CStringList &Params, CString &Result) {
 
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::BinanceTradeHandler(const CStringList &Params, CString &Result) {
+        void CExchange::PoloniexQuoteHandler(CExchangeHandler *Header, const CStringList &Params, CString &Result) {
+
+            Log()->Debug(0, "[%s] Order book", EXCHANGE_NAME[Header->Type()]);
+
+            CString url(Header->Uri());
+            url += "/public?";
+
+            CString querystring("command=returnOrderBook&currencyPair=");
+
+            const CString &Pair = Params.Values("pair");
+            size_t Pos = Pair.Find("-");
+
+            if (Pos == CString::npos) {
+                throw Delphi::Exception::ExceptionFrm(_T("Invalid format Pair: \"%s\""), Pair.c_str());
+            }
+
+            CString Symbol;
+
+            Symbol = Pair.SubString(Pos + 1);
+            Symbol += "_";
+            Symbol += Pair.SubString(0, Pos);
+
+            querystring.Append(Symbol);
+            querystring.Append("&depth=");
+            querystring.Append("1000");
+
+            url.Append(querystring);
+
+            Log()->Debug(0, "[%s] Order book: uri = |%s|", EXCHANGE_NAME[Header->Type()], url.c_str());
+
+            curl_api(url, Result);
+
+            if (!Result.IsEmpty()) {
+                Log()->Debug(0, "[%s] Order book: Done.", EXCHANGE_NAME[Header->Type()]);
+            } else {
+                Log()->Debug(0, "[%s] Order book: Failed to get anything", EXCHANGE_NAME[Header->Type()]);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CExchange::PoloniexTradeHandler(CExchangeHandler *Header, const CStringList &Params, CString &Result) {
 
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::PoloniexQuoteHandler(const CStringList &Params, CString &Result) {
+        void CExchange::BitfinexQuoteHandler(CExchangeHandler *Header, const CStringList &Params, CString &Result) {
 
+            Log()->Debug(0, "[%s] Order book", EXCHANGE_NAME[Header->Type()]);
+
+            CString url(Header->Uri());
+            url += "/v1/book/";
+
+            const CString &Pair = Params.Values("pair");
+            size_t Pos = Pair.Find("-");
+
+            if (Pos == CString::npos) {
+                throw Delphi::Exception::ExceptionFrm(_T("Invalid format Pair: \"%s\""), Pair.c_str());
+            }
+
+            CString Symbol, Pair2;
+
+            Symbol = Pair.SubString(0, Pos);
+            Pair2 = Pair.SubString(Pos + 1);
+
+            if (Pair2 == "USDT") {
+                Pair2 = "USD";
+            }
+
+            Symbol += Pair2;
+
+            url.Append(Symbol.Lower());
+
+            Log()->Debug(0, "[%s] Order book: uri = |%s|", EXCHANGE_NAME[Header->Type()], url.c_str());
+
+            curl_api(url, Result);
+
+            if (!Result.IsEmpty()) {
+                Log()->Debug(0, "[%s] Order book: Done.", EXCHANGE_NAME[Header->Type()]);
+            } else {
+                Log()->Debug(0, "[%s] Order book: Failed to get anything", EXCHANGE_NAME[Header->Type()]);
+            }
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::PoloniexTradeHandler(const CStringList &Params, CString &Result) {
-
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::BitfinexQuoteHandler(const CStringList &Params, CString &Result) {
-
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::BitfinexTradeHandler(const CStringList &Params, CString &Result) {
+        void CExchange::BitfinexTradeHandler(CExchangeHandler *Header, const CStringList &Params, CString &Result) {
 
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CExchange::Quote(const CStringList& Params, CHTTPConnection *AConnection) {
+
             auto LReply = AConnection->Reply();
+
+            const CString &Type = Params.Values("type");
+            const CString &Amount = Params.Values("amount");
+
+            double amount = StrToFloat(Amount.c_str());
+
+            TList<CJSON> Json;
 
             Log()->Debug(0, "Quote");
 
-            //https://api.binance.com/api/v1/depth?symbol=BTCUSDT&limit=100
+            CString asks_bids;
+            if (Type == "BUY") {
+                asks_bids = "asks";
+            } else if (Type == "SELL") {
+                asks_bids = "bids";
+            }
 
-            LReply->Content << R"(["BTC-USDT", "ETH-USDT", "XRP-USDT", "ETH-BTC", "XRP-BTC", "XRP-ETH"])";
+            CStringList Results;
+
+            int Count = 0;
+
+            LReply->Content = "[";
+
+            CExchangeHandler *Handler;
+            // Опрос бирж...
+            for (int i = 0; i < m_Exchanges->Count(); i++) {
+
+                Handler = (CExchangeHandler *) m_Exchanges->Objects(i);
+                Json.Add(CJSON());
+
+                if (Handler->Enabled()) {
+
+                    Results.Add(CString());
+                    Handler->QuoteHandler(Handler, Params, Results[i]); // Запрос данных с биржи...
+                    Json[i] << Results[i]; // Конвертируем в JSON
+
+                    const CJSONValue &Data = Json[i][asks_bids];
+
+                    if (Data.IsArray()) {
+
+                        double totalAmountCurrency = 0;
+                        double totalAmountAsset = amount;
+
+                        for (int j = 0; j < Data.Count(); j++) {
+
+                            const CJSONValue &Next = Data[j];
+
+                            if (totalAmountAsset > Next[1].AsDouble()) {
+                                totalAmountAsset -= Next[1].AsDouble();
+                                totalAmountCurrency += Next[0].AsDouble() * Next[1].AsDouble();
+                            } else {
+                                totalAmountCurrency += Next[0].AsDouble() * totalAmountAsset;
+                                totalAmountAsset = 0;
+                                break;
+                            }
+                        }
+
+                        if (totalAmountCurrency != 0) {
+
+                            if (Count > 0) {
+                                LReply->Content += ", ";
+                            }
+
+                            CString Str;
+                            Str.Format(
+                                    _T("{\"asks_bids\": \"%s\", \"AveragePrice\": %f, \"TotalPrice\": %f, \"Exchange\": \"%s\", \"Remain\": %f}"),
+                                    asks_bids.c_str(),
+                                    totalAmountCurrency / (amount - totalAmountAsset),
+                                    totalAmountCurrency,
+                                    EXCHANGE_NAME[Handler->Type()],
+                                    totalAmountAsset);
+
+                            LReply->Content += Str;
+
+                            Count++;
+                        }
+                    }
+                }
+            }
+
+            LReply->Content += "]";
 
             Log()->Debug(0, "Get: %s\n", LReply->Content.c_str());
 

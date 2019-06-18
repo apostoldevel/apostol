@@ -737,7 +737,7 @@ namespace Delphi {
 
             long AsInteger() const { return StrToInt(m_Data.c_str()); };
 
-            double AsDouble() const { return StrToInt(m_Data.c_str()); };
+            double AsDouble() const { return StrToFloat(m_Data.c_str()); };
 
             bool AsBoolean() const {
                 LPCTSTR LBoolStr[] = ARRAY_BOOLEAN_STRINGS;
