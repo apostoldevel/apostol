@@ -203,11 +203,11 @@ namespace Delphi {
                 return In;
             };
 
-            virtual CJSONMember &Members(int Index);;
+            virtual CJSONMember &Members(int Index);
 
-            virtual const CJSONMember &Members(int Index) const;;
+            virtual const CJSONMember &Members(int Index) const;
 
-            virtual void Members(int Index, const CJSONMember &Value);;
+            virtual void Members(int Index, const CJSONMember &Value);
 
             virtual CJSONValue &operator[](int Index);
 

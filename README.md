@@ -13,6 +13,7 @@ Apostol Web Service
     | └─delphi/       содержит файлы с исходным кодом библиотеки: Delphi classes for C++
     └─mod/            содержит файлы с исходным кодом дополнений (модулей)
       ├─WebServer/    содержит файлы с исходным кодом дополнения: Web-Server
+      ├─Exchange/     содержит файлы с исходным кодом дополнения: Exchange (Криптобиржа)
       └─Client365/    содержит файлы с исходным кодом дополнения: Клиент 365
 
 ОПИСАНИЕ
@@ -120,7 +121,13 @@ Apostol Web Service
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
 1. Библиотека [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development).
 1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development)
-###### Описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство. 
+
+Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
+~~~
+sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
+~~~
+
+###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство. 
 
 Для сборки Апостол, необходимо:
 

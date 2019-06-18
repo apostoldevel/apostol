@@ -171,8 +171,6 @@ namespace Apostol {
                 if (!path_separator(m_sPrefix.back())) {
                     m_sPrefix += '/';
                 }
-
-                //m_sConfPrefix = m_sPrefix;
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -230,11 +228,14 @@ namespace Apostol {
             if (m_sConfFile != AValue) {
                 m_sConfFile = AValue;
                 if (!path_separator(m_sConfFile.front())) {
+                    m_sConfFile = m_sPrefix + m_sConfFile;
+/*
                     if (m_sConfFile.find('/') == CString::npos) {
                         m_sConfFile = m_sConfPrefix + m_sConfFile;
                     } else {
                         m_sConfFile = m_sPrefix + m_sConfFile;
                     }
+*/
                 }
             }
         }

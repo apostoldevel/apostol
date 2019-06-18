@@ -48,6 +48,7 @@ namespace Apostol {
 
             bool m_Enabled;
 
+            CString m_Name;
             CString m_Uri;
 
             CString m_ApiKey;
@@ -60,6 +61,10 @@ namespace Apostol {
 
             CExchangeHandler(CExchangeType Type, const CString &Uri, const CString &ApiKey, const CString &SecretKey,
                              bool Enabled): CObject(), m_Type(Type), m_Enabled(Enabled) {
+
+                const TCHAR *EXCHANGE_NAME[] = {"Binance", "Poloniex", "Bitfinex"};
+
+                m_Name = EXCHANGE_NAME[Type];
                 m_Uri = Uri;
                 m_ApiKey = ApiKey;
                 m_SecretKey = SecretKey;
@@ -78,6 +83,8 @@ namespace Apostol {
                 if (m_Enabled && m_TradeHandler)
                     m_TradeHandler(Header, Params, Result);
             }
+
+            const CString& Name() const { return m_Name; };
 
             const CString& Uri() const { return m_Uri; };
             const CString& ApiKey() const { return m_ApiKey; };
@@ -114,6 +121,8 @@ namespace Apostol {
 
             void GetServerTime(CString &exchange, CJSON &json_result);
 
+            void GetTicker(CExchangeHandler *Exchange, const CString& Symbol, CJSON &Result);
+
             void GetTradingPairs(CHTTPConnection *AConnection);
 
             void Quote(const CStringList& Params, CHTTPConnection *AConnection);
@@ -137,14 +146,14 @@ namespace Apostol {
 
             void Cleanup();
 
-            void BinanceQuoteHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
-            void BinanceTradeHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
+            void BinanceQuoteHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
+            void BinanceTradeHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
 
-            void PoloniexQuoteHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
-            void PoloniexTradeHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
+            void PoloniexQuoteHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
+            void PoloniexTradeHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
 
-            void BitfinexQuoteHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
-            void BitfinexTradeHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result);
+            void BitfinexQuoteHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
+            void BitfinexTradeHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
 
         };
     }

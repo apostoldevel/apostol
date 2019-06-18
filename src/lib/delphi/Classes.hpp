@@ -1260,6 +1260,8 @@ namespace Delphi {
 
             CString &operator[] (int Index) { return Strings(Index); }
             const CString &operator[] (int Index) const { return Strings(Index); }
+
+            const CString &operator[] (reference Name) const { return Values(Name); }
         };
 
         //--------------------------------------------------------------------------------------------------------------

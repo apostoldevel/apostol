@@ -1266,7 +1266,7 @@ namespace Delphi {
                     }
                     return false;
                 case string:
-                    if (IsLetter(AInput)) {
+                    if (IsLetter(AInput) || (AInput == '0') || IsDigit(AInput)) {
                         CurrentMember().String().Append(AInput);
                         UpdateData(AInput);
                         m_State = string;
@@ -1302,7 +1302,7 @@ namespace Delphi {
                         UpdateData(AInput);
                         m_State = value_string_start;
                         return -1;
-                    } else if ((AInput == '-') || (AInput == '0') || (IsDigit(AInput))) {
+                    } else if ((AInput == '-') || (AInput == '0') || IsDigit(AInput)) {
                         CreateValue(jvtNumber);
                         CurrentValue().Data().Append(AInput);
                         UpdateData(AInput);
