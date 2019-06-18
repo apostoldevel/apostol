@@ -201,6 +201,8 @@ namespace Apostol {
 
             buffer->Append((char *) content, size * nmemb);
 
+            Log()->Debug(0, "[curl_api] Buffer:\n%s", buffer->c_str());
+
             Log()->Debug(0, "[curl_api] curl_cb: Done!");
 
             return size * nmemb;
