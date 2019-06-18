@@ -1424,7 +1424,7 @@ namespace Delphi {
                         else
                             m_State = value_start;
                         return -1;
-                    } else if ((AInput == '.') || (AInput == '0') || IsDigit(AInput)) {
+                    } else if ((AInput == '.') || (AInput == '0') || IsDigit(AInput) || (AInput == 'e') || (AInput == 'E') || (AInput == '+') || (AInput == '-')) {
                         CurrentValue().Data().Append(AInput);
                         UpdateData(AInput);
                         return -1;
