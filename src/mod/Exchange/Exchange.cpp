@@ -75,7 +75,7 @@ namespace Apostol {
             struct timeval tv {0};
             gettimeofday(&tv, nullptr);
 
-            return tv.tv_sec * 1000 + tv.tv_usec / 1000 ;
+            return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 
         }
 
@@ -201,7 +201,7 @@ namespace Apostol {
 
             buffer->Append((char *) content, size * nmemb);
 
-            Log()->Debug(0, "[curl_api] Buffer:\n%s", buffer->c_str());
+            //Log()->Debug(0, "[curl_api] Buffer:\n%s", buffer->c_str());
 
             Log()->Debug(0, "[curl_api] curl_cb: Done!");
 
@@ -216,7 +216,9 @@ namespace Apostol {
 
             CURLcode res;
 
-            if( m_curl ) {
+            if ( m_curl ) {
+
+                curl_easy_reset(m_curl);
 
                 curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
                 curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, CExchange::curl_cb);
@@ -233,11 +235,16 @@ namespace Apostol {
                     curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, chunk);
                 }
 
-                if ( !post_data.IsEmpty() || action == "POST" || action == "PUT" || action == "DELETE" ) {
+                if ( action == "GET" ) {
+
+                    curl_easy_setopt(m_curl, CURLOPT_HTTPGET, TRUE );
+
+                } else if ( !post_data.IsEmpty() || action == "POST" || action == "PUT" || action == "DELETE" ) {
 
                     if ( action == "PUT" || action == "DELETE" ) {
                         curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, action.c_str() );
                     }
+
                     curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, post_data.c_str() );
                 }
 
