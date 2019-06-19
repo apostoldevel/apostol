@@ -815,13 +815,13 @@ namespace Delphi {
 
             CString(): CCustomString() {};
 
-            CString(const CString& S): CString() { Create(S); };
+            CString(const CString& S);
 
-            CString(LPCTSTR Str, size_t Length = 0): CString() { Create(Str, Length); };
+            CString(LPCTSTR Str, size_t Length = 0);
 
-            CString(TCHAR C): CString() { Create(C); };
+            CString(TCHAR C);
 
-            explicit CString(size_t Length, TCHAR C): CString() { Create(Length, C); };
+            explicit CString(size_t Length, TCHAR C);
 
             void Create(const CString& S);
             void Create(LPCTSTR Str, size_t Length = 0);

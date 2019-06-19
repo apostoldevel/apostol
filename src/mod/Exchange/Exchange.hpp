@@ -22,6 +22,7 @@ Author:
 --*/
 
 #include <curl/curl.h>
+#include "base64.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 #ifndef APOSTOL_EXCHANGE_HPP
@@ -112,14 +113,14 @@ namespace Apostol {
 
             static size_t curl_cb(void *content, size_t size, size_t nmemb, CString *buffer);
             void curl_api(CString &url, CString &result_json);
-            void curl_api_with_header(CString &url, CString &str_result, CStringList &extra_http_header,
-                    CString &post_data, CString &action);
+            void curl_api_with_header(const CString &url, const CString &str_result,
+                 const CStringList &extra_http_header, const CString &post_data, const CString &action);
 
             void ExceptionToJson(Delphi::Exception::Exception *AException, CString& Json);
 
         protected:
 
-            void GetServerTime(CString &exchange, CJSON &json_result);
+            void GetServerTime(CExchangeHandler *Exchange, CJSON &json_result);
 
             void GetTicker(CExchangeHandler *Exchange, const CString& Symbol, CJSON &Result);
 

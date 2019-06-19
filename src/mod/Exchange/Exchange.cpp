@@ -41,27 +41,38 @@ namespace Apostol {
 
     namespace Exchange {
 
-        CString b2a_hex( char *byte_arr, int n ) {
+        #define SHA256_DIGEST_LENGTH   32
+        #define SHA384_DIGEST_LENGTH   48
+        #define SHA512_DIGEST_LENGTH   64
+
+
+        CString b2a_hex(const unsigned char *byte_arr, int size) {
             const static CString HexCodes = "0123456789abcdef";
             CString HexString;
-            for ( int i = 0; i < n ; ++i ) {
+            for ( int i = 0; i < size; ++i ) {
                 unsigned char BinValue = byte_arr[i];
-                HexString += HexCodes[( BinValue >> 4 ) & 0x0F];
+                HexString += HexCodes[(BinValue >> 4) & 0x0F];
                 HexString += HexCodes[BinValue & 0x0F];
             }
             return HexString;
         }
 
-        CString hmac_sha256( const char *key, const char *data) {
+        CString hmac_sha256(const CString& key, const CString& data) {
             unsigned char* digest;
-            digest = HMAC(EVP_sha256(), key, strlen(key), (unsigned char *) data, strlen(data), nullptr, nullptr);
-            return b2a_hex( (char *) digest, 32 );
+            digest = HMAC(EVP_sha256(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
+            return b2a_hex( digest, SHA256_DIGEST_LENGTH );
         }
 
-        CString hmac_sha512( const char *key, const char *data) {
+        CString hmac_sha384(const CString& key, const CString& data) {
             unsigned char* digest;
-            digest = HMAC(EVP_sha512(), key, strlen(key), (unsigned char *) data, strlen(data), nullptr, nullptr);
-            return b2a_hex( (char *) digest, 32 );
+            digest = HMAC(EVP_sha384(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
+            return b2a_hex( digest, SHA384_DIGEST_LENGTH );
+        }
+
+        CString hmac_sha512(const CString& key, const CString& data) {
+            unsigned char* digest;
+            digest = HMAC(EVP_sha512(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
+            return b2a_hex( digest, SHA512_DIGEST_LENGTH );
         }
 
         CString to_string(unsigned long Value) {
@@ -209,8 +220,8 @@ namespace Apostol {
         }
 
         // Do the curl
-        void CExchange::curl_api_with_header(CString &url, CString &str_result, CStringList &extra_http_header,
-                CString &post_data, CString &action) {
+        void CExchange::curl_api_with_header(const CString &url, const CString &str_result,
+                const CStringList &extra_http_header, const CString &post_data, const CString &action) {
 
             Log()->Debug(0, "[curl_api] curl_api_with_header");
 
@@ -229,9 +240,10 @@ namespace Apostol {
                 if ( extra_http_header.Count() > 0 ) {
 
                     struct curl_slist *chunk = nullptr;
-                    for ( int i = 0 ; i < extra_http_header.Count() ;i++ ) {
-                        chunk = curl_slist_append(chunk, extra_http_header[i].c_str() );
+                    for ( int i = 0; i < extra_http_header.Count(); i++ ) {
+                        chunk = curl_slist_append(chunk, extra_http_header[i].c_str());
                     }
+
                     curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, chunk);
                 }
 
@@ -239,13 +251,17 @@ namespace Apostol {
 
                     curl_easy_setopt(m_curl, CURLOPT_HTTPGET, TRUE );
 
-                } else if ( !post_data.IsEmpty() || action == "POST" || action == "PUT" || action == "DELETE" ) {
+                } else if ( action == "POST" || action == "PUT" || action == "DELETE" ) {
 
                     if ( action == "PUT" || action == "DELETE" ) {
                         curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, action.c_str() );
-                    }
+                    } else {
+                        curl_easy_setopt(m_curl, CURLOPT_HTTPPOST, TRUE );
 
-                    curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, post_data.c_str() );
+                        if (!post_data.IsEmpty()) {
+                            curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, post_data.c_str());
+                        }
+                    }
                 }
 
                 res = curl_easy_perform(m_curl);
@@ -262,26 +278,27 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CExchange::curl_api(CString &url, CString &result_json) {
-            CStringList Header;
-
-            CString action("GET");
-            CString post_data("");
-
-            curl_api_with_header(url, result_json, Header, post_data, action);
+            curl_api_with_header(url, result_json, CStringList(), CString(), "GET");
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::GetServerTime(CString &exchange, CJSON &json_result) {
+        void CExchange::GetServerTime(CExchangeHandler *Exchange, CJSON &json_result) {
 
-            Log()->Debug(0, "[%s] GetServerTime", exchange.c_str());
+            Log()->Debug(0, "[%s] GetServerTime", Exchange->Name().c_str());
 
             CString url;
 
-            if (exchange.Lower() == "binance") {
-                url = BINANCE_HOST;
-                url += "/api/v1/time";
-            } else {
-                throw Delphi::Exception::ExceptionFrm(_T("Unknown exchange: \"%s\""), exchange.c_str());
+            switch (Exchange->Type()) {
+                case etBinance:
+                    url += "/api/v1/time";
+                    break;
+
+                case etPoloniex:
+                    throw Delphi::Exception::ExceptionFrm(_T("[%s] No support."), Exchange->Name().c_str());
+
+                case etBitfinex:
+                    url += "/v1/pubticker/";
+                    break;
             }
 
             CString str_result;
@@ -292,12 +309,12 @@ namespace Apostol {
                     json_result.Clear();
                     json_result << str_result;
                 } catch (Delphi::Exception::Exception &e) {
-                    Log()->Error(LOG_EMERG, 0, "[%s] GetServerTime: Error: %s", exchange.c_str(), e.what());
+                    Log()->Error(LOG_EMERG, 0, "[%s] GetServerTime: Error: %s", Exchange->Name().c_str());
                 }
-                Log()->Debug(0, "[%s] GetServerTime: Done!", exchange.c_str());
+                Log()->Debug(0, "[%s] GetServerTime: Done!", Exchange->Name().c_str());
 
             } else {
-                Log()->Error(LOG_EMERG, 0, "[%s] GetServerTime: Failed to get anything.", exchange.c_str());
+                Log()->Error(LOG_EMERG, 0, "[%s] GetServerTime: Failed to get anything.", Exchange->Name().c_str());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -378,7 +395,7 @@ namespace Apostol {
 
             url.Append(QueryString);
 
-            Log()->Debug(0, "[%s] Order book: uri = |%s|", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] Order book - uri: %s", Exchange->Name().c_str(), url.c_str());
 
             curl_api(url, Result);
 
@@ -408,7 +425,7 @@ namespace Apostol {
             CString action = "POST";
 
             CString url(Exchange->Uri());
-            url += "/api/v3/order?";
+            url += "/api/v3/order";
 
             CString post_data("symbol=");
             post_data.Append( Symbol );
@@ -463,17 +480,17 @@ namespace Apostol {
             post_data.Append("&timestamp=");
             post_data.Append( to_string( get_current_ms_epoch() ) );
 
-            CString signature = hmac_sha256( Exchange->SecretKey().c_str(), post_data.c_str() );
+            CString signature = hmac_sha256( Exchange->SecretKey(), post_data );
 
             post_data.Append( "&signature=");
             post_data.Append( signature );
 
             CStringList extra_http_header;
-            CString header_chunk("X-MBX-APIKEY: ");
-            header_chunk.Append( Exchange->ApiKey() );
-            extra_http_header.Add(header_chunk);
 
-            Log()->Debug(0, "[%s] Send Order: uri = |%s%s|", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
+            extra_http_header.Add(CString("X-MBX-APIKEY: "));
+            extra_http_header.Last().Append(Exchange->ApiKey());
+
+            Log()->Debug(0, "[%s] Send Order - uri: %s, data: %s", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
 
             curl_api_with_header( url, Result, extra_http_header, post_data, action ) ;
 
@@ -502,7 +519,7 @@ namespace Apostol {
 
             url.Append(QueryString);
 
-            Log()->Debug(0, "[%s] Order book: uri = |%s|", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] Order book - uri: %s", Exchange->Name().c_str(), url.c_str());
 
             curl_api(url, Result);
 
@@ -540,7 +557,7 @@ namespace Apostol {
             }
 
             CString url(Exchange->Uri());
-            url += "/tradingApi?";
+            url += "/tradingApi";
 
             CString post_data("command=");
             post_data.Append( Params["type"].Lower() );
@@ -578,22 +595,19 @@ namespace Apostol {
             post_data.Append("&nonce=");
             post_data.Append( to_string( get_current_ms_epoch() ) );
 
-            CString signature = hmac_sha512( Exchange->SecretKey().c_str(), post_data.c_str() );
+            CString signature = hmac_sha512( Exchange->SecretKey(), post_data );
 
             CStringList extra_http_header;
 
-            CString header_key("Key: ");
-            header_key.Append( Exchange->ApiKey() );
+            extra_http_header.Add(CString("Key: "));
+            extra_http_header.Last().Append(Exchange->ApiKey());
 
-            CString header_sign("Sign: ");
-            header_sign.Append( signature );
+            extra_http_header.Add(CString("Sign: "));
+            extra_http_header.Last().Append(signature);
 
-            extra_http_header.Add(header_key);
-            extra_http_header.Add(header_sign);
+            Log()->Debug(0, "[%s] Send Order - uri: %s, data: %s", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
 
-            Log()->Debug(0, "[%s] Send Order: uri = |%s%s|", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
-
-            curl_api_with_header( url, Result, extra_http_header, post_data, action ) ;
+            curl_api_with_header( url, Result, extra_http_header, post_data, action );
 
             if (!Result.IsEmpty()) {
                 Log()->Debug(0, "[%s] Send order: Done.", Exchange->Name().c_str());
@@ -615,7 +629,7 @@ namespace Apostol {
 
             url.Append(Symbol.Lower());
 
-            Log()->Debug(0, "[%s] Order book: uri = |%s|", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] Order book - uri: %s", Exchange->Name().c_str(), url.c_str());
 
             curl_api(url, Result);
 
@@ -629,6 +643,67 @@ namespace Apostol {
 
         void CExchange::BitfinexTradeHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
 
+            Log()->Debug(0, "[%s] Send Order", Exchange->Name().c_str());
+
+            if (Exchange->ApiKey().IsEmpty()) {
+                throw Delphi::Exception::ExceptionFrm(_T("[%s] API Key has not been set"), Exchange->Name().c_str());
+            }
+
+            if (Exchange->SecretKey().IsEmpty()) {
+                throw Delphi::Exception::ExceptionFrm(_T("[%s] Secret Key has not been set"), Exchange->Name().c_str());
+            }
+
+            CString Symbol;
+            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
+
+            CString action = "POST";
+
+            CString url(Exchange->Uri());
+            url += "/v1/order/new";
+
+            CString payload;
+
+            payload.Format(R"({"request": "%s", "nonce": "%ul", "symbol": "%s", "amount": "%s", "price": "%d", "exchange": "%s", "side": "%s", "type": "%s"})",
+                    "/v1/order/new",
+                    get_current_ms_epoch(),
+                    Symbol.c_str(),
+                    Params["amount"].c_str(),
+                    1000,
+                    "bitfinex",
+                    Params["type"].Lower().c_str(),
+                    "market"
+            );
+
+            CString payload_enc = base64_encode(reinterpret_cast<const uint8_t *>(payload.c_str()), payload.length());
+
+            CString signature = hmac_sha384( Exchange->SecretKey(), payload_enc );
+
+            CStringList extra_http_header;
+
+            extra_http_header.Add(CString("Content-Type: "));
+            extra_http_header.Last().Append( "application/json" );
+
+            extra_http_header.Add(CString("Accept: "));
+            extra_http_header.Last().Append( "application/json" );
+
+            extra_http_header.Add(CString("X-BFX-APIKEY: "));
+            extra_http_header.Last().Append( Exchange->ApiKey() );
+
+            extra_http_header.Add(CString("X-BFX-SIGNATURE: "));
+            extra_http_header.Last().Append( signature );
+
+            extra_http_header.Add(CString("X-BFX-PAYLOAD: "));
+            extra_http_header.Last().Append( payload_enc );
+
+            Log()->Debug(0, "[%s] Send Order - uri: %s, payload: %s", Exchange->Name().c_str(), url.c_str(), payload.c_str());
+
+            curl_api_with_header( url, Result, extra_http_header, payload, action ) ;
+
+            if (!Result.IsEmpty()) {
+                Log()->Debug(0, "[%s] Send order: Done.", Exchange->Name().c_str());
+            } else {
+                Log()->Debug(0, "[%s] Send order: Failed to get anything", Exchange->Name().c_str());
+            }
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -893,6 +968,7 @@ namespace Apostol {
 
             LReply->Clear();
             LReply->ContentType = CReply::json;
+            LReply->AddHeader("Access-Control-Allow-Origin", "*");
 
             if (LRequest->Method == _T("POST")) {
                 Post(AConnection);
