@@ -933,7 +933,7 @@ namespace Apostol {
 
                 LModule->Execute(LConnection);
 
-                log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Execute runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
+                Log()->Debug(0, _T("[Module] Runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
             } catch (Delphi::Exception::Exception &E) {
                 DoServerException(LConnection, &E);
                 LConnection->SendStockReply(CReply::internal_server_error);

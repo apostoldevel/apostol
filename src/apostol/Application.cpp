@@ -522,10 +522,10 @@ namespace Apostol {
 
             if ( Config()->Daemon() ) {
                 Daemonize();
-            }
 
-            Log()->RedirectStdErr();
-            Log()->UseStdErr(false);
+                Log()->UseStdErr(false);
+                Log()->RedirectStdErr();
+            }
 
             Start(CApplicationProcess::Create(this, m_ProcessType));
 
@@ -998,6 +998,9 @@ namespace Apostol {
 
         void CProcessSingle::Run() {
 
+#ifdef _DEBUG
+            Log()->AddLogFile("stderr:", LOG_DEBUG);
+#endif
             while (!(sig_terminate || sig_quit)) {
 
                 log_debug0(LOG_DEBUG_EVENT, Log(), 0, "single cycle");
@@ -1142,7 +1145,9 @@ namespace Apostol {
             CApplicationProcess *LProcess;
             for (int i = 0; i < Application()->ProcessCount(); ++i) {
                 LProcess = Application()->Process(i);
-                Log()->Debug(0, "process (%s)\t: %P - %i %P e:%d t:%d d:%d r:%d j:%d",
+
+                log_debug9(LOG_DEBUG_EVENT, Log(), 0,
+                              "process (%s)\t: %P - %i %P e:%d t:%d d:%d r:%d j:%d",
                                LProcess->ProcessName(),
                                Pid(),
                                i,

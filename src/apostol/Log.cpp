@@ -106,7 +106,7 @@ namespace Apostol {
 
             Close();
 
-            if (strncmp(m_lpFileName, "stderr", 7) == 0) {
+            if (strncmp(m_lpFileName, "stderr:", 7) == 0) {
                 m_hHandle = STDERR_FILENO;
             } else {
                 m_hHandle = ::open(m_lpFileName, m_iFlags, FILE_DEFAULT_ACCESS);

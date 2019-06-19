@@ -44,7 +44,7 @@ namespace Apostol {
         #define SHA256_DIGEST_LENGTH   32
         #define SHA384_DIGEST_LENGTH   48
         #define SHA512_DIGEST_LENGTH   64
-
+        //--------------------------------------------------------------------------------------------------------------
 
         CString b2a_hex(const unsigned char *byte_arr, int size) {
             const static CString HexCodes = "0123456789abcdef";
@@ -56,39 +56,42 @@ namespace Apostol {
             }
             return HexString;
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         CString hmac_sha256(const CString& key, const CString& data) {
             unsigned char* digest;
             digest = HMAC(EVP_sha256(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
             return b2a_hex( digest, SHA256_DIGEST_LENGTH );
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         CString hmac_sha384(const CString& key, const CString& data) {
             unsigned char* digest;
             digest = HMAC(EVP_sha384(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
             return b2a_hex( digest, SHA384_DIGEST_LENGTH );
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         CString hmac_sha512(const CString& key, const CString& data) {
             unsigned char* digest;
             digest = HMAC(EVP_sha512(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
             return b2a_hex( digest, SHA512_DIGEST_LENGTH );
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         CString to_string(unsigned long Value) {
             TCHAR szString[_INT_T_LEN + 1] = {0};
             sprintf(szString, "%lu", Value);
             return CString(szString);
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         unsigned long get_current_ms_epoch( ) {
-
             struct timeval tv {0};
             gettimeofday(&tv, nullptr);
-
             return tv.tv_sec * 1000 + tv.tv_usec / 1000;
-
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         void PairToSymbol(CExchangeType Exchange, const CString& Pair, CString& Symbol) {
 
@@ -132,6 +135,7 @@ namespace Apostol {
                     break;
             }
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         CExchange::CExchange() : CApostolModule() {
             curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -218,6 +222,7 @@ namespace Apostol {
 
             return size * nmemb;
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         // Do the curl
         void CExchange::curl_api_with_header(const CString &url, const CString &str_result,
@@ -264,7 +269,11 @@ namespace Apostol {
                     }
                 }
 
+                clock_t start = clock();
+
                 res = curl_easy_perform(m_curl);
+
+                Log()->Debug(0, "[curl_api] curl_easy_perform runtime: %.2f ms.", (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
 
                 /* Check for errors */
                 if ( res != CURLE_OK ) {
@@ -273,7 +282,7 @@ namespace Apostol {
 
             }
 
-            Log()->Debug(0, "[curl_api] done" ) ;
+            Log()->Debug(0, "[curl_api] curl_api_with_header: Done!" ) ;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -370,7 +379,7 @@ namespace Apostol {
 
             LReply->Content << R"(["BTC-USDT", "ETH-USDT", "XRP-USDT", "ETH-BTC", "XRP-BTC", "XRP-ETH"])";
 
-            Log()->Debug(0, "Get: %s\n", LReply->Content.c_str());
+            Log()->Debug(0, "Result: %s\n", LReply->Content.c_str());
 
             AConnection->SendReply(CReply::ok);
 
@@ -395,12 +404,12 @@ namespace Apostol {
 
             url.Append(QueryString);
 
-            Log()->Debug(0, "[%s] Order book - uri: %s", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
 
             curl_api(url, Result);
 
             if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order book: Done.", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order book: Done!", Exchange->Name().c_str());
             } else {
                 Log()->Debug(0, "[%s] Order book: Failed to get anything", Exchange->Name().c_str());
             }
@@ -409,7 +418,7 @@ namespace Apostol {
 
         void CExchange::BinanceTradeHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
 
-            Log()->Debug(0, "[%s] Send Order", Exchange->Name().c_str());
+            Log()->Debug(0, "[%s] Order", Exchange->Name().c_str());
 
             if (Exchange->ApiKey().IsEmpty()) {
                 throw Delphi::Exception::ExceptionFrm(_T("[%s] API Key has not been set"), Exchange->Name().c_str());
@@ -490,14 +499,14 @@ namespace Apostol {
             extra_http_header.Add(CString("X-MBX-APIKEY: "));
             extra_http_header.Last().Append(Exchange->ApiKey());
 
-            Log()->Debug(0, "[%s] Send Order - uri: %s, data: %s", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
+            Log()->Debug(0, "[%s] uri: %s, data: %s", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
 
             curl_api_with_header( url, Result, extra_http_header, post_data, action ) ;
 
             if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Send order: Done.", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order: Done!", Exchange->Name().c_str());
             } else {
-                Log()->Debug(0, "[%s] Send order: Failed to get anything", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order: Failed to get anything", Exchange->Name().c_str());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -519,12 +528,12 @@ namespace Apostol {
 
             url.Append(QueryString);
 
-            Log()->Debug(0, "[%s] Order book - uri: %s", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
 
             curl_api(url, Result);
 
             if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order book: Done.", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order book: Done!", Exchange->Name().c_str());
             } else {
                 Log()->Debug(0, "[%s] Order book: Failed to get anything", Exchange->Name().c_str());
             }
@@ -533,7 +542,7 @@ namespace Apostol {
 
         void CExchange::PoloniexTradeHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
 
-            Log()->Debug(0, "[%s] Send Order", Exchange->Name().c_str());
+            Log()->Debug(0, "[%s] Order", Exchange->Name().c_str());
 
             if (Exchange->ApiKey().IsEmpty()) {
                 throw Delphi::Exception::ExceptionFrm(_T("[%s] API Key has not been set"), Exchange->Name().c_str());
@@ -605,14 +614,14 @@ namespace Apostol {
             extra_http_header.Add(CString("Sign: "));
             extra_http_header.Last().Append(signature);
 
-            Log()->Debug(0, "[%s] Send Order - uri: %s, data: %s", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
+            Log()->Debug(0, "[%s] uri: %s, data: %s", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
 
             curl_api_with_header( url, Result, extra_http_header, post_data, action );
 
             if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Send order: Done.", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order: Done!", Exchange->Name().c_str());
             } else {
-                Log()->Debug(0, "[%s] Send order: Failed to get anything", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order: Failed to get anything", Exchange->Name().c_str());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -629,12 +638,12 @@ namespace Apostol {
 
             url.Append(Symbol.Lower());
 
-            Log()->Debug(0, "[%s] Order book - uri: %s", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
 
             curl_api(url, Result);
 
             if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order book: Done.", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order book: Done!", Exchange->Name().c_str());
             } else {
                 Log()->Debug(0, "[%s] Order book: Failed to get anything", Exchange->Name().c_str());
             }
@@ -643,7 +652,7 @@ namespace Apostol {
 
         void CExchange::BitfinexTradeHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
 
-            Log()->Debug(0, "[%s] Send Order", Exchange->Name().c_str());
+            Log()->Debug(0, "[%s] Order", Exchange->Name().c_str());
 
             if (Exchange->ApiKey().IsEmpty()) {
                 throw Delphi::Exception::ExceptionFrm(_T("[%s] API Key has not been set"), Exchange->Name().c_str());
@@ -695,14 +704,14 @@ namespace Apostol {
             extra_http_header.Add(CString("X-BFX-PAYLOAD: "));
             extra_http_header.Last().Append( payload_enc );
 
-            Log()->Debug(0, "[%s] Send Order - uri: %s, payload: %s", Exchange->Name().c_str(), url.c_str(), payload.c_str());
+            Log()->Debug(0, "[%s] uri: %s, payload: %s", Exchange->Name().c_str(), url.c_str(), payload.c_str());
 
             curl_api_with_header( url, Result, extra_http_header, payload, action ) ;
 
             if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Send order: Done.", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order: Done!", Exchange->Name().c_str());
             } else {
-                Log()->Debug(0, "[%s] Send order: Failed to get anything", Exchange->Name().c_str());
+                Log()->Debug(0, "[%s] Order: Failed to get anything", Exchange->Name().c_str());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -792,11 +801,11 @@ namespace Apostol {
 
             LReply->Content += "]";
 
-            Log()->Debug(0, "Get: %s\n", LReply->Content.c_str());
+            Log()->Debug(0, "[Quote] Content size: %d", LReply->Content.size());
 
             AConnection->SendReply(CReply::ok);
 
-            Log()->Debug(0, "Quote: Done!");
+            Log()->Debug(0, "[Quote] Done!");
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -804,7 +813,7 @@ namespace Apostol {
 
             auto LReply = AConnection->Reply();
 
-            Log()->Debug(0, "Trade");
+            Log()->Debug(0, "[Trade] Start");
 
             CExchangeHandler *Handler;
             // Перебор бирж...
@@ -818,12 +827,12 @@ namespace Apostol {
             }
 
             if (!LReply->Content.IsEmpty()) {
-                Log()->Debug(0, "Get: %s\n", LReply->Content.c_str());
+                Log()->Debug(0, "[Trade] Content size: %d", LReply->Content.size());
             }
 
             AConnection->SendReply(CReply::ok);
 
-            Log()->Debug(0, "Trade: Done!");
+            Log()->Debug(0, "[Trade] Done!");
         }
         //--------------------------------------------------------------------------------------------------------------
 
