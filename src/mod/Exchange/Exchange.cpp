@@ -675,11 +675,13 @@ namespace Apostol {
             CString url(Exchange->Uri());
             url += "/v1/order/new";
 
+            uint64_t nonce = time(nullptr) * 4;
+
             CString payload;
 
             payload.Format(R"({"request": "%s", "nonce": "%ul", "symbol": "%s", "amount": "%s", "price": "%d", "exchange": "%s", "side": "%s", "type": "%s"})",
                     "/v1/order/new",
-                    get_current_ms_epoch(),
+                    to_string(++nonce).c_str(),
                     Symbol.c_str(),
                     Params["amount"].c_str(),
                     1000,
