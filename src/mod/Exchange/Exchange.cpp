@@ -500,7 +500,9 @@ namespace Apostol {
             extra_http_header.Add(CString("X-MBX-APIKEY: "));
             extra_http_header.Last().Append(Exchange->ApiKey());
 
-            Log()->Debug(0, "[%s] uri: %s, data: %s", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
+            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] post data: %s", Exchange->Name().c_str(), post_data.c_str());
+            Log()->Debug(0, "[%s] signature: %s", Exchange->Name().c_str(), signature.c_str());
 
             curl_api_with_header( url, Result, extra_http_header, post_data, action ) ;
 
@@ -616,7 +618,9 @@ namespace Apostol {
             extra_http_header.Add(CString("Sign: "));
             extra_http_header.Last().Append(signature);
 
-            Log()->Debug(0, "[%s] uri: %s, data: %s", Exchange->Name().c_str(), url.c_str(), post_data.c_str());
+            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] post data: %s", Exchange->Name().c_str(), post_data.c_str());
+            Log()->Debug(0, "[%s] signature: %s", Exchange->Name().c_str(), signature.c_str());
 
             curl_api_with_header( url, Result, extra_http_header, post_data, action );
 
@@ -706,7 +710,9 @@ namespace Apostol {
             extra_http_header.Add(CString("X-BFX-PAYLOAD: "));
             extra_http_header.Last().Append( payload_enc );
 
-            Log()->Debug(0, "[%s] uri: %s, payload: %s", Exchange->Name().c_str(), url.c_str(), payload.c_str());
+            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
+            Log()->Debug(0, "[%s] post data: %s", Exchange->Name().c_str(), payload.c_str());
+            Log()->Debug(0, "[%s] signature: %s", Exchange->Name().c_str(), signature.c_str());
 
             curl_api_with_header( url, Result, extra_http_header, payload, action ) ;
 

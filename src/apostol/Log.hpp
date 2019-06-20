@@ -380,6 +380,9 @@ using namespace Apostol::Log;
 #define log_debug8(level, log, err, fmt, arg1, arg2, arg3, arg4, arg5,    \
                        arg6, arg7, arg8)
 
+#define log_debug9(level, log, err, fmt, arg1, arg2, arg3, arg4, arg5,    \
+                       arg6, arg7, arg8, arg9)
+
 #endif
 
 #endif //APOSTOL_LOGFILE_HPP
