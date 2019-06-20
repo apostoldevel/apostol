@@ -681,6 +681,30 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        LIB_DELPHI bool ValA(LPCSTR S, float *val) {
+            char *temp;
+            bool Result = true;
+            errno = 0;
+            *val = strtof(S, &temp);
+            if (temp == S || *temp != '\0' ||
+                ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE))
+                Result = false;
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI bool ValW(LPCWSTR S, float *val) {
+            wchar_t *temp;
+            bool Result = true;
+            errno = 0;
+            *val = wcstof(S, &temp);
+            if (temp == S || *temp != '\0' ||
+                ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE))
+                Result = false;
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         LIB_DELPHI bool ValA(LPCSTR S, double *val) {
             char *temp;
             bool Result = true;
@@ -698,6 +722,30 @@ namespace Delphi {
             bool Result = true;
             errno = 0;
             *val = wcstod(S, &temp);
+            if (temp == S || *temp != '\0' ||
+                ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE))
+                Result = false;
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI bool ValA(LPCSTR S, long double *val) {
+            char *temp;
+            bool Result = true;
+            errno = 0;
+            *val = strtold(S, &temp);
+            if (temp == S || *temp != '\0' ||
+                ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE))
+                Result = false;
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI bool ValW(LPCWSTR S, long double *val) {
+            wchar_t *temp;
+            bool Result = true;
+            errno = 0;
+            *val = wcstold(S, &temp);
             if (temp == S || *temp != '\0' ||
                 ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE))
                 Result = false;
@@ -787,7 +835,39 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI double StrToFloatA(LPCSTR S) {
+        LIB_DELPHI float StrToFloatA(LPCSTR S) {
+            float val;
+            if (!ValA(S, &val))
+                ErrorStrToFloatA(val, S);
+            return val;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI float StrToFloatW(LPCWSTR S) {
+            float val;
+            if (!ValW(S, &val))
+                ErrorStrToFloatW(val, S);
+            return val;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI float StrToFloatDefA(LPCSTR S, float Default) {
+            float val;
+            if (!ValA(S, &val))
+                return Default;
+            return val;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI float StrToFloatDefW(LPCWSTR S, float Default) {
+            float val;
+            if (!ValW(S, &val))
+                return Default;
+            return val;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI double StrToDoubleA(LPCSTR S) {
             double val;
             if (!ValA(S, &val))
                 ErrorStrToFloatA(val, S);
@@ -795,7 +875,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI double StrToFloatW(LPCWSTR S) {
+        LIB_DELPHI double StrToDoubleW(LPCWSTR S) {
             double val;
             if (!ValW(S, &val))
                 ErrorStrToFloatW(val, S);
@@ -803,7 +883,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI double StrToFloatDefA(LPCSTR S, double Default) {
+        LIB_DELPHI double StrToDoubleDefA(LPCSTR S, double Default) {
             double val;
             if (!ValA(S, &val))
                 return Default;
@@ -811,8 +891,40 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI double StrToFloatDefW(LPCWSTR S, double Default) {
+        LIB_DELPHI double StrToDoubleDefW(LPCWSTR S, double Default) {
             double val;
+            if (!ValW(S, &val))
+                return Default;
+            return val;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI long double StrToDecimalA(LPCSTR S) {
+            long double val;
+            if (!ValA(S, &val))
+                ErrorStrToFloatA(val, S);
+            return val;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI long double StrToDecimalW(LPCWSTR S) {
+            long double val;
+            if (!ValW(S, &val))
+                ErrorStrToFloatW(val, S);
+            return val;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI long double StrToDecimalDefA(LPCSTR S, long double Default) {
+            long double val;
+            if (!ValA(S, &val))
+                return Default;
+            return val;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI long double StrToDecimalDefW(LPCWSTR S, long double Default) {
+            long double val;
             if (!ValW(S, &val))
                 return Default;
             return val;

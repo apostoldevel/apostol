@@ -391,16 +391,17 @@ namespace Apostol {
 
             Log()->Debug(0, "[%s] Order book", Exchange->Name().c_str());
 
-            CString url(Exchange->Uri());
-            url += "/api/v1/depth?";
-
             CString Symbol;
             PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
+
+            CString url(Exchange->Uri());
+            url += "/api/v1/depth?";
 
             CString QueryString("symbol=");
             QueryString.Append(Symbol);
 
-            QueryString.Append("&limit=1000");
+            QueryString.Append("&limit=");
+            QueryString.Append(Params["limit"]);
 
             url.Append(QueryString);
 
@@ -515,16 +516,17 @@ namespace Apostol {
 
             Log()->Debug(0, "[%s] Order book", Exchange->Name().c_str());
 
+            CString Symbol;
+            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
+
             CString url(Exchange->Uri());
             url += "/public?";
 
             CString QueryString("command=returnOrderBook&currencyPair=");
-
-            CString Symbol;
-            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
-
             QueryString.Append(Symbol);
-            QueryString.Append("&depth=100"); // Max: 100
+
+            QueryString.Append("&depth="); // Max: 100
+            QueryString.Append(Params["limit"]);
 
             url.Append(QueryString);
 
@@ -630,11 +632,11 @@ namespace Apostol {
 
             Log()->Debug(0, "[%s] Order book", Exchange->Name().c_str());
 
-            CString url(Exchange->Uri());
-            url += "/v1/book/";
-
             CString Symbol;
             PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
+
+            CString url(Exchange->Uri());
+            url += "/v1/book/";
 
             url.Append(Symbol.Lower());
 
@@ -759,24 +761,38 @@ namespace Apostol {
 
                     if (Data.IsArray()) {
 
-                        double totalAmountCurrency = 0;
-                        double totalAmountAsset = amount;
+                        DebugMessage("Exchange: %s\n", Handler->Name().c_str());
+
+                        double AmountCurrency = 0;
+                        double AmountAsset = amount;
+
+                        DebugMessage("AmountCurrency: %f, AmountAsset: %f\n", AmountCurrency, AmountAsset);
 
                         for (int j = 0; j < Data.Count(); j++) {
 
                             const CJSONValue &Next = Data[j];
 
-                            if (totalAmountAsset > Next[1].AsDouble()) {
-                                totalAmountAsset -= Next[1].AsDouble();
-                                totalAmountCurrency += Next[0].AsDouble() * Next[1].AsDouble();
+                            if (AmountAsset > Next[1].AsDouble()) {
+
+                                AmountAsset -= Next[1].AsDouble();
+                                AmountCurrency += Next[0].AsDouble() * Next[1].AsDouble();
+
+                                DebugMessage("[C] Price: %.2f (%s), Amount: %.8f (%s)\n", Next[0].AsDouble(), Next[0].AsSiring().c_str(), Next[1].AsDouble(), Next[1].AsSiring().c_str());
+                                DebugMessage("[C] AmountCurrency: %.4f, AmountAsset: %.4f\n", AmountCurrency, AmountAsset);
+
                             } else {
-                                totalAmountCurrency += Next[0].AsDouble() * totalAmountAsset;
-                                totalAmountAsset = 0;
+
+                                AmountCurrency += Next[0].AsDouble() * AmountAsset;
+                                AmountAsset = 0;
+
+                                DebugMessage("[B] Price: %.2f (%s), Amount: %.8f (%s)\n", Next[0].AsDouble(), Next[0].AsSiring().c_str(), Next[1].AsDouble(), Next[1].AsSiring().c_str());
+                                DebugMessage("[B] AmountCurrency: %.4f, AmountAsset: %.4f\n", AmountCurrency, AmountAsset);
+
                                 break;
                             }
                         }
 
-                        if (totalAmountCurrency != 0) {
+                        if (AmountCurrency != 0) {
 
                             if (Count > 0) {
                                 LReply->Content += ", ";
@@ -784,12 +800,12 @@ namespace Apostol {
 
                             CString Str;
                             Str.Format(
-                                    _T("{\"asks_bids\": \"%s\", \"AveragePrice\": %f, \"TotalPrice\": %f, \"Exchange\": \"%s\", \"Remain\": %f}"),
+                                    _T("{\"asks_bids\": \"%s\", \"AveragePrice\": %.4f, \"TotalPrice\": %.4f, \"Exchange\": \"%s\", \"Remain\": %.2f}"),
                                     asks_bids.c_str(),
-                                    totalAmountCurrency / (amount - totalAmountAsset),
-                                    totalAmountCurrency,
+                                    AmountCurrency / (amount - AmountAsset),
+                                    AmountCurrency,
                                     Handler->Name().c_str(),
-                                    totalAmountAsset);
+                                    AmountAsset);
 
                             LReply->Content += Str;
 
@@ -940,6 +956,7 @@ namespace Apostol {
                         Params.AddPair("pair", LUri[3]);
                         Params.AddPair("type", LUri[4]);
                         Params.AddPair("amount", LUri[5]);
+                        Params.AddPair("limit", "1000");
 
                         Quote(Params, AConnection);
 

@@ -149,8 +149,16 @@ namespace Delphi {
         LIB_DELPHI bool ValW(LPCWSTR S, long int *val);
         //--------------------------------------------------------------------------------------------------------------
 
+        LIB_DELPHI bool ValA(LPCSTR S, float *val);
+        LIB_DELPHI bool ValW(LPCWSTR S, float *val);
+        //--------------------------------------------------------------------------------------------------------------
+
         LIB_DELPHI bool ValA(LPCSTR S, double *val);
         LIB_DELPHI bool ValW(LPCWSTR S, double *val);
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI bool ValA(LPCSTR S, long double *val);
+        LIB_DELPHI bool ValW(LPCWSTR S, long double *val);
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI long int StrToIntA(LPCSTR S);
@@ -161,12 +169,28 @@ namespace Delphi {
         LIB_DELPHI long int StrToIntDefW(LPCWSTR S, long int Default);
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI double StrToFloatA(LPCSTR S);
-        LIB_DELPHI double StrToFloatW(LPCWSTR S);
+        LIB_DELPHI float StrToFloatA(LPCSTR S);
+        LIB_DELPHI float StrToFloatW(LPCWSTR S);
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI double StrToFloatDefA(LPCSTR S, double Default);
-        LIB_DELPHI double StrToFloatDefW(LPCWSTR S, double Default);
+        LIB_DELPHI float StrToFloatDefA(LPCSTR S, float Default);
+        LIB_DELPHI float StrToFloatDefW(LPCWSTR S, float Default);
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI double StrToDoubleA(LPCSTR S);
+        LIB_DELPHI double StrToDoubleW(LPCWSTR S);
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI double StrToDoubleDefA(LPCSTR S, double Default);
+        LIB_DELPHI double StrToDoubleDefW(LPCWSTR S, double Default);
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI long double StrToDecimalA(LPCSTR S);
+        LIB_DELPHI long double StrToDecimalW(LPCWSTR S);
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI long double StrToDecimalDefA(LPCSTR S, long double Default);
+        LIB_DELPHI long double StrToDecimalDefW(LPCWSTR S, long double Default);
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPSTR DateTimeToStrA(CDateTime Value, LPSTR Str, size_t Size, LPCSTR Format = "%Y-%m-%d %H:%M:%S");
@@ -194,7 +218,14 @@ namespace Delphi {
     #define StrToFloat          StrToFloatW
     #define StrToFloatDef       StrToFloatDefW
 
+    #define StrToDouble         StrToDoubleW
+    #define StrToDoubleDef      StrToDoubleDefW
+
+    #define StrToDecimal        StrToDecimalW
+    #define StrToDecimalDef     StrToDecimalDefW
+
     #define DateTimeToStr       DateTimeToStrW
+
     #define StrToDateTime       StrToDateTimeW
     #define StrToDateTimeDef    StrToDateTimeDefW
 
@@ -217,6 +248,13 @@ namespace Delphi {
 
     #define StrToFloat          StrToFloatA
     #define StrToFloatDef       StrToFloatDefA
+
+    #define StrToDouble         StrToDoubleA
+    #define StrToDoubleDef      StrToDoubleDefA
+
+    #define StrToDecimal        StrToDecimalA
+    #define StrToDecimalDef     StrToDecimalDefA
+
     #define StrToDateTimeDef    StrToDateTimeDefA
 
     #define DateTimeToStr       DateTimeToStrA
