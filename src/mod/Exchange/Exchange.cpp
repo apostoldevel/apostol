@@ -446,9 +446,6 @@ namespace Apostol {
             post_data.Append("&type=");
             post_data.Append( "MARKET" );
 
-            post_data.Append("&timeInForce=");
-            post_data.Append( "GTC" );
-
             post_data.Append("&quantity=");
             post_data.Append( Params["amount"] );
 
@@ -605,8 +602,10 @@ namespace Apostol {
                 post_data.Append( postOnly );
             }
 
+            uint64_t nonce = time(nullptr) * 4;
+
             post_data.Append("&nonce=");
-            post_data.Append( to_string( get_current_ms_epoch() ) );
+            post_data.Append( to_string( ++nonce ) );
 
             CString signature = hmac_sha512( Exchange->SecretKey(), post_data );
 
@@ -894,21 +893,28 @@ namespace Apostol {
 
                 if (LUri[2] == _T("Trade")) {
 
-                    if (LUri.Count() == 7) {
-                        CStringList Params;
-
-                        Params.AddPair("pair", LUri[3]);
-                        Params.AddPair("type", LUri[4]);
-                        Params.AddPair("amount", LUri[5]);
-                        Params.AddPair("exchange", LUri[6]);
-
-                        // Poloniex default value
-                        Params.AddPair("immediateOrCancel", "1");
-
-                        Trade(Params, AConnection);
-
+                    if (LRequest->Content.IsEmpty()) {
+                        AConnection->SendStockReply(CReply::no_content);
                         return;
                     }
+
+                    CJSON Json;
+                    CStringList Params;
+
+                    Json << LRequest->Content;
+
+                    Params.AddPair("pair", Json["pair"].AsSiring());
+                    Params.AddPair("type", Json["type"].AsSiring());
+                    Params.AddPair("amount", Json["amount"].AsSiring());
+                    Params.AddPair("exchange", Json["exchange"].AsSiring());
+
+                    // Poloniex default value
+                    Params.AddPair("immediateOrCancel", "1");
+
+                    Trade(Params, AConnection);
+
+                    return;
+
                 }
 
                 AConnection->SendStockReply(CReply::not_found);
