@@ -387,11 +387,24 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CClient365::ExceptionToJson(Delphi::Exception::Exception *AException, CString &Json) {
+
+            LPCTSTR lpMessage = AException->what();
+            CString Message;
+            TCHAR ch = 0;
+
+            while (*lpMessage) {
+                ch = *lpMessage++;
+                if ((ch == '"') || (ch == '\\')) {
+                    Message.Append('\\');
+                }
+                Message.Append(ch);
+            }
+
             Json.Format(
                     _T("{\"error\": {\"errors\": [{\"domain\": \"%s\", \"reason\": \"%s\", \"message\": "
                        "\"%s\", \"locationType\": \"%s\", \"location\": \"%s\"}], \"code\": %u, "
                        "\"message\": \"%s\"}}"), _T("module"), _T("exception"),
-                    AException->what(), _T("Query"), _T("PostgreSQL"), 500, _T("Internal Server Error"));
+                    Message.c_str(), _T("cURL"), _T("Exchange"), 500, _T("Internal Server Error"));
         }
         //--------------------------------------------------------------------------------------------------------------
 

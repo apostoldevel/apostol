@@ -602,10 +602,8 @@ namespace Apostol {
                 post_data.Append( postOnly );
             }
 
-            uint64_t nonce = time(nullptr) * 4;
-
             post_data.Append("&nonce=");
-            post_data.Append( to_string( ++nonce ) );
+            post_data.Append( to_string(get_current_ms_epoch()) );
 
             CString signature = hmac_sha512( Exchange->SecretKey(), post_data );
 
@@ -675,13 +673,11 @@ namespace Apostol {
             CString url(Exchange->Uri());
             url += "/v1/order/new";
 
-            uint64_t nonce = time(nullptr) * 4;
-
             CString payload;
 
-            payload.Format(R"({"request": "%s", "nonce": "%ul", "symbol": "%s", "amount": "%s", "price": "%d", "exchange": "%s", "side": "%s", "type": "%s"})",
+            payload.Format(R"({"request": "%s", "nonce": "%lu", "symbol": "%s", "amount": "%s", "price": "%d", "exchange": "%s", "side": "%s", "type": "%s"})",
                     "/v1/order/new",
-                    to_string(++nonce).c_str(),
+                    get_current_ms_epoch(),
                     Symbol.c_str(),
                     Params["amount"].c_str(),
                     1000,
@@ -732,7 +728,7 @@ namespace Apostol {
             const CString &Type = Params.Values("type");
             const CString &Amount = Params.Values("amount");
 
-            double amount = StrToFloat(Amount.c_str());
+            double amount = StrToDouble(Amount.c_str());
 
             TList<CJSON> Json;
 
@@ -860,11 +856,20 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CExchange::ExceptionToJson(Delphi::Exception::Exception *AException, CString &Json) {
-            Json.Format(
-                    _T("{\"error\": {\"errors\": [{\"domain\": \"%s\", \"reason\": \"%s\", \"message\": "
-                       "\"%s\", \"locationType\": \"%s\", \"location\": \"%s\"}], \"code\": %u, "
-                       "\"message\": \"%s\"}}"), _T("module"), _T("exception"),
-                    AException->what(), _T("cURL"), _T("Exchange"), 500, _T("Internal Server Error"));
+
+            LPCTSTR lpMessage = AException->what();
+            CString Message;
+            TCHAR ch = 0;
+
+            while (*lpMessage) {
+                ch = *lpMessage++;
+                if ((ch == '"') || (ch == '\\')) {
+                    Message.Append('\\');
+                }
+                Message.Append(ch);
+            }
+
+            Json.Format(R"({"Error": "%s"})", Message.c_str());
         }
         //--------------------------------------------------------------------------------------------------------------
 
