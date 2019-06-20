@@ -111,6 +111,9 @@ namespace Apostol {
             void Post(CHTTPConnection *AConnection);
             void Get(CHTTPConnection *AConnection);
 
+            bool SaveOrder(CHTTPConnection *AConnection, const CStringList& Params);
+            bool UpdateOrder(CHTTPConnection *AConnection, const CStringList& Params, const CString& Response);
+
             static size_t curl_cb(void *content, size_t size, size_t nmemb, CString *buffer);
             void curl_api(CString &url, CString &result_json);
             void curl_api_with_header(const CString &url, const CString &str_result,

@@ -841,7 +841,9 @@ namespace Apostol {
                 Handler = (CExchangeHandler *) m_Exchanges->Objects(i);
 
                 if (Handler->Enabled() && (Params["exchange"].Lower() == Handler->Name().Lower())) {
+                    SaveOrder(AConnection, Params);
                     Handler->TradeHandler(Handler, Params, LReply->Content); // Отправляем ордер...
+                    UpdateOrder(AConnection, Params, LReply->Content);
                 }
             }
 
@@ -909,6 +911,9 @@ namespace Apostol {
                     CStringList Params;
 
                     Json << LRequest->Content;
+
+                    // Асинхронный ключ
+                    Params.AddPair("async_key", to_string(get_current_ms_epoch()));
 
                     Params.AddPair("pair", Json["pair"].AsSiring());
                     Params.AddPair("type", Json["type"].AsSiring());
@@ -1002,7 +1007,58 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CExchange::DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) {
+            Log()->Error(LOG_EMERG, 0, AException->what());
+        }
+        //--------------------------------------------------------------------------------------------------------------
 
+        bool CExchange::SaveOrder(CHTTPConnection *AConnection, const CStringList &Params) {
+            auto LQuery = GetQuery(AConnection);
+
+            if (LQuery == nullptr) {
+                Log()->Debug(0, "[Trade] Save order error: GetQuery() is null");
+                return false;
+            }
+
+            LQuery->SQL().Add(CString());
+            LQuery->SQL().Last().Format(R"(SELECT * FROM NewOrder(%s, '%s', '%s', '%s', %s);)",
+                    Params["async_key"].c_str(),
+                    Params["exchange"].c_str(),
+                    Params["pair"].c_str(),
+                    Params["type"].c_str(),
+                    Params["amount"].c_str()
+            );
+
+            if (LQuery->QueryStart() != POLL_QUERY_START_ERROR) {
+                return true;
+            } else {
+                delete LQuery;
+            }
+
+            return false;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CExchange::UpdateOrder(CHTTPConnection *AConnection, const CStringList &Params, const CString &Response) {
+            auto LQuery = GetQuery(AConnection);
+
+            if (LQuery == nullptr) {
+                Log()->Debug(0, "[Trade] Update order error: GetQuery() is null");
+                return false;
+            }
+
+            LQuery->SQL().Add(CString());
+            LQuery->SQL().Last().Format(R"(UPDATE orders SET response = '%s'::jsonb WHERE async_key = %s;)",
+                                        Response.c_str(),
+                                        Params["async_key"].c_str()
+            );
+
+            if (LQuery->QueryStart() != POLL_QUERY_START_ERROR) {
+                return true;
+            } else {
+                delete LQuery;
+            }
+
+            return false;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1027,7 +1083,6 @@ namespace Apostol {
 
             AConnection->SendStockReply(CReply::not_implemented);
         }
-
     }
 
 }

@@ -304,8 +304,10 @@ namespace Apostol {
 
             while (logfile) {
 
-                if (logfile->Level() < ALevel || logfile->LogType() != ALogType) {
-                    goto next;
+                if (logfile->Handle() != STDERR_FILENO) {
+                    if (logfile->Level() < ALevel || logfile->LogType() != ALogType) {
+                        goto next;
+                    }
                 }
 
                 if (Level() < ALevel && !debug_connection) {
