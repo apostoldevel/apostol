@@ -723,126 +723,44 @@ namespace Apostol {
 
         void CExchange::Quote(const CStringList& Params, CHTTPConnection *AConnection) {
 
-            auto LReply = AConnection->Reply();
-
-            const CString &Type = Params.Values("type");
-            const CString &Amount = Params.Values("amount");
-
-            double amount = StrToDouble(Amount.c_str());
-
-            TList<CJSON> Json;
-
             Log()->Debug(0, "Quote");
 
-            CString asks_bids;
-            if (Type == "BUY") {
-                asks_bids = "asks";
-            } else if (Type == "SELL") {
-                asks_bids = "bids";
-            }
+            auto LReply = AConnection->Reply();
 
             CStringList Results;
-
-            int Count = 0;
-
-            LReply->Content = "[";
-
             CExchangeHandler *Handler;
-            // Перебор бирж...
+
             for (int i = 0; i < m_Exchanges->Count(); i++) {
-
                 Handler = (CExchangeHandler *) m_Exchanges->Objects(i);
-                Json.Add(CJSON());
-
                 if (Handler->Enabled()) {
-
-                    Results.Add(CString());
-                    Handler->QuoteHandler(Handler, Params, Results[i]); // Запрос данных с биржи...
-                    Json[i] << Results[i]; // Конвертируем в JSON
-
-                    const CJSONValue &Data = Json[i][asks_bids];
-
-                    if (Data.IsArray()) {
-
-                        DebugMessage("Exchange: %s\n", Handler->Name().c_str());
-
-                        double AmountCurrency = 0;
-                        double AmountAsset = amount;
-
-                        DebugMessage("AmountCurrency: %f, AmountAsset: %f\n", AmountCurrency, AmountAsset);
-
-                        for (int j = 0; j < Data.Count(); j++) {
-
-                            const CJSONValue &Next = Data[j];
-
-                            if (AmountAsset > Next[1].AsDouble()) {
-
-                                AmountAsset -= Next[1].AsDouble();
-                                AmountCurrency += Next[0].AsDouble() * Next[1].AsDouble();
-
-                                DebugMessage("[C] Price: %.2f (%s), Amount: %.8f (%s)\n", Next[0].AsDouble(), Next[0].AsSiring().c_str(), Next[1].AsDouble(), Next[1].AsSiring().c_str());
-                                DebugMessage("[C] AmountCurrency: %.4f, AmountAsset: %.4f\n", AmountCurrency, AmountAsset);
-
-                            } else {
-
-                                AmountCurrency += Next[0].AsDouble() * AmountAsset;
-                                AmountAsset = 0;
-
-                                DebugMessage("[B] Price: %.2f (%s), Amount: %.8f (%s)\n", Next[0].AsDouble(), Next[0].AsSiring().c_str(), Next[1].AsDouble(), Next[1].AsSiring().c_str());
-                                DebugMessage("[B] AmountCurrency: %.4f, AmountAsset: %.4f\n", AmountCurrency, AmountAsset);
-
-                                break;
-                            }
-                        }
-
-                        if (AmountCurrency != 0) {
-
-                            if (Count > 0) {
-                                LReply->Content += ", ";
-                            }
-
-                            CString Str;
-                            Str.Format(
-                                    _T("{\"asks_bids\": \"%s\", \"AveragePrice\": %.4f, \"TotalPrice\": %.4f, \"Exchange\": \"%s\", \"Remain\": %.2f}"),
-                                    asks_bids.c_str(),
-                                    AmountCurrency / (amount - AmountAsset),
-                                    AmountCurrency,
-                                    Handler->Name().c_str(),
-                                    AmountAsset);
-
-                            LReply->Content += Str;
-
-                            Count++;
-                        }
-                    }
+                    Results.AddObject(CString(), (CObject *) Handler);
+                    Handler->QuoteHandler(Handler, Params, Results[i]);
                 }
             }
 
-            LReply->Content += "]";
-
-            Log()->Debug(0, "[Quote] Content size: %d", LReply->Content.size());
+            FindBestPrice(Params, Results, LReply->Content);
 
             AConnection->SendReply(CReply::ok);
 
+            Log()->Debug(0, "[Quote] Content size: %d", LReply->Content.size());
             Log()->Debug(0, "[Quote] Done!");
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CExchange::Trade(const CStringList &Params, CHTTPConnection *AConnection) {
 
-            auto LReply = AConnection->Reply();
-
             Log()->Debug(0, "[Trade] Start");
 
+            auto LReply = AConnection->Reply();
+
             CExchangeHandler *Handler;
-            // Перебор бирж...
             for (int i = 0; i < m_Exchanges->Count(); i++) {
 
                 Handler = (CExchangeHandler *) m_Exchanges->Objects(i);
 
                 if (Handler->Enabled() && (Params["exchange"].Lower() == Handler->Name().Lower())) {
                     SaveOrder(AConnection, Params);
-                    Handler->TradeHandler(Handler, Params, LReply->Content); // Отправляем ордер...
+                    Handler->TradeHandler(Handler, Params, LReply->Content);
                     UpdateOrder(AConnection, Params, LReply->Content);
                 }
             }
@@ -857,6 +775,304 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CExchange::Split(const CStringList &Params, CHTTPConnection *AConnection) {
+
+            Log()->Debug(0, "Split");
+
+            auto LReply = AConnection->Reply();
+
+            CStringList Results;
+            CExchangeHandler *Handler;
+
+            for (int i = 0; i < m_Exchanges->Count(); i++) {
+                Handler = (CExchangeHandler *) m_Exchanges->Objects(i);
+                if (Handler->Enabled()) {
+                    Results.AddObject(CString(), (CObject *) Handler);
+                    Handler->QuoteHandler(Handler, Params, Results[i]);
+                }
+            }
+
+            OrderSplit(Params, Results, LReply->Content);
+
+            AConnection->SendReply(CReply::ok);
+
+            Log()->Debug(0, "[Split] Content size: %d", LReply->Content.size());
+            Log()->Debug(0, "[Split] Done!");
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CExchange::CalcBestPrice(const CJSONValue &Data, CAmountPrice &Amount) {
+
+            DebugMessage("Exchange: %s\n", Amount.Exchange.c_str());
+            DebugMessage("Currency: %f, Asset: %f\n", Amount.Currency, Amount.Asset);
+
+            for (int j = 0; j < Data.Count(); j++) {
+
+                const CJSONValue &Next = Data[j];
+
+                if (Amount.Asset > Next[1].AsDouble()) {
+
+                    Amount.Asset -= Next[1].AsDouble();
+                    Amount.Currency += Next[0].AsDouble() * Next[1].AsDouble();
+
+                    DebugMessage("[C] Price: %.2f (%s), Amount: %.8f (%s)\n", Next[0].AsDouble(),
+                                 Next[0].AsSiring().c_str(), Next[1].AsDouble(), Next[1].AsSiring().c_str());
+                    DebugMessage("[C] Currency: %.4f, Asset: %.4f\n", Amount.Currency, Amount.Asset);
+
+                } else {
+
+                    Amount.Currency += Next[0].AsDouble() * Amount.Asset;
+                    Amount.Asset = 0;
+
+                    DebugMessage("[B] Price: %.2f (%s), Amount: %.8f (%s)\n", Next[0].AsDouble(),
+                                 Next[0].AsSiring().c_str(), Next[1].AsDouble(), Next[1].AsSiring().c_str());
+                    DebugMessage("[B] Currency: %.4f, Asset: %.4f\n", Amount.Currency, Amount.Asset);
+
+                    break;
+                }
+            }
+
+            return Amount.Currency != 0;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CExchange::CalcSplitPrice(const CJSONValue &Data, double Amount, TList<CAmountPrice> &Price) {
+
+            //DebugMessage("Exchange: %s\n", Exchange.c_str());
+            //DebugMessage("Currency: %f, Asset: %f\n", Amount.Currency, Amount.Asset);
+
+            int Index;
+
+            double Asset = Amount;
+            double Currency = 0;
+
+            for (int i = 0; i < Data.Count(); i++) {
+
+                const CJSONValue &Next = Data[i];
+
+                Index = 0;
+                while ((Index < Price.Count()) && (Price[Index].Exchange != Next[2].AsSiring()))
+                    Index++;
+
+                if (Index == Price.Count())
+                    continue;
+
+                if (Asset > Next[1].AsDouble()) {
+
+                    Asset -= Next[1].AsDouble();
+                    Currency += Next[0].AsDouble() * Next[1].AsDouble();
+
+                    Price[Index].Asset -= Next[1].AsDouble();
+                    Price[Index].Currency += Next[0].AsDouble() * Next[1].AsDouble();
+
+                    DebugMessage("[R] Exchange: %s, Price: %.2f (%s), Amount: %.8f (%s)\n", Next[2].AsSiring().c_str(),
+                            Next[0].AsDouble(), Next[0].AsSiring().c_str(), Next[1].AsDouble(), Next[1].AsSiring().c_str());
+
+                    DebugMessage("[D] Currency: %.4f, Asset: %.4f\n", Price[Index].Currency, Price[Index].Asset);
+                    DebugMessage("[A] Currency: %.4f, Asset: %.4f\n", Currency, Asset);
+
+                } else {
+
+                    Price[Index].Currency += Next[0].AsDouble() * Price[Index].Asset;
+                    Price[Index].Asset = 0;
+
+                    DebugMessage("[Q] Currency: %.4f, Asset: %.4f\n", Price[Index].Currency, Price[Index].Asset);
+                    DebugMessage("[Q] Currency: %.4f, Asset: %.4f\n", Currency, Asset);
+
+                    break;
+                }
+            }
+
+            return Currency != 0;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CExchange::FindBestPrice(const CStringList &Params, const CStringList &Requests, CString &Result) {
+
+            const CString &type = Params.Values("type");
+            const CString &amount = Params.Values("amount");
+
+            double Amount = StrToDouble(amount.c_str());
+
+            CString AsksBids;
+            if (type == "BUY") {
+                AsksBids = "asks";
+            } else if (type == "SELL") {
+                AsksBids = "bids";
+            }
+
+            CExchangeHandler *Exchange;
+            TList<CJSON> Json;
+
+            int Count = 0;
+
+            Result = "[";
+
+            for (int i = 0; i < Requests.Count(); i++) {
+
+                // Convert string JSON to object JSON
+                Json.Add(CJSON(Requests[i]));
+
+                // Get JSON array "asks" or "bids"
+                const CJSONValue &Data = Json[i][AsksBids];
+
+                if (Data.IsArray()) {
+                    Exchange = (CExchangeHandler *) Requests.Objects(i);
+
+                    CAmountPrice Price = {Exchange->Name(), 0, Amount};
+
+                    if (CalcBestPrice(Data, Price)) {
+
+                        if (Count > 0) {
+                            Result += ", ";
+                        }
+
+                        Result.Format(
+                                R"({"asks_bids": "%s", "AveragePrice": %.4f, "TotalPrice": %.4f, "Exchange": "%s", "Remain": %.2f})",
+                                AsksBids.c_str(),
+                                Price.Currency / (Amount - Price.Asset),
+                                Price.Currency,
+                                Exchange->Name().c_str(),
+                                Price.Asset);
+
+                        Count++;
+                    }
+                }
+            }
+
+            Result += "]";
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CExchange::OrderBookValueCompare(const CJSONValue &Value1, const CJSONValue &Value2) {
+            return Value1[0].Compare(Value2[0]);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CExchange::OrderSplit(const CStringList &Params, const CStringList &Requests, CString &Result) {
+
+            const CString &pair = Params.Values("pair");
+            const CString &type = Params.Values("type");
+            const CString &amount = Params.Values("amount");
+
+            double Amount = StrToDouble(amount.c_str());
+
+            CString AsksBids;
+            if (type == "BUY") {
+                AsksBids = "asks";
+            } else if (type == "SELL") {
+                AsksBids = "bids";
+            }
+
+            CExchangeHandler *Exchange;
+            CJSONValue Split;
+
+            TList<CJSON> Json;
+            TList<CAmountPrice> PriceArray;
+
+            CJSON Root(jvtObject);
+
+            Root.Object().AddPair("filled_amount", amount);
+            Root.Object().AddPair("filled_percent", amount);
+            Root.Object().AddPair("operation_code", "OrderFilled");
+
+            CJSONValue orderSpec(jvtObject);
+
+            orderSpec.Object().AddPair("amount", amount);
+            orderSpec.Object().AddPair("currency_pair", pair);
+            orderSpec.Object().AddPair("order_type", "market");
+            orderSpec.Object().AddPair("price", "0");
+            orderSpec.Object().AddPair("side", type.Lower());
+
+            Root.Object().AddPair("original_order_spec", orderSpec);
+
+            CJSONValue routedOrders(jvtObject);
+            CJSONValue singleMatches(jvtObject);
+
+            for (int i = 0; i < Requests.Count(); i++) {
+
+                // Convert string JSON to object JSON
+                Json.Add(CJSON(Requests[i]));
+
+                // Get JSON array "asks" or "bids"
+                const CJSONValue &Data = Json[i][AsksBids];
+
+                if (Data.IsArray()) {
+                    Exchange = (CExchangeHandler *) Requests.Objects(i);
+
+                    PriceArray.Add({Exchange->Name(), 0, Amount});
+
+                    for (int j = 0; j < Data.Count(); j++) {
+                        if (Data[j].IsArray()) {
+                            Split.Array().Add(Data[j]);
+                            Split.Array().Last().Array().Add(Exchange->Name());
+                        } else if (Data[j].IsObject()) {
+                            CJSONValue V(jvtArray);
+                            V.Array().Add(Data[j][0]);
+                            V.Array().Add(Data[j][1]);
+                            V.Array().Add(Exchange->Name());
+                            Split.Array().Add(V);
+                        }
+                    }
+
+                    CAmountPrice Price = {Exchange->Name(), 0, Amount};
+
+                    if (CalcBestPrice(Data, Price)) {
+
+                        CJSONValue singleMatche(jvtObject);
+
+                        singleMatche.Object().AddPair("avg_price", Price.Currency / (Amount - Price.Asset));
+                        singleMatche.Object().AddPair("filled_amount", Amount);
+                        singleMatche.Object().AddPair("filled_percent", (Amount - Price.Asset) / Amount * 100);
+
+                        singleMatches.Object().AddPair("demo-" + Exchange->Name(), singleMatche);
+                    }
+                }
+            }
+
+            Split.Array().Sort(OrderBookValueCompare);
+
+            //Split.GetJSON(Result);
+
+            double averagePrice = 0;
+            double Total = 0;
+
+            if (CalcSplitPrice(Split, Amount, PriceArray)) {
+
+                for (int i = 0; i < PriceArray.Count(); i++) {
+
+                    if (PriceArray[i].Currency == 0)
+                        continue;
+
+                    averagePrice += (PriceArray[i].Currency / (Amount - PriceArray[i].Asset));
+                    Total += PriceArray[i].Currency;
+
+                    CJSONValue singleOrder(jvtObject);
+
+                    singleOrder.Object().AddPair("amount", amount);
+                    singleOrder.Object().AddPair("currency_pair", pair);
+                    singleOrder.Object().AddPair("filled_amount", Amount);
+                    singleOrder.Object().AddPair("filled_percent", (Amount - PriceArray[i].Asset) / Amount * 100);
+                    singleOrder.Object().AddPair("market_name", "demo-" + PriceArray[i].Exchange);
+                    singleOrder.Object().AddPair("order_type", "market");
+                    singleOrder.Object().AddPair("price", "0");
+                    singleOrder.Object().AddPair("resulting_average_price", PriceArray[i].Currency / (Amount - PriceArray[i].Asset));
+                    singleOrder.Object().AddPair("resulting_total", PriceArray[i].Currency);
+                    singleOrder.Object().AddPair("side", type.Lower());
+
+                    routedOrders.Object().AddPair("demo-" + PriceArray[i].Exchange, singleOrder);
+                }
+            }
+
+            Root.Object().AddPair("resulting_average_price", averagePrice / PriceArray.Count());
+            Root.Object().AddPair("resulting_total", Total);
+            Root.Object().AddPair("routed_orders", routedOrders);
+            Root.Object().AddPair("single_market_matches", singleMatches);
+
+            Root.GetJSON(Result);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CExchange::ExceptionToJson(Delphi::Exception::Exception *AException, CString &Json) {
 
             LPCTSTR lpMessage = AException->what();
@@ -865,9 +1081,8 @@ namespace Apostol {
 
             while (*lpMessage) {
                 ch = *lpMessage++;
-                if ((ch == '"') || (ch == '\\')) {
+                if ((ch == '"') || (ch == '\\'))
                     Message.Append('\\');
-                }
                 Message.Append(ch);
             }
 
@@ -912,7 +1127,6 @@ namespace Apostol {
 
                     Json << LRequest->Content;
 
-                    // Асинхронный ключ
                     Params.AddPair("async_key", to_string(get_current_ms_epoch()));
 
                     Params.AddPair("pair", Json["pair"].AsSiring());
@@ -983,6 +1197,21 @@ namespace Apostol {
                         Params.AddPair("limit", "1000");
 
                         Quote(Params, AConnection);
+
+                        return;
+                    }
+
+                } else if (LUri[2] == _T("Split")) {
+
+                    if (LUri.Count() == 6) {
+                        CStringList Params;
+
+                        Params.AddPair("pair", LUri[3]);
+                        Params.AddPair("type", LUri[4]);
+                        Params.AddPair("amount", LUri[5]);
+                        Params.AddPair("limit", "10");
+
+                        Split(Params, AConnection);
 
                         return;
                     }
@@ -1071,19 +1300,18 @@ namespace Apostol {
             LReply->ContentType = CReply::json;
             LReply->AddHeader("Access-Control-Allow-Origin", "*");
 
-            if (LRequest->Method == _T("POST")) {
-                Post(AConnection);
+            if (LRequest->Method == _T("GET")) {
+                Get(AConnection);
                 return;
             }
 
-            if (LRequest->Method == _T("GET")) {
-                Get(AConnection);
+            if (LRequest->Method == _T("POST")) {
+                Post(AConnection);
                 return;
             }
 
             AConnection->SendStockReply(CReply::not_implemented);
         }
     }
-
 }
 }

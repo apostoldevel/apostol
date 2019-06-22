@@ -913,6 +913,27 @@ namespace Delphi {
                 return *this;
             };
 
+            CString& operator= (int Value) {
+                Clear();
+                TCHAR szValue[_INT_T_LEN + 1] = {0};
+                Create(IntToStr(Value, szValue, _INT_T_LEN));
+                return *this;
+            };
+
+            CString& operator= (float Value) {
+                Clear();
+                TCHAR szValue[_INT_T_LEN + 1] = {0};
+                Create(FloatToStr(Value, szValue, _INT_T_LEN));
+                return *this;
+            };
+
+            CString& operator= (double Value) {
+                Clear();
+                TCHAR szValue[_INT_T_LEN + 1] = {0};
+                Create(FloatToStr(Value, szValue, _INT_T_LEN));
+                return *this;
+            };
+
             CString& operator+= (const CString& S) {
                 if (this != &S) Append(S);
                 return *this;

@@ -99,6 +99,12 @@ namespace Apostol {
         };
         //--------------------------------------------------------------------------------------------------------------
 
+        struct CAmountPrice {
+            CString Exchange;
+            double Currency;
+            double Asset;
+        };
+
         class CExchange : public CApostolModule {
         private:
 
@@ -119,7 +125,15 @@ namespace Apostol {
             void curl_api_with_header(const CString &url, const CString &str_result,
                  const CStringList &extra_http_header, const CString &post_data, const CString &action);
 
+            void FindBestPrice(const CStringList& Params, const CStringList& Requests, CString& Result);
+            bool CalcBestPrice(const CJSONValue &Data, CAmountPrice &Amount);
+            bool CalcSplitPrice(const CJSONValue &Data, double Amount, TList<CAmountPrice> &Price);
+
+            void OrderSplit(const CStringList& Params, const CStringList& Requests, CString& Result);
+
             void ExceptionToJson(Delphi::Exception::Exception *AException, CString& Json);
+
+            static int OrderBookValueCompare(const CJSONValue& Value1, const CJSONValue& Value2);
 
         protected:
 
@@ -131,6 +145,7 @@ namespace Apostol {
 
             void Quote(const CStringList& Params, CHTTPConnection *AConnection);
             void Trade(const CStringList& Params, CHTTPConnection *AConnection);
+            void Split(const CStringList& Params, CHTTPConnection *AConnection);
 
             void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) override;
 

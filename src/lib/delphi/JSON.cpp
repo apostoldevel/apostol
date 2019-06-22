@@ -36,26 +36,34 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CJSON::CJSON(): CPersistent(this), m_ValueType(jvtNull) {
-            m_Json = nullptr;
-            m_UpdateCount = 0;
+        CJSON::CJSON(): CJSON(this, jvtNull) {
+
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CJSON::CJSON(CPersistent *AOwner): CPersistent(AOwner), m_ValueType(jvtNull) {
-            m_Json = nullptr;
-            m_UpdateCount = 0;
+        CJSON::CJSON(CJSONValueType ValueType): CJSON(this, ValueType) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CJSON::CJSON(CPersistent *AOwner): CJSON(AOwner, jvtNull) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CJSON::CJSON(const CString &AString): CJSON() {
+            JSON(AString);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         CJSON::CJSON(CPersistent *AOwner, CJSONValueType ValueType): CPersistent(AOwner), m_ValueType(ValueType) {
-            m_Json = nullptr;
+            m_Value = nullptr;
             m_UpdateCount = 0;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         CJSON::~CJSON() {
-            delete m_Json;
+            delete m_Value;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -80,45 +88,55 @@ namespace Delphi {
 
         CJSONObject *CJSON::CreateObject() {
             m_ValueType = jvtObject;
-            m_Json = new CJSONObject(this);
-            return (CJSONObject *) m_Json;
+            m_Value = new CJSONObject(this);
+            return (CJSONObject *) m_Value;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         CJSONArray *CJSON::CreateArray() {
             m_ValueType = jvtArray;
-            m_Json = new CJSONArray(this);
-            return (CJSONArray *) m_Json;
+            m_Value = new CJSONArray(this);
+            return (CJSONArray *) m_Value;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CJSON::Assign(const CJSON& Source) {
+
+            Clear();
+
             m_ValueType = Source.ValueType();
 
-            if (Assigned(Source.Json())) {
-                if (Source.Json()->ValueType() == jvtObject) {
-                    CreateObject();
+            if (Assigned(Source.Value())) {
+                if (Source.Value()->ValueType() == jvtObject) {
+                    CreateObject()->Assign(Source.Object());
                 }
 
-                if (Source.Json()->ValueType() == jvtArray) {
-                    CreateArray();
+                if (Source.Value()->ValueType() == jvtArray) {
+                    CreateArray()->Assign(Source.Array());
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSON::Concat(const CJSON& Source) {
+            if (Assigned(Source.Value()) && (ValueType() == Source.Value()->ValueType())) {
+                if (Source.Value()->ValueType() == jvtObject) {
+                    CreateObject()->Concat(Source.Object());
                 }
 
-                if (m_Json->ValueType() == jvtObject)
-                    Object() = Source.Object();
-
-                if (m_Json->ValueType() == jvtArray)
-                    Array() = Source.Array();
+                if (Source.Value()->ValueType() == jvtArray) {
+                    CreateArray()->Concat(Source.Array());
+                }
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         int CJSON::GetCount() const noexcept {
-            if (Assigned(m_Json)) {
-                if (m_Json->ValueType() == jvtObject)
+            if (Assigned(m_Value)) {
+                if (m_Value->ValueType() == jvtObject)
                     return Object().Count();
 
-                if (m_Json->ValueType() == jvtArray)
+                if (m_Value->ValueType() == jvtArray)
                     return Array().Count();
             }
 
@@ -127,33 +145,58 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CJSON::Clear() {
-            if (Assigned(m_Json)) {
-                if (m_Json->ValueType() == jvtObject)
+            if (Assigned(m_Value)) {
+                if (m_Value->ValueType() == jvtObject)
                     return Object().Clear();
 
-                if (m_Json->ValueType() == jvtArray)
+                if (m_Value->ValueType() == jvtArray)
                     return Array().Clear();
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        const CString &CJSON::GetJSON(CString &JSON) {
-            return JSON;
+        void CJSON::GetJSON(CString& String) {
+
+            if (ValueType() == jvtObject) {
+                String += "{";
+
+                for (int i = 0; i < Count(); i++) {
+
+                    if (i > 0) {
+                        String += ", ";
+                    }
+
+                    String += "\"";
+                    String += Members(i).String();
+                    String += "\": ";
+
+                    Object()[i].GetJSON(String);
+                }
+
+                String += "}";
+            }
+
+            if (ValueType() == jvtArray) {
+
+                String += "[";
+
+                for (int i = 0; i < Count(); i++) {
+
+                    if (i > 0) {
+                        String += ", ";
+                    }
+
+                    Array()[i].GetJSON(String);
+                }
+
+                String += "]";
+            }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CJSON::SetJSON(const CString &Value) {
-            SetJSONStr(Value.c_str(), Value.Size());
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        CString &CJSON::GetJSON() {
-            return m_JSON;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        const CString &CJSON::GetJSON() const {
-            return m_JSON;
+            if (!Value.IsEmpty())
+              SetJSONStr(Value.c_str(), Value.Size());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -242,7 +285,8 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CJSON::SaveToStream(CStream *Stream) {
-            const CString &S = GetJSON();
+            CString S;
+            GetJSON(S);
             Stream->WriteBuffer(S.Data(), S.Size());
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -345,38 +389,6 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        const CString &CJSONElements::GetJSON(CString &JSON) {
-            int I;
-            size_t L, LineBreakLen;
-            LPCTSTR LB = m_LineBreak;
-
-            JSON.Clear();
-
-            L = 0;
-            LineBreakLen = strlen(LB);
-
-            for (I = 0; I < GetCount(); ++I) {
-                const CJSONValue &Value = Get(I);
-                if (!Value.IsEmpty()){
-                    L = Value.Data().Length();
-                }
-            }
-
-            JSON.SetLength(L);
-            JSON.Position(0);
-
-            for (I = 0; I < GetCount(); ++I) {
-                const CJSONValue &Value = Get(I);
-                if (!Value.IsEmpty()) {
-                    JSON.WriteBuffer(Value.Data().Data(), Value.Data().Size());
-                    JSON.WriteBuffer(LB, LineBreakLen);
-                }
-            }
-
-            return JSON;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         void CJSONElements::Put(int Index, const CJSONValue &Value) {
             Delete(Index);
             Insert(Index, Value);
@@ -388,14 +400,23 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        int CJSONElements::CompareStrings(const CString &S1, const CString &S2) {
-            return S1.Compare(S2);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         int CJSONElements::Add(const CJSONValue &Value) {
             int Result = GetCount();
             Insert(Result, Value);
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONElements::Add(const CString &Value) {
+            int Result = GetCount();
+            Insert(Result, CJSONValue(Value));
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONElements::Add(reference Value) {
+            int Result = GetCount();
+            Insert(Result, CJSONValue(Value));
             return Result;
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -423,6 +444,18 @@ namespace Delphi {
                 m_LineBreak = Source.m_LineBreak;
                 m_StrictDelimiter = Source.m_StrictDelimiter;
 
+                AddElements(Source);
+            } catch (...) {
+                EndUpdate();
+                throw;
+            }
+            EndUpdate();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONElements::Concat(const CJSONElements &Source) {
+            BeginUpdate();
+            try {
                 AddElements(Source);
             } catch (...) {
                 EndUpdate();
@@ -493,6 +526,18 @@ namespace Delphi {
                 }
                 EndUpdate();
             }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONElements::GetJSON(CString &String) {
+            String += "[";
+            for (int i = 0; i < Count(); i++) {
+                if (i > 0) {
+                    String += ", ";
+                }
+                Values(i).GetJSON(String);
+            }
+            String += "]";
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -578,35 +623,23 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        const CString &CJSONMembers::GetJSON(CString &JSON) {
-            int I;
-            size_t L, LineBreakLen;
-            LPCTSTR LB = m_LineBreak;
+        void CJSONMembers::GetJSON(CString &String) {
+            String += "{";
 
-            JSON.Clear();
+            for (int i = 0; i < Count(); i++) {
 
-            L = 0;
-            LineBreakLen = strlen(LB);
-
-            for (I = 0; I < GetCount(); ++I) {
-                const CJSONMember &Member = Get(I);
-                if (!Member.Value().IsEmpty()){
-                    L = Member.Value().Data().Length();
+                if (i > 0) {
+                    String += ", ";
                 }
+
+                String += "\"";
+                String += Members(i).String();
+                String += "\": ";
+
+                Members(i).Value().GetJSON(String);
             }
 
-            JSON.SetLength(L);
-            JSON.Position(0);
-
-            for (I = 0; I < GetCount(); ++I) {
-                const CJSONMember &Member = Get(I);
-                if (!Member.Value().IsEmpty()) {
-                    JSON.WriteBuffer(Member.Value().Data().Data(), Member.Value().Data().Size());
-                    JSON.WriteBuffer(LB, LineBreakLen);
-                }
-            }
-
-            return JSON;
+            String += "}";
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -633,11 +666,6 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        int CJSONMembers::CompareStrings(const CString &S1, const CString &S2) {
-            return S1.Compare(S2);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         int CJSONMembers::Add(const CJSONMember &Value) {
             int Result = GetCount();
             Insert(Result, Value);
@@ -653,6 +681,41 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         int CJSONMembers::AddPair(reference String, const CJSONValue &Value) {
+            int Result = GetCount();
+            InsertPair(Result, String, Value);
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONMembers::AddPair(const CString &String, const CString &Value) {
+            int Result = GetCount();
+            InsertPair(Result, String, Value);
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONMembers::AddPair(reference String, const CString &Value) {
+            int Result = GetCount();
+            InsertPair(Result, String, Value);
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONMembers::AddPair(reference String, int Value) {
+            int Result = GetCount();
+            InsertPair(Result, String, Value);
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONMembers::AddPair(reference String, float Value) {
+            int Result = GetCount();
+            InsertPair(Result, String, Value);
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONMembers::AddPair(reference String, double Value) {
             int Result = GetCount();
             InsertPair(Result, String, Value);
             return Result;
@@ -690,8 +753,19 @@ namespace Delphi {
                 throw;
             }
             EndUpdate();
+        }
+        //--------------------------------------------------------------------------------------------------------------
 
-            //inherited::Assign(Source);
+        void CJSONMembers::Concat(const CJSONMembers& Source) {
+
+            BeginUpdate();
+            try {
+                AddMembers(Source);
+            } catch (...) {
+                EndUpdate();
+                throw;
+            }
+            EndUpdate();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -783,21 +857,7 @@ namespace Delphi {
         //-- CJSONValue ------------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
-/*
-        CJSONArray *CJSONValue::CreateArray() {
-            ValueType(jvtArray);
-            m_Json = new CJSONArray(this);
-            return (CJSONArray *) m_Json;
-        }
-        //--------------------------------------------------------------------------------------------------------------
 
-        CJSONObject *CJSONValue::CreateObject() {
-            ValueType(jvtObject);
-            m_Json = new CJSONObject(this);
-            return (CJSONObject *) m_Json;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-*/
         CJSONValue &CJSONValue::Get(int Index) {
             if (ValueType() == jvtObject)
                 return AsObject()[Index];
@@ -877,16 +937,131 @@ namespace Delphi {
 
             *this = Value;
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         void CJSONValue::Assign(const CJSONValue &Value) {
             inherited::Assign(Value);
             m_Data = Value.m_Data;
         }
+        //--------------------------------------------------------------------------------------------------------------
 
+        int CJSONValue::Compare(const CJSONValue &Value) const {
+
+            if (IsEmpty())
+                return -1;
+
+            if (Value.IsEmpty())
+                return 1;
+
+            if (ValueType() == Value.ValueType()) {
+
+                switch (ValueType()) {
+                    case jvtObject:
+                    case jvtArray:
+                        if (Count() == Value.Count())
+                            return 0;
+                        if (Count() > Value.Count())
+                            return 1;
+                        return -1;
+
+                    case jvtString:
+                        return AsSiring().Compare(Value.AsSiring());
+
+                    case jvtNumber:
+                        if (AsDouble() == Value.AsDouble())
+                            return 0;
+                        if (AsDouble() > Value.AsDouble())
+                            return 1;
+                        return -1;
+
+                    case jvtBoolean:
+                        if (AsBoolean() == Value.AsBoolean())
+                            return 0;
+                        if (AsBoolean())
+                            return 1;
+                        return -1;
+
+                    case jvtNull:
+                        return 0;
+                }
+            }
+
+            return incorrect_type;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONValue::GetJSON(CString &String) {
+            switch (ValueType()) {
+                case jvtObject:
+                    AsObject().GetJSON(String);
+                    break;
+
+                case jvtArray:
+                    AsArray().GetJSON(String);
+                    break;
+
+                case jvtString:
+                    String += "\"";
+                    String += Data();
+                    String += "\"";
+                    break;
+
+                case jvtNumber:
+                    String += Data();
+                    break;
+
+                case jvtBoolean:
+                    if (AsBoolean()) {
+                        String += "true";
+                    } else {
+                        String += "false";
+                    }
+                    break;
+
+                case jvtNull:
+                    String += "null";
+                    break;
+            }
+        }
         //--------------------------------------------------------------------------------------------------------------
 
         //-- CJSONArray ------------------------------------------------------------------------------------------------
 
+        //--------------------------------------------------------------------------------------------------------------
+
+        void QuickSort(CJSONValueList& SortList, int L, int R, CJSONListSortCompare SCompare) {
+            int I, J;
+
+            do {
+                I = L;
+                J = R;
+                const CJSONValue& P = SortList[(L + R) >> 1];
+
+                do {
+                    while (SCompare(SortList[I], P) < 0)
+                        I++;
+                    while (SCompare(SortList[J], P) > 0)
+                        J--;
+                    if (I <= J) {
+                        const CJSONValue &T = SortList[I];
+                        SortList[I] = SortList[J];
+                        SortList[J] = T;
+                        I++;
+                        J--;
+                    }
+                } while (I <= J);
+
+                if (L < J)
+                    QuickSort(SortList, L, J, SCompare);
+
+                L = I;
+            } while (I < R);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CJSONArray::CJSONArray() : CJSONArray(this) {
+
+        }
         //--------------------------------------------------------------------------------------------------------------
 
         CJSONArray::CJSONArray(CPersistent *AOwner) : CJSONElements(AOwner, jvtArray) {
@@ -928,6 +1103,16 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        int CJSONArray::Add(const CString &Value) {
+            return m_pList.Add(CJSONValue(Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONArray::Add(reference Value) {
+            return m_pList.Add(CJSONValue(Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CJSONArray::Insert(int Index, const CJSONValue &Value) {
             m_pList.Insert(Index, Value);
         }
@@ -956,6 +1141,13 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CJSONArray::Concat(const CJSONElements &Source) {
+            for (int I = 0; I < Source.Count(); ++I) {
+                Add(Source[I]);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CJSONArray::Clear() {
             m_pList.Clear();
         }
@@ -964,11 +1156,22 @@ namespace Delphi {
         void CJSONArray::Delete(int Index) {
             m_pList.Delete(Index);
         }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONArray::Sort(CJSONListSortCompare Compare) {
+            if (m_pList.Count() > 0)
+                QuickSort(m_pList, 0, GetCount() - 1, Compare);
+        }
 
         //--------------------------------------------------------------------------------------------------------------
 
         //-- CJSONObject -----------------------------------------------------------------------------------------------
 
+        //--------------------------------------------------------------------------------------------------------------
+
+        CJSONObject::CJSONObject(): CJSONObject(this) {
+
+        }
         //--------------------------------------------------------------------------------------------------------------
 
         CJSONObject::CJSONObject(CPersistent *AOwner): CJSONMembers(AOwner, jvtObject) {
@@ -1068,6 +1271,31 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        int CJSONObject::AddPair(const CString& String, const CString &Value) {
+            return m_pList.Add(CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONObject::AddPair(reference String, const CString &Value) {
+            return m_pList.Add(CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONObject::AddPair(reference String, int Value) {
+            return m_pList.Add(CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONObject::AddPair(reference String, float Value) {
+            return m_pList.Add(CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CJSONObject::AddPair(reference String, double Value) {
+            return m_pList.Add(CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CJSONObject::Insert(int Index, const CJSONMember &Value) {
             return m_pList.Insert(Index, Value);
         }
@@ -1079,6 +1307,31 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CJSONObject::InsertPair(int Index, reference String, const CJSONValue &Value) {
+            m_pList.Insert(Index, CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONObject::InsertPair(int Index, const CString &String, const CString &Value) {
+            m_pList.Insert(Index, CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONObject::InsertPair(int Index, reference String, const CString &Value) {
+            m_pList.Insert(Index, CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONObject::InsertPair(int Index, reference String, int Value) {
+            m_pList.Insert(Index, CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONObject::InsertPair(int Index, reference String, float Value) {
+            m_pList.Insert(Index, CJSONMember(String, Value));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CJSONObject::InsertPair(int Index, reference String, double Value) {
             m_pList.Insert(Index, CJSONMember(String, Value));
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -1203,7 +1456,7 @@ namespace Delphi {
                     case jvtObject:
                     case jvtArray:
                         CurrentArray().Add(CJSONValue(ValueType));
-                        m_pJsonList->Add(CurrentArray().Last().Json());
+                        m_pJsonList->Add(CurrentArray().Last().Value());
                         break;
                     default:
                         CurrentArray().Add(CJSONValue(ValueType));
