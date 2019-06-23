@@ -126,8 +126,8 @@ namespace Apostol {
                  const CStringList &extra_http_header, const CString &post_data, const CString &action);
 
             void FindBestPrice(const CStringList& Params, const CStringList& Requests, CString& Result);
-            bool CalcBestPrice(const CJSONValue &Data, CAmountPrice &Amount);
-            bool CalcSplitPrice(const CJSONValue &Data, double Amount, TList<CAmountPrice> &Price);
+            bool CalcBestPrice(const CJSONValue &Data, CAmountPrice &Price);
+            bool CalcSplitPrice(const CJSONValue &Data, CAmountPrice &Price, TList<CAmountPrice> &Exchanges);
 
             void OrderSplit(const CStringList& Params, const CStringList& Requests, CString& Result);
 
