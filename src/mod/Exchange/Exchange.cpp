@@ -23,16 +23,14 @@ Author:
 
 //----------------------------------------------------------------------------------------------------------------------
 
+#include <openssl/hmac.h>
 #include "Apostol.hpp"
 #include "Exchange.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-#include <openssl/hmac.h>
-//----------------------------------------------------------------------------------------------------------------------
-
-#define BINANCE_HOST    "https://api.binance.com"
-#define POLONIEX_HOST   "https://poloniex.com"
-#define BITFINEX_HOST   "https://api.bitfinex.com"
+#include "Binance.hpp"
+#include "Poloniex.hpp"
+#include "Bitfinex.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C++" {
@@ -40,11 +38,6 @@ extern "C++" {
 namespace Apostol {
 
     namespace Exchange {
-
-        #define SHA256_DIGEST_LENGTH   32
-        #define SHA384_DIGEST_LENGTH   48
-        #define SHA512_DIGEST_LENGTH   64
-        //--------------------------------------------------------------------------------------------------------------
 
         CString b2a_hex(const unsigned char *byte_arr, int size) {
             const static CString HexCodes = "0123456789abcdef";
@@ -58,21 +51,21 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CString hmac_sha256(const CString& key, const CString& data) {
+        CString hmac_sha256(const CString &key, const CString &data) {
             unsigned char* digest;
             digest = HMAC(EVP_sha256(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
             return b2a_hex( digest, SHA256_DIGEST_LENGTH );
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CString hmac_sha384(const CString& key, const CString& data) {
+        CString hmac_sha384(const CString &key, const CString &data) {
             unsigned char* digest;
             digest = HMAC(EVP_sha384(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
             return b2a_hex( digest, SHA384_DIGEST_LENGTH );
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CString hmac_sha512(const CString& key, const CString& data) {
+        CString hmac_sha512(const CString &key, const CString &data) {
             unsigned char* digest;
             digest = HMAC(EVP_sha512(), key.data(), key.length(), (unsigned char *) data.data(), data.length(), nullptr, nullptr);
             return b2a_hex( digest, SHA512_DIGEST_LENGTH );
@@ -86,60 +79,15 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        unsigned long get_current_ms_epoch( ) {
+        unsigned long get_current_ms_epoch() {
             struct timeval tv {0};
             gettimeofday(&tv, nullptr);
             return tv.tv_sec * 1000 + tv.tv_usec / 1000;
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void PairToSymbol(CExchangeType Exchange, const CString& Pair, CString& Symbol) {
-
-            CString Str;
-
-            size_t Pos = Pair.Find("-");
-
-            if (Pos == CString::npos) {
-                throw Delphi::Exception::ExceptionFrm(_T("Invalid format Pair: \"%s\""), Pair.c_str());
-            }
-
-            switch (Exchange) {
-                case etBinance:
-                    Symbol = Pair.SubString(0, Pos);
-                    Symbol += Pair.SubString(Pos + 1);
-
-                    break;
-
-                case etPoloniex:
-                    Symbol = Pair.SubString(Pos + 1);
-                    Symbol += "_";
-                    Symbol += Pair.SubString(0, Pos);
-
-                    break;
-
-                case etBitfinex:
-
-                    Symbol = Pair.SubString(0, Pos);
-                    Str = Pair.SubString(Pos + 1);
-
-                    if (Str == "USDT") {
-                        Str = "USD";
-                    }
-
-                    Symbol += Str;
-
-                    break;
-
-                default:
-                    Symbol = Pair;
-                    break;
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         CExchange::CExchange() : CApostolModule() {
             curl_global_init(CURL_GLOBAL_DEFAULT);
-            m_curl = curl_easy_init();
             m_Exchanges = new CStringList(true);
             InitExchanges();
         }
@@ -152,14 +100,13 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CExchange::Cleanup() {
-            curl_easy_cleanup(m_curl);
             curl_global_cleanup();
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CExchange::InitExchanges() {
 
-            CExchangeHandler *Handler = nullptr;
+            CExchangeApi *Exchange = nullptr;
             CString ConfFileName;
 
             ConfFileName = Config()->ConfPrefix() + "exchange.conf";
@@ -175,34 +122,28 @@ namespace Apostol {
 
                 for (int i = 0; i < Sections.Count(); i++) {
 
+                    Exchange = nullptr;
+
                     ConfFile.ReadSectionValues(Sections[i].c_str(), &Section);
 
-                    const CString &uri = Section.Values("uri");
+                    const CString &Uri = Section.Values("uri");
                     const CString &ApiKey = Section.Values("ApiKey");
                     const CString &SecretKey = Section.Values("SecretKey");
 
                     if (Sections[i].Lower() == "binance") {
-                        Handler = new CExchangeHandler(etBinance, uri.IsEmpty() ? BINANCE_HOST : uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
-                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::BinanceQuoteHandler, this, _1, _2, _3));
-                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::BinanceTradeHandler, this, _1, _2, _3));
-
-                        m_Exchanges->AddObject(Sections[i], (CObject *) Handler);
+                        Exchange = (CExchangeApi *) new CBinance(Uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
                     }
 
                     if (Sections[i].Lower() == "poloniex") {
-                        Handler = new CExchangeHandler(etPoloniex, uri.IsEmpty() ? POLONIEX_HOST : uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
-                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::PoloniexQuoteHandler, this, _1, _2, _3));
-                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::PoloniexTradeHandler, this, _1, _2, _3));
-
-                        m_Exchanges->AddObject(Sections[i], (CObject *) Handler);
+                        Exchange = (CExchangeApi *) new CPoloniex(Uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
                     }
 
                     if (Sections[i].Lower() == "bitfinex") {
-                        Handler = new CExchangeHandler(etBitfinex, uri.IsEmpty() ? BITFINEX_HOST : uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
-                        Handler->OnQuoteHandlerEvent(std::bind(&CExchange::BitfinexQuoteHandler, this, _1, _2, _3));
-                        Handler->OnTradeHandlerEvent(std::bind(&CExchange::BitfinexTradeHandler, this, _1, _2, _3));
+                        Exchange = (CExchangeApi *) new CBitfinex(Uri, ApiKey, SecretKey, ConfFile.ReadBool(Sections[i].c_str(), "enabled", true));
+                    }
 
-                        m_Exchanges->AddObject(Sections[i], (CObject *) Handler);
+                    if (Assigned(Exchange)) {
+                        m_Exchanges->AddObject(Sections[i], (CObject *) Exchange);
                     }
                 }
             }
@@ -210,7 +151,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         // Curl's callback
-        size_t CExchange::curl_cb(void *content, size_t size, size_t nmemb, CString *buffer)
+        size_t CExchangeApi::curl_cb(void *content, size_t size, size_t nmemb, CString *buffer)
         {
             Log()->Debug(0, "[curl_api] curl_cb");
 
@@ -225,7 +166,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         // Do the curl
-        void CExchange::curl_api_with_header(const CString &url, const CString &str_result,
+        void CExchangeApi::curl_api_with_header(const CString &url, const CString &str_result,
                 const CStringList &extra_http_header, const CString &post_data, const CString &action) {
 
             Log()->Debug(0, "[curl_api] curl_api_with_header");
@@ -237,7 +178,7 @@ namespace Apostol {
                 curl_easy_reset(m_curl);
 
                 curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
-                curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, CExchange::curl_cb);
+                curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, CExchangeApi::curl_cb);
                 curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &str_result);
                 curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYPEER, false);
                 curl_easy_setopt(m_curl, CURLOPT_ENCODING, "gzip");
@@ -286,89 +227,8 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::curl_api(CString &url, CString &result_json) {
+        void CExchangeApi::curl_api(CString &url, CString &result_json) {
             curl_api_with_header(url, result_json, CStringList(), CString(), "GET");
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::GetServerTime(CExchangeHandler *Exchange, CJSON &json_result) {
-
-            Log()->Debug(0, "[%s] GetServerTime", Exchange->Name().c_str());
-
-            CString url;
-
-            switch (Exchange->Type()) {
-                case etBinance:
-                    url += "/api/v1/time";
-                    break;
-
-                case etPoloniex:
-                    throw Delphi::Exception::ExceptionFrm(_T("[%s] No support."), Exchange->Name().c_str());
-
-                case etBitfinex:
-                    url += "/v1/pubticker/";
-                    break;
-            }
-
-            CString str_result;
-            curl_api(url, str_result);
-
-            if (!str_result.IsEmpty()) {
-                try {
-                    json_result.Clear();
-                    json_result << str_result;
-                } catch (Delphi::Exception::Exception &e) {
-                    Log()->Error(LOG_EMERG, 0, "[%s] GetServerTime: Error: %s", Exchange->Name().c_str());
-                }
-                Log()->Debug(0, "[%s] GetServerTime: Done!", Exchange->Name().c_str());
-
-            } else {
-                Log()->Error(LOG_EMERG, 0, "[%s] GetServerTime: Failed to get anything.", Exchange->Name().c_str());
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::GetTicker(CExchangeHandler *Exchange, const CString& Symbol, CJSON &Result) {
-
-            Log()->Debug(0, "[%s] GetTicker", Exchange->Name().c_str());
-
-            CString url(Exchange->Uri());
-
-            switch (Exchange->Type()) {
-                case etBinance:
-                    url += "/api/v3/ticker/price";
-
-                    if (!Symbol.IsEmpty()) {
-                        url += "?symbol=";
-                        url += Symbol;
-                    }
-
-                    break;
-
-                case etPoloniex:
-                    url += "/public?command=returnTicker";
-                    break;
-
-                case etBitfinex:
-                    url += "/v1/pubticker/";
-                    url += Symbol;
-                    break;
-            }
-
-            CString str_result;
-            curl_api(url, str_result);
-
-            if (!str_result.IsEmpty()) {
-                try {
-                    Result.Clear();
-                    Result << str_result;
-                } catch (Delphi::Exception::Exception &e) {
-                    Log()->Error(LOG_EMERG, 0, "[%s] GetTicker: Error: %s", Exchange->Name().c_str(), e.what());
-                }
-                Log()->Debug(0, "[%s] GetTicker: Done!", Exchange->Name().c_str());
-            } else {
-                Log()->Error(LOG_EMERG, 0, "[%s] GetTicker: Failed to get anything.", Exchange->Name().c_str());
-            }
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -387,340 +247,6 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::BinanceQuoteHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
-
-            Log()->Debug(0, "[%s] Order book", Exchange->Name().c_str());
-
-            CString Symbol;
-            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
-
-            CString url(Exchange->Uri());
-            url += "/api/v1/depth?";
-
-            CString QueryString("symbol=");
-            QueryString.Append(Symbol);
-
-            QueryString.Append("&limit=");
-            QueryString.Append(Params["limit"]);
-
-            url.Append(QueryString);
-
-            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
-
-            curl_api(url, Result);
-
-            if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order book: Done!", Exchange->Name().c_str());
-            } else {
-                Log()->Debug(0, "[%s] Order book: Failed to get anything", Exchange->Name().c_str());
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::BinanceTradeHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
-
-            Log()->Debug(0, "[%s] Order", Exchange->Name().c_str());
-
-            if (Exchange->ApiKey().IsEmpty()) {
-                throw Delphi::Exception::ExceptionFrm(_T("[%s] API Key has not been set"), Exchange->Name().c_str());
-            }
-
-            if (Exchange->SecretKey().IsEmpty()) {
-                throw Delphi::Exception::ExceptionFrm(_T("[%s] Secret Key has not been set"), Exchange->Name().c_str());
-            }
-
-            CString Symbol;
-            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
-
-            CString action = "POST";
-
-            CString url(Exchange->Uri());
-            url += "/api/v3/order";
-
-            CString post_data("symbol=");
-            post_data.Append( Symbol );
-
-            post_data.Append("&side=");
-            post_data.Append( Params["type"] );
-
-            post_data.Append("&type=");
-            post_data.Append( "MARKET" );
-
-            post_data.Append("&quantity=");
-            post_data.Append( Params["amount"] );
-
-            const CString& price = Params["price"];
-
-            if ( !price.IsEmpty() && price != "0" ) {
-                post_data.Append("&price=");
-                post_data.Append( price );
-            }
-
-            const CString& newClientOrderId = Params["newClientOrderId"];
-
-            if ( !newClientOrderId.IsEmpty() ) {
-                post_data.Append("&newClientOrderId=");
-                post_data.Append( newClientOrderId );
-            }
-
-            const CString& stopPrice = Params["stopPrice"];
-
-            if ( !stopPrice.IsEmpty() && stopPrice != "0.0" ) {
-                post_data.Append("&stopPrice=");
-                post_data.Append( stopPrice );
-            }
-
-            const CString& icebergQty = Params["icebergQty"];
-
-            if ( !icebergQty.IsEmpty() && icebergQty != "0.0" ) {
-                post_data.Append("&icebergQty=");
-                post_data.Append( icebergQty );
-            }
-
-            const CString& recvWindow = Params["recvWindow"];
-
-            if ( !recvWindow.IsEmpty() && recvWindow != "0" ) {
-                post_data.Append("&recvWindow=");
-                post_data.Append( recvWindow );
-            }
-
-            post_data.Append("&timestamp=");
-            post_data.Append( to_string( get_current_ms_epoch() ) );
-
-            CString signature = hmac_sha256( Exchange->SecretKey(), post_data );
-
-            post_data.Append( "&signature=");
-            post_data.Append( signature );
-
-            CStringList extra_http_header;
-
-            extra_http_header.Add(CString("X-MBX-APIKEY: "));
-            extra_http_header.Last().Append(Exchange->ApiKey());
-
-            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
-            Log()->Debug(0, "[%s] post data: %s", Exchange->Name().c_str(), post_data.c_str());
-            Log()->Debug(0, "[%s] signature: %s", Exchange->Name().c_str(), signature.c_str());
-
-            curl_api_with_header( url, Result, extra_http_header, post_data, action ) ;
-
-            if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order: Done!", Exchange->Name().c_str());
-            } else {
-                Log()->Debug(0, "[%s] Order: Failed to get anything", Exchange->Name().c_str());
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::PoloniexQuoteHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
-
-            Log()->Debug(0, "[%s] Order book", Exchange->Name().c_str());
-
-            CString Symbol;
-            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
-
-            CString url(Exchange->Uri());
-            url += "/public?";
-
-            CString QueryString("command=returnOrderBook&currencyPair=");
-            QueryString.Append(Symbol);
-
-            QueryString.Append("&depth="); // Max: 100
-            QueryString.Append(Params["limit"]);
-
-            url.Append(QueryString);
-
-            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
-
-            curl_api(url, Result);
-
-            if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order book: Done!", Exchange->Name().c_str());
-            } else {
-                Log()->Debug(0, "[%s] Order book: Failed to get anything", Exchange->Name().c_str());
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::PoloniexTradeHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
-
-            Log()->Debug(0, "[%s] Order", Exchange->Name().c_str());
-
-            if (Exchange->ApiKey().IsEmpty()) {
-                throw Delphi::Exception::ExceptionFrm(_T("[%s] API Key has not been set"), Exchange->Name().c_str());
-            }
-
-            if (Exchange->SecretKey().IsEmpty()) {
-                throw Delphi::Exception::ExceptionFrm(_T("[%s] Secret Key has not been set"), Exchange->Name().c_str());
-            }
-
-            CString action = "POST";
-
-            CString Symbol;
-            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
-
-            CString Rate(Params["rate"]);
-
-            if (Rate.IsEmpty()) {
-                CJSON Json;
-                GetTicker(Exchange, Symbol, Json);
-                Rate = Json[Symbol]["last"].AsSiring();
-            }
-
-            CString url(Exchange->Uri());
-            url += "/tradingApi";
-
-            CString post_data("command=");
-            post_data.Append( Params["type"].Lower() );
-
-            post_data.Append("&currencyPair=");
-            post_data.Append( Symbol );
-
-            post_data.Append("&rate=");
-            post_data.Append( Rate );
-
-            post_data.Append("&amount=");
-            post_data.Append( Params["amount"] );
-
-            const CString& fillOrKill = Params["fillOrKill"];
-
-            if ( !fillOrKill.IsEmpty() && fillOrKill != "0" ) {
-                post_data.Append("&fillOrKill=");
-                post_data.Append( fillOrKill );
-            }
-
-            const CString& immediateOrCancel = Params["immediateOrCancel"];
-
-            if ( !immediateOrCancel.IsEmpty() && immediateOrCancel != "0" ) {
-                post_data.Append("&immediateOrCancel=");
-                post_data.Append( immediateOrCancel );
-            }
-
-            const CString& postOnly = Params["postOnly"];
-
-            if ( !postOnly.IsEmpty() && postOnly != "0" ) {
-                post_data.Append("&postOnly=");
-                post_data.Append( postOnly );
-            }
-
-            post_data.Append("&nonce=");
-            post_data.Append( to_string(get_current_ms_epoch()) );
-
-            CString signature = hmac_sha512( Exchange->SecretKey(), post_data );
-
-            CStringList extra_http_header;
-
-            extra_http_header.Add(CString("Key: "));
-            extra_http_header.Last().Append(Exchange->ApiKey());
-
-            extra_http_header.Add(CString("Sign: "));
-            extra_http_header.Last().Append(signature);
-
-            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
-            Log()->Debug(0, "[%s] post data: %s", Exchange->Name().c_str(), post_data.c_str());
-            Log()->Debug(0, "[%s] signature: %s", Exchange->Name().c_str(), signature.c_str());
-
-            curl_api_with_header( url, Result, extra_http_header, post_data, action );
-
-            if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order: Done!", Exchange->Name().c_str());
-            } else {
-                Log()->Debug(0, "[%s] Order: Failed to get anything", Exchange->Name().c_str());
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::BitfinexQuoteHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
-
-            Log()->Debug(0, "[%s] Order book", Exchange->Name().c_str());
-
-            CString Symbol;
-            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
-
-            CString url(Exchange->Uri());
-            url += "/v1/book/";
-
-            url.Append(Symbol.Lower());
-
-            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
-
-            curl_api(url, Result);
-
-            if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order book: Done!", Exchange->Name().c_str());
-            } else {
-                Log()->Debug(0, "[%s] Order book: Failed to get anything", Exchange->Name().c_str());
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CExchange::BitfinexTradeHandler(CExchangeHandler *Exchange, const CStringList &Params, CString &Result) {
-
-            Log()->Debug(0, "[%s] Order", Exchange->Name().c_str());
-
-            if (Exchange->ApiKey().IsEmpty()) {
-                throw Delphi::Exception::ExceptionFrm(_T("[%s] API Key has not been set"), Exchange->Name().c_str());
-            }
-
-            if (Exchange->SecretKey().IsEmpty()) {
-                throw Delphi::Exception::ExceptionFrm(_T("[%s] Secret Key has not been set"), Exchange->Name().c_str());
-            }
-
-            CString Symbol;
-            PairToSymbol(Exchange->Type(), Params["pair"], Symbol);
-
-            CString action = "POST";
-
-            CString url(Exchange->Uri());
-            url += "/v1/order/new";
-
-            CString payload;
-
-            payload.Format(R"({"request": "%s", "nonce": "%lu", "symbol": "%s", "amount": "%s", "price": "%d", "exchange": "%s", "side": "%s", "type": "%s"})",
-                    "/v1/order/new",
-                    get_current_ms_epoch(),
-                    Symbol.c_str(),
-                    Params["amount"].c_str(),
-                    1000,
-                    "bitfinex",
-                    Params["type"].Lower().c_str(),
-                    "market"
-            );
-
-            CString payload_enc = base64_encode(reinterpret_cast<const uint8_t *>(payload.c_str()), payload.length());
-
-            CString signature = hmac_sha384( Exchange->SecretKey(), payload_enc );
-
-            CStringList extra_http_header;
-
-            extra_http_header.Add(CString("Content-Type: "));
-            extra_http_header.Last().Append( "application/json" );
-
-            extra_http_header.Add(CString("Accept: "));
-            extra_http_header.Last().Append( "application/json" );
-
-            extra_http_header.Add(CString("X-BFX-APIKEY: "));
-            extra_http_header.Last().Append( Exchange->ApiKey() );
-
-            extra_http_header.Add(CString("X-BFX-SIGNATURE: "));
-            extra_http_header.Last().Append( signature );
-
-            extra_http_header.Add(CString("X-BFX-PAYLOAD: "));
-            extra_http_header.Last().Append( payload_enc );
-
-            Log()->Debug(0, "[%s] uri: %s", Exchange->Name().c_str(), url.c_str());
-            Log()->Debug(0, "[%s] post data: %s", Exchange->Name().c_str(), payload.c_str());
-            Log()->Debug(0, "[%s] signature: %s", Exchange->Name().c_str(), signature.c_str());
-
-            curl_api_with_header( url, Result, extra_http_header, payload, action ) ;
-
-            if (!Result.IsEmpty()) {
-                Log()->Debug(0, "[%s] Order: Done!", Exchange->Name().c_str());
-            } else {
-                Log()->Debug(0, "[%s] Order: Failed to get anything", Exchange->Name().c_str());
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         void CExchange::Quote(const CStringList& Params, CHTTPConnection *AConnection) {
 
             Log()->Debug(0, "Quote");
@@ -728,13 +254,13 @@ namespace Apostol {
             auto LReply = AConnection->Reply();
 
             CStringList Results;
-            CExchangeHandler *Handler;
+            CExchangeApi *Exchange;
 
             for (int i = 0; i < m_Exchanges->Count(); i++) {
-                Handler = (CExchangeHandler *) m_Exchanges->Objects(i);
-                if (Handler->Enabled()) {
-                    Results.AddObject(CString(), (CObject *) Handler);
-                    Handler->QuoteHandler(Handler, Params, Results[i]);
+                Exchange = (CExchangeApi *) m_Exchanges->Objects(i);
+                if (Exchange->Enabled()) {
+                    Results.AddObject(CString(), (CObject *) Exchange);
+                    Exchange->GetOrderBook(Params, Results[i]);
                 }
             }
 
@@ -753,14 +279,14 @@ namespace Apostol {
 
             auto LReply = AConnection->Reply();
 
-            CExchangeHandler *Handler;
+            CExchangeApi *Exchange;
             for (int i = 0; i < m_Exchanges->Count(); i++) {
 
-                Handler = (CExchangeHandler *) m_Exchanges->Objects(i);
+                Exchange = (CExchangeApi *) m_Exchanges->Objects(i);
 
-                if (Handler->Enabled() && (Params["exchange"].Lower() == Handler->Name().Lower())) {
+                if (Exchange->Enabled() && (Params["exchange"].Lower() == Exchange->Name().Lower())) {
                     SaveOrder(AConnection, Params);
-                    Handler->TradeHandler(Handler, Params, LReply->Content);
+                    Exchange->NewOrder(Params, LReply->Content);
                     UpdateOrder(AConnection, Params, LReply->Content);
                 }
             }
@@ -782,13 +308,13 @@ namespace Apostol {
             auto LReply = AConnection->Reply();
 
             CStringList Results;
-            CExchangeHandler *Handler;
+            CExchangeApi *Exchange;
 
             for (int i = 0; i < m_Exchanges->Count(); i++) {
-                Handler = (CExchangeHandler *) m_Exchanges->Objects(i);
-                if (Handler->Enabled()) {
-                    Results.AddObject(CString(), (CObject *) Handler);
-                    Handler->QuoteHandler(Handler, Params, Results[i]);
+                Exchange = (CExchangeApi *) m_Exchanges->Objects(i);
+                if (Exchange->Enabled()) {
+                    Results.AddObject(CString(), (CObject *) Exchange);
+                    Exchange->GetOrderBook(Params, Results[i]);
                 }
             }
 
@@ -906,7 +432,7 @@ namespace Apostol {
                 AsksBids = "bids";
             }
 
-            CExchangeHandler *Exchange;
+            CExchangeApi *Exchange;
             TList<CJSON> Json;
 
             int Count = 0;
@@ -922,7 +448,7 @@ namespace Apostol {
                 const CJSONValue &Data = Json[i][AsksBids];
 
                 if (Data.IsArray()) {
-                    Exchange = (CExchangeHandler *) Requests.Objects(i);
+                    Exchange = (CExchangeApi *) Requests.Objects(i);
 
                     CAmountPrice Price = { Exchange->Name().Lower(), 0, Amount };
 
@@ -969,7 +495,7 @@ namespace Apostol {
                 AsksBids = "bids";
             }
 
-            CExchangeHandler *Exchange;
+            CExchangeApi *Exchange;
             CString ExchangeName;
 
             CJSONValue Split;
@@ -1005,7 +531,7 @@ namespace Apostol {
                 const CJSONValue &Data = Json[i][AsksBids];
 
                 if (Data.IsArray()) {
-                    Exchange = (CExchangeHandler *) Requests.Objects(i);
+                    Exchange = (CExchangeApi *) Requests.Objects(i);
                     ExchangeName = Exchange->Name().Lower();
 
                     PriceArray.Add({ ExchangeName, 0, Amount });
@@ -1238,7 +764,7 @@ namespace Apostol {
                         Params.AddPair("pair", LUri[3]);
                         Params.AddPair("type", LUri[4]);
                         Params.AddPair("amount", LUri[5]);
-                        Params.AddPair("limit", "10");
+                        Params.AddPair("limit", "1000");
 
                         Split(Params, AConnection);
 
@@ -1341,6 +867,7 @@ namespace Apostol {
 
             AConnection->SendStockReply(CReply::not_implemented);
         }
+
     }
 }
 }

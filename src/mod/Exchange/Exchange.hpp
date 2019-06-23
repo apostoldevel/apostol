@@ -23,10 +23,15 @@ Author:
 
 #include <curl/curl.h>
 #include "base64.hpp"
-//----------------------------------------------------------------------------------------------------------------------
 
 #ifndef APOSTOL_EXCHANGE_HPP
 #define APOSTOL_EXCHANGE_HPP
+//----------------------------------------------------------------------------------------------------------------------
+
+#define SHA256_DIGEST_LENGTH   32
+#define SHA384_DIGEST_LENGTH   48
+#define SHA512_DIGEST_LENGTH   64
+//----------------------------------------------------------------------------------------------------------------------
 
 extern "C++" {
 
@@ -34,16 +39,30 @@ namespace Apostol {
 
     namespace Exchange {
 
-        class CExchangeHandler;
-
         enum CExchangeType { etBinance = 0, etPoloniex, etBitfinex };
 
-        typedef std::function<void (CExchangeHandler *Header, const CStringList& Params, CString &Result)> COnQuoteHandlerEvent;
-        typedef std::function<void (CExchangeHandler *Header, const CStringList& Params, CString &Result)> COnTradeHandlerEvent;
+        CString b2a_hex(const unsigned char *byte_arr, int size);
         //--------------------------------------------------------------------------------------------------------------
 
-        class CExchangeHandler: CObject {
+        CString hmac_sha256(const CString& key, const CString& data);
+        //--------------------------------------------------------------------------------------------------------------
+
+        CString hmac_sha384(const CString& key, const CString& data);
+        //--------------------------------------------------------------------------------------------------------------
+
+        CString hmac_sha512(const CString& key, const CString& data);
+        //--------------------------------------------------------------------------------------------------------------
+
+        CString to_string(unsigned long Value);
+        //--------------------------------------------------------------------------------------------------------------
+
+        unsigned long get_current_ms_epoch( );
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CExchangeApi: public CObject, public CGlobalComponent {
         private:
+
+            CURL* m_curl;
 
             CExchangeType m_Type;
 
@@ -55,15 +74,23 @@ namespace Apostol {
             CString m_ApiKey;
             CString m_SecretKey;
 
-            COnQuoteHandlerEvent m_QuoteHandler;
-            COnTradeHandlerEvent m_TradeHandler;
+            virtual void PairToSymbol(const CString& Pair, CString& Symbol) abstract;
+
+        protected:
+
+            static size_t curl_cb(void *content, size_t size, size_t nmemb, CString *buffer);
+            void curl_api(CString &url, CString &result_json);
+            void curl_api_with_header(const CString &url, const CString &str_result,
+                    const CStringList &extra_http_header, const CString &post_data, const CString &action);
 
         public:
 
-            CExchangeHandler(CExchangeType Type, const CString &Uri, const CString &ApiKey, const CString &SecretKey,
+            CExchangeApi(CExchangeType Type, const CString &Uri, const CString &ApiKey, const CString &SecretKey,
                              bool Enabled): CObject(), m_Type(Type), m_Enabled(Enabled) {
 
                 const TCHAR *EXCHANGE_NAME[] = {"Binance", "Poloniex", "Bitfinex"};
+
+                m_curl = curl_easy_init();
 
                 m_Name = EXCHANGE_NAME[Type];
                 m_Uri = Uri;
@@ -71,19 +98,13 @@ namespace Apostol {
                 m_SecretKey = SecretKey;
             };
 
+            ~CExchangeApi() override {
+                curl_easy_cleanup(m_curl);
+            }
+
             CExchangeType Type() { return m_Type; };
 
             bool Enabled() { return m_Enabled; };
-
-            void QuoteHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result) {
-                if (m_Enabled && m_QuoteHandler)
-                    m_QuoteHandler(Header, Params, Result);
-            }
-
-            void TradeHandler(CExchangeHandler *Header, const CStringList& Params, CString &Result) {
-                if (m_Enabled && m_TradeHandler)
-                    m_TradeHandler(Header, Params, Result);
-            }
 
             const CString& Name() const { return m_Name; };
 
@@ -91,11 +112,11 @@ namespace Apostol {
             const CString& ApiKey() const { return m_ApiKey; };
             const CString& SecretKey() const { return m_SecretKey; };
 
-            const COnQuoteHandlerEvent &OnQuoteHandlerEvent() { return m_QuoteHandler; }
-            void OnQuoteHandlerEvent(COnQuoteHandlerEvent && Value) { m_QuoteHandler = Value; }
+            virtual void GetServerTime(CJSON &Result) abstract;
+            virtual void GetTicker(const CString& Symbol, CJSON &Result) abstract;
 
-            const COnTradeHandlerEvent &OnTradeHandlerEvent() { return m_TradeHandler; }
-            void OnTradeHandlerEvent(COnTradeHandlerEvent && Value) { m_TradeHandler = Value; }
+            virtual void GetOrderBook(const CStringList &Params, CString &Result) abstract;
+            virtual void NewOrder(const CStringList &Params, CString &Result) abstract;
         };
         //--------------------------------------------------------------------------------------------------------------
 
@@ -108,8 +129,6 @@ namespace Apostol {
         class CExchange : public CApostolModule {
         private:
 
-            CURL* m_curl;
-
             CStringList* m_Exchanges;
 
             void InitExchanges();
@@ -119,11 +138,6 @@ namespace Apostol {
 
             bool SaveOrder(CHTTPConnection *AConnection, const CStringList& Params);
             bool UpdateOrder(CHTTPConnection *AConnection, const CStringList& Params, const CString& Response);
-
-            static size_t curl_cb(void *content, size_t size, size_t nmemb, CString *buffer);
-            void curl_api(CString &url, CString &result_json);
-            void curl_api_with_header(const CString &url, const CString &str_result,
-                 const CStringList &extra_http_header, const CString &post_data, const CString &action);
 
             void FindBestPrice(const CStringList& Params, const CStringList& Requests, CString& Result);
             bool CalcBestPrice(const CJSONValue &Data, CAmountPrice &Price);
@@ -136,10 +150,6 @@ namespace Apostol {
             static int OrderBookValueCompare(const CJSONValue& Value1, const CJSONValue& Value2);
 
         protected:
-
-            void GetServerTime(CExchangeHandler *Exchange, CJSON &json_result);
-
-            void GetTicker(CExchangeHandler *Exchange, const CString& Symbol, CJSON &Result);
 
             void GetTradingPairs(CHTTPConnection *AConnection);
 
@@ -164,15 +174,6 @@ namespace Apostol {
             void Execute(CHTTPConnection *AConnection) override;
 
             void Cleanup();
-
-            void BinanceQuoteHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
-            void BinanceTradeHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
-
-            void PoloniexQuoteHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
-            void PoloniexTradeHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
-
-            void BitfinexQuoteHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
-            void BitfinexTradeHandler(CExchangeHandler *Exchange, const CStringList& Params, CString &Result);
 
         };
     }
