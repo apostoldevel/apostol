@@ -1031,6 +1031,7 @@ namespace Delphi {
 
         void QuickSort(CJSONValueList& SortList, int L, int R, CJSONListSortCompare SCompare) {
             int I, J;
+            CJSONValue T;
 
             do {
                 I = L;
@@ -1043,7 +1044,7 @@ namespace Delphi {
                     while (SCompare(SortList[J], P) > 0)
                         J--;
                     if (I <= J) {
-                        const CJSONValue &T = SortList[I];
+                        T = SortList[I];
                         SortList[I] = SortList[J];
                         SortList[J] = T;
                         I++;

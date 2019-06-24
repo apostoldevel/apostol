@@ -476,7 +476,15 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         int CExchange::OrderBookValueCompare(const CJSONValue &Value1, const CJSONValue &Value2) {
-            return Value1[0].Compare(Value2[0]);
+
+            double V1 = Value1[0].AsDouble();
+            double V2 = Value2[0].AsDouble();
+
+            if (V1 == V2)
+                return 0;
+            if (V1 > V2)
+                return 1;
+            return -1;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -566,10 +574,14 @@ namespace Apostol {
                 }
             }
 
+            Split.GetJSON(Result);
+            DebugMessage("[D] [O] %s\n", Result.c_str());
+            Result.Clear();
+
             Split.Array().Sort(OrderBookValueCompare);
 
             Split.GetJSON(Result);
-            DebugMessage("[Split] %s", Result.c_str());
+            DebugMessage("[D] [S] %s\n", Result.c_str());
             Result.Clear();
 
             double averagePrice = 0;
