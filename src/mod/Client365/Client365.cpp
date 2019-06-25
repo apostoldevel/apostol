@@ -126,7 +126,7 @@ namespace Apostol {
 
         CClient365::CClient365() : CApostolModule() {
             m_Jobs = new CJobManager();
-            UpdateCacheList();
+            //UpdateCacheList();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -426,13 +426,13 @@ namespace Apostol {
                         LReply->AddHeader(_T("Authenticate"), _T("SESSION="));
                         LReply->Headers.Last().Value += Session;
                     }
-
+/*
                     if (!LReply->CacheFile.IsEmpty()) {
                         clock_t start = clock();
                         LReply->Content.SaveToFile(LReply->CacheFile.c_str());
                         log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
                     }
-
+*/
                     LStatus = CReply::ok;
 
                 } catch (Delphi::Exception::Exception &E) {
@@ -449,12 +449,13 @@ namespace Apostol {
                 if (LJob != nullptr) {
                     try {
                         QueryToJson(APollQuery, LJob->Result(), Session);
+/*
                         if (!LJob->CacheFile().IsEmpty()) {
                             clock_t start = clock();
                             LJob->Result().SaveToFile(LJob->CacheFile().c_str());
                             log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
                         }
-
+*/
                     } catch (Delphi::Exception::Exception &E) {
                         ExceptionToJson(&E, LJob->Result());
                         Log()->Error(LOG_EMERG, 0, E.what());
@@ -653,9 +654,9 @@ namespace Apostol {
                     AConnection->SendStockReply(CReply::bad_request);
                     return;
                 }
-
-                //int Index = m_CacheList.IndexOf(LRoute);
-                //if (Index != -1)
+/*
+                int Index = m_CacheList.IndexOf(LRoute);
+                if (Index != -1)
                 {
 
                     LCacheFile = Config()->CachePrefix();
@@ -677,7 +678,7 @@ namespace Apostol {
                         LCacheFile << (size_t) ContentHash(Content);
                     }
                 }
-
+*
                 if (!LCacheFile.IsEmpty()) {
                     auto LReply = AConnection->Reply();
                     LReply->CacheFile = LCacheFile;
@@ -687,7 +688,7 @@ namespace Apostol {
                         return;
                     }
                 }
-
+*/
                 LSQL.Add("SELECT * FROM apis.slogin('" + LSession + "');");
                 LSQL.Add("SELECT * FROM api.run('" + LRoute);
 
@@ -720,7 +721,7 @@ namespace Apostol {
                     auto LJob = m_Jobs->Add(LQuery);
                     auto LReply = AConnection->Reply();
 
-                    LJob->CacheFile() = ACacheFile;
+                    //LJob->CacheFile() = ACacheFile;
 
                     LReply->Content = "{\"jobid\":" "\"" + LJob->JobId() + "\"}";
 
