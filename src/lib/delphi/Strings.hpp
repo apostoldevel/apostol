@@ -55,7 +55,7 @@ namespace Delphi {
 
     namespace Strings {
 
-        char *ld_cpystrn(char *dst, char *src, size_t n);
+        char *ld_cpystrn(char *dst, const char *src, size_t n);
         char *ld_sprintf(char *buf, LPCSTR fmt, ...);
         char *ld_snprintf(char *buf, size_t max, LPCSTR fmt, ...);
         char *ld_vslprintf(char *buf, char *last, LPCSTR fmt, va_list args);

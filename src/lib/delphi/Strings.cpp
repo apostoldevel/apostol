@@ -447,7 +447,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        char *ld_cpystrn(char *dst, char *src, size_t n) {
+        char *ld_cpystrn(char *dst, const char *src, size_t n) {
 
             if (n == 0) {
                 return dst;

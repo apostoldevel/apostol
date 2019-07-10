@@ -52,7 +52,8 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CCustomApplication::~CCustomApplication() {
-            delete [] m_environ;
+            //delete [] m_environ; //!!! don`t free m_environ
+            m_environ = nullptr;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -83,6 +84,7 @@ namespace Apostol {
             if (m_environ == nullptr)
                 m_environ = new char[size];
 
+            ZeroMemory(m_environ, size);
             tmp = m_environ;
 
             m_os_argv_last = m_os_argv[0];
@@ -99,13 +101,12 @@ namespace Apostol {
                     size = strlen(environ[i]) + 1;
                     m_os_argv_last = environ[i] + size;
 
-                    ld_cpystrn(m_environ, environ[i], size);
-                    environ[i] = m_environ;
-                    m_environ += size;
+                    ld_cpystrn(tmp, environ[i], size);
+                    environ[i] = tmp;
+                    tmp += size;
                 }
             }
 
-            m_environ = tmp;
             m_os_argv_last--;
         }
         //--------------------------------------------------------------------------------------------------------------

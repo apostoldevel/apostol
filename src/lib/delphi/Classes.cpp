@@ -283,14 +283,14 @@ namespace Delphi {
         void CDefaultLocale::SetLocale(LPCSTR Value) {
             if (m_LocaleName != Value) {
                 if (m_Locale != nullptr) {
-                    ::freelocale(m_Locale);
+                    //::freelocale(m_Locale); //!!! don`t call freelocale
                     m_Locale = nullptr;
                 }
 
                 m_LocaleName = Value;
 
                 if (m_LocaleName != nullptr) {
-                    m_Locale = ::newlocale(m_CategoryMask, m_LocaleName, nullptr);
+                    m_Locale = ::newlocale(m_CategoryMask, m_LocaleName, m_Locale);
 
                     if (m_Locale == nullptr) {
                         throw EOSError(errno, "Could not set locale argument \"%s\" failed: ", m_LocaleName);
