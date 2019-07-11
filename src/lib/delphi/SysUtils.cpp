@@ -21,7 +21,7 @@ Author:
 
 --*/
 
-#include "libdelphi.hpp"
+#include "delphi.hpp"
 #include "SysUtils.hpp"
 
 extern "C++" {
