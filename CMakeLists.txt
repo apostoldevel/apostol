@@ -8,8 +8,8 @@ add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 
-set( DELPHI_LIB_NAME delphi )
-set( MODULE_LIB_NAME apostol-modules )
+set(DELPHI_LIB_NAME delphi)
+set(APOSTOL_CORE apostol-core)
 
 find_library(GCC_LIBRARY libgcc.a)
 find_library(GCC++_LIBRARY libgcc++.a)
@@ -30,37 +30,47 @@ add_custom_target(
 
 find_package(PostgreSQL REQUIRED)
 
-include_directories(src/lib/delphi src/apostol-core src/apostol-aws src/utils src/modules)
+include_directories(src/lib/delphi src/apostol-core src/apostol-aws src/apostol-bitcoin src/utils)
 
-file(GLOB delphi_files src/lib/delphi/*.hpp src/lib/delphi/*.cpp)
-file(GLOB core_files src/apostol-core/*.hpp src/apostol-core/*.cpp)
-file(GLOB apostol_files version.h src/apostol-aws/*.hpp src/apostol-aws/*.cpp)
-file(GLOB bitcoin_files version.h src/apostol-bitcoin/*.hpp src/apostol-bitcoin/*.cpp)
+file(GLOB delphi_files src/lib/${DELPHI_LIB_NAME}/*.hpp src/lib/${DELPHI_LIB_NAME}/*.cpp)
+file(GLOB apostol-core_files src/${APOSTOL_CORE}/*.hpp src/${APOSTOL_CORE}/*.cpp)
+
 file(GLOB utils_files src/utils/*.hpp src/utils/*.cpp)
-file(GLOB mod_files src/modules/Modules.* src/modules/*/*.hpp src/modules/*/*.cpp)
 
-link_libraries(pthread pq dl)
+file(GLOB apostol-aws_files version.h src/apostol-aws/*.hpp src/apostol-aws/*.cpp)
+file(GLOB modules-aws_files src/modules-aws/Modules.hpp src/modules-aws/*/*.hpp src/modules-aws/*/*.cpp)
+
+file(GLOB apostol-bitcoin_files version.h src/apostol-bitcoin/*.hpp src/apostol-bitcoin/*.cpp)
+file(GLOB modules-bitcoin_files src/modules-bitcoin/Modules.hpp src/modules-bitcoin/*/*.hpp src/modules-bitcoin/*/*.cpp)
+
+link_libraries(pq dl)
+
+# Delphi classes for C++
+# ----------------------------------------------------------------------------------------------------------------------
+add_definitions(-Dapplication_name="'${PROJECT_DESCRIPTION}'")
+add_definitions(-DWWWServerName="${PROJECT_DESCRIPTION}")
+
+add_library(${DELPHI_LIB_NAME} STATIC ${delphi_files})
+target_link_libraries(${DELPHI_LIB_NAME} pthread)
 
 # Apostol Web Service
 # ----------------------------------------------------------------------------------------------------------------------
 set(PROJECT_NAME "apostol")
 set(PROJECT_DESCRIPTION "Apostol Web Service")
+set(MODULE_LIB_NAME modules-aws)
 
 message(STATUS "Project name: ${PROJECT_NAME}")
 message(STATUS "Project description: ${PROJECT_DESCRIPTION}")
 
-add_definitions(-Dapplication_name="'${PROJECT_DESCRIPTION}'")
-add_definitions(-DWWWServerName="${PROJECT_DESCRIPTION}")
-
-add_library(${DELPHI_LIB_NAME} STATIC ${delphi_files})
-target_link_libraries(${DELPHI_LIB_NAME})
-
-add_library(${MODULE_LIB_NAME} STATIC ${utils_files} ${mod_files})
+add_library(${MODULE_LIB_NAME} STATIC ${utils_files} ${modules-aws_files})
 target_link_libraries(${MODULE_LIB_NAME} ${DELPHI_LIB_NAME} crypto curl)
 
-add_executable(${PROJECT_NAME} ${core_files} ${apostol_files})
+add_executable(${PROJECT_NAME} ${apostol-core_files} ${apostol-aws_files})
+
+target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULE_LIB_NAME})
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
+        APP_APOSTOL=1
         APP_NAME="${PROJECT_NAME}"
         APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
         APP_VAR="${PROJECT_NAME}"
@@ -77,8 +87,6 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
         APP_POSTGRES_LOG_FILE="logs/postgres.log"
         APP_DOC_ROOT="www/"
         )
-
-target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULE_LIB_NAME})
 
 add_dependencies(${PROJECT_NAME} auto_increment_version)
 # ----------------------------------------------------------------------------------------------------------------------
@@ -87,13 +95,20 @@ add_dependencies(${PROJECT_NAME} auto_increment_version)
 # ----------------------------------------------------------------------------------------------------------------------
 set(PROJECT_NAME "abc")
 set(PROJECT_DESCRIPTION "Apostol Bitcoin")
+set(MODULE_LIB_NAME modules-bitcoin)
 
 message(STATUS "Project name: ${PROJECT_NAME}")
 message(STATUS "Project description: ${PROJECT_DESCRIPTION}")
 
-add_executable(${PROJECT_NAME} ${core_files} ${bitcoin_files})
+add_library(${MODULE_LIB_NAME} STATIC ${utils_files} ${modules-bitcoin_files})
+#target_link_libraries(${MODULE_LIB_NAME} ${DELPHI_LIB_NAME} crypto curl)
+
+add_executable(${PROJECT_NAME} ${apostol-core_files} ${apostol-bitcoin_files})
+
+target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULE_LIB_NAME})
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
+        APP_ABC=1
         APP_NAME="${PROJECT_NAME}"
         APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
         APP_VAR="${PROJECT_NAME}"
@@ -110,8 +125,6 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
         APP_POSTGRES_LOG_FILE="logs/postgres.log"
         APP_DOC_ROOT="www/"
         )
-
-target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULE_LIB_NAME})
 
 add_dependencies(${PROJECT_NAME} auto_increment_version)
 # ----------------------------------------------------------------------------------------------------------------------
