@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 project(apostol)
 
+list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/modules" )
+
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -9,7 +11,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-lib
 find_library(GCC_LIBRARY libgcc.a)
 find_library(GCC++_LIBRARY libgcc++.a)
 
-ADD_DEFINITIONS(-static-libgcc)
+add_definitions(-static-libgcc)
 
 set(PROJECT_NAME "apostol")
 set(PROJECT_DESCRIPTION "Apostol Web Service")
@@ -31,10 +33,11 @@ add_definitions(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
 find_package(PostgreSQL REQUIRED)
 
-include_directories(src/apostol src/lib/delphi src/utils src/mod)
+include_directories(src/lib/delphi src/apostol-core src/apostol src/utils src/mod)
 
-file(GLOB apostol_files version.h src/apostol/*.hpp src/apostol/*.cpp)
 file(GLOB delphi_files src/lib/delphi/*.hpp src/lib/delphi/*.cpp)
+file(GLOB core_files src/apostol-core/*.hpp src/apostol-core/*.cpp)
+file(GLOB apostol_files version.h src/apostol/*.hpp src/apostol/*.cpp)
 file(GLOB utils_files src/utils/*.hpp src/utils/*.cpp)
 file(GLOB mod_files src/mod/Modules.* src/mod/*/*.hpp src/mod/*/*.cpp)
 
@@ -46,16 +49,16 @@ target_link_libraries(${DELPHI_LIB_NAME})
 add_library(${MODULE_LIB_NAME} STATIC ${utils_files} ${mod_files})
 target_link_libraries(${MODULE_LIB_NAME} ${DELPHI_LIB_NAME} crypto curl)
 
-add_executable(${PROJECT_NAME} ${apostol_files})
+add_executable(${PROJECT_NAME} ${core_files} ${apostol_files})
 target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULE_LIB_NAME})
 
-ADD_CUSTOM_TARGET(
+add_custom_target(
         auto_increment_version
         ${CMAKE_COMMAND}
         -D VERSION_FILE=${CMAKE_SOURCE_DIR}/version.h
         -P ${CMAKE_SOURCE_DIR}/AutoVersion.cmake
 )
-ADD_DEPENDENCIES(apostol auto_increment_version)
+add_dependencies(apostol auto_increment_version)
 
 set(INSTALL_PATH "/etc/apostol")
 

@@ -28,7 +28,6 @@ Author:
 #include "../../version.h"
 //----------------------------------------------------------------------------------------------------------------------
 
-#define aws_version      1000000
 #define AWS_NAME         _T(APOSTOL_NAME)
 #define AWS_DESCRIPTION  _T(APOSTOL_DESCRIPTION)
 #define AWS_VERSION      _T(AUTO_VERSION)
@@ -36,6 +35,41 @@ Author:
 #define AWS_VAR          _T("APOSTOL")
 #define AWS_OLDPID_EXT   _T(".oldbin")
 //----------------------------------------------------------------------------------------------------------------------
+
+extern "C++" {
+
+namespace Apostol {
+
+    namespace Apostol {
+
+        class CApostol: public CApplication {
+        protected:
+
+            void ParseCmdLine() override;
+            void ShowVersioInfo() override;
+
+        public:
+
+            CApostol(int argc, char *const *argv): CApplication(argc, argv) {
+
+            };
+
+            ~CApostol() override = default;
+
+            static class CApostol *Create(int argc, char *const *argv) {
+                return new CApostol(argc, argv);
+            };
+
+            inline void Destroy() override { delete this; };
+
+            void Run() override;
+
+        };
+    }
+}
+
+using namespace Apostol::Apostol;
+}
 
 #endif //APOSTOL_APOSTOL_HPP
 

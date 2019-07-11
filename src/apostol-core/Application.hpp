@@ -209,8 +209,9 @@ namespace Apostol {
 
             void SetProcessType(CProcessType Value);
 
-            void ParseCmdLine();
-            void ShowVersioInfo();
+            virtual void ParseCmdLine() abstract;
+            virtual void ShowVersioInfo() abstract;
+
             void CreateLogFile();
             void Daemonize();
 
@@ -220,15 +221,9 @@ namespace Apostol {
 
             CApplication(int argc, char *const *argv);
 
-            static class CApplication *Create(int argc, char *const *argv) {
-                return new CApplication(argc, argv);
-            };
-
-            void Destroy() override { delete this; };
+            inline void Destroy() override { delete this; };
 
             ~CApplication() override = default;
-
-            void Run() override;
 
             pid_t ExecNewBinary(char *const *argv);
 
