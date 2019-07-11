@@ -1216,7 +1216,7 @@ namespace Delphi {
             virtual void Move(int CurIndex, int NewIndex);
             virtual void SaveToFile(LPCTSTR lpszFileName);
             virtual void SaveToStream(CStream* Stream);
-            virtual void SetTextStr(LPCTSTR Text);
+            virtual void SetTextStr(LPCTSTR Text, size_t Size);
 
             int Capacity() { return GetCapacity(); };
             void Capacity(int NewCapacity) { SetCapacity(NewCapacity); };

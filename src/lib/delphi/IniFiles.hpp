@@ -83,8 +83,8 @@ namespace Delphi {
 
             virtual CString ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault) abstract;
 
-            virtual CString* ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault,
-                                CString* ReturnedString) abstract;
+            virtual void ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault,
+                                CString &ReturnedString) abstract;
 
             virtual DWORD ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault,
                     LPTSTR lpszReturnedString, DWORD nSize) abstract;
@@ -141,9 +141,9 @@ namespace Delphi {
 
             size_t m_BucketSize;
 
-        private:
-
             CList **m_Buckets;
+
+            void ClearList(CList *List);
 
         protected:
 
@@ -288,8 +288,8 @@ namespace Delphi {
 
             CString ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault) override;
 
-            CString* ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault,
-                    CString* ReturnedString) override;
+            void ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault,
+                    CString &ReturnedString) override;
 
             DWORD ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault,
                              LPTSTR lpszReturnedString, DWORD nSize) override;

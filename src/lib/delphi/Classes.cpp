@@ -1395,7 +1395,7 @@ namespace Delphi {
 
         LPTSTR CStringStream::Realloc(size_t &NewCapacity) {
             if ((NewCapacity > 0) && (NewCapacity != m_Size))
-                NewCapacity = (NewCapacity + (StringDelta - 1)) & ~(StringDelta - 1);
+                NewCapacity = (NewCapacity + StringDelta) & ~(StringDelta - 1);
 
             Pointer P = m_Data;
 
@@ -1962,7 +1962,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CStrings::SetText(const CString &Value) {
-            SetTextStr(Value.c_str());
+            SetTextStr(Value.c_str(), Value.size());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -2294,7 +2294,7 @@ namespace Delphi {
             BeginUpdate();
             try {
                 Stream->Read(Buffer, BufSize);
-                SetTextStr(Buffer);
+                SetTextStr(Buffer, BufSize);
             } catch (...) {
                 GHeap->Free(0, Buffer, BufSize);
                 EndUpdate();
@@ -2341,19 +2341,20 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CStrings::SetTextStr(LPCTSTR Text) {
+        void CStrings::SetTextStr(LPCTSTR Text, size_t Size) {
 
             size_t LineBreakLen;
-            LPCTSTR P, LB;
+            LPCTSTR P, E, LB;
 
             BeginUpdate();
             try {
                 Clear();
                 P = Text;
+                E = P + Size;
                 if (Assigned(P)) {
                     Add(CString());
                     if (LineBreak() == sLineBreak) {
-                        while (*P) {
+                        while (P < E) {
                             if ((*P == '\n') || (*P == m_Delimiter)) {
                                 Add(CString());
                             } else {
@@ -2366,19 +2367,23 @@ namespace Delphi {
                     } else {
                         LineBreakLen = strlen(LineBreak());
                         LB = strstr(P, LineBreak());
-                        while (*P) {
+                        while (P < E) {
                             if ((P == LB) || (*P == m_Delimiter)) {
                                 Add(CString());
                                 if (P == LB) {
                                     P += LineBreakLen;
                                     LB = strstr(P, LineBreak());
                                 } else {
+                                    if (P == (Text + Size))
+                                        break;
                                     P++;
                                 }
                             } else {
                                 if (!IsCtl(*P) && (*P != m_QuoteChar)) {
                                     Last().Append(*P);
                                 }
+                                if (P == (Text + Size))
+                                    break;
                                 P++;
                             }
                         }

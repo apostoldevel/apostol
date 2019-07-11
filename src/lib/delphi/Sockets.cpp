@@ -652,6 +652,8 @@ namespace Delphi {
         CSocketHandle::CSocketHandle(CCollection *ACollection): CSocketComponent(), CCollectionItem(ACollection) {
             Reset();
 
+            m_SocketType = SOCK_STREAM;
+
             m_ClientPortMin = 0;
             m_ClientPortMax = 0;
         };

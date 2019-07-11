@@ -443,7 +443,8 @@ namespace Apostol {
                             break;
 
                         default:
-                            V = F.ReadString(C->Section(), C->Ident(), C->Default().vasStr, new CString());
+                            V = new CString();
+                            F.ReadString(C->Section(), C->Ident(), C->Default().vasStr, *V.vasCString);
                             break;
                     }
 

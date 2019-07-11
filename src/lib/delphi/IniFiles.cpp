@@ -235,7 +235,7 @@ namespace Delphi {
             for (int I = 0; I < m_BucketSize; ++I) {
                 FreeAndNil(m_Buckets[I]);
             }
-            delete m_Buckets;
+            delete [] m_Buckets;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -315,16 +315,24 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CStringHash::ClearList(CList *List) {
+            for (int I = List->Count() - 1; I >= 0; --I) {
+                delete (CHashItem *) List->Items(I);
+            }
+            List->Clear();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CStringHash::Clear() {
             for (int I = 0; I < m_BucketSize; ++I) {
-                m_Buckets[I]->Clear();
+                ClearList(m_Buckets[I]);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CStringHash::Remove(const CString &Key) {
             int Hash, Pos;
-            CHashItem *Item;
+            CHashItem *Item = nullptr;
             Pos = Find(Key, Item);
             if (Pos >= 0) {
                 Hash = HashOf(Key) % (unsigned) m_BucketSize;
@@ -335,7 +343,7 @@ namespace Delphi {
 
         void CStringHash::Remove(LPCTSTR Key) {
             int Hash, Pos;
-            CHashItem *Item;
+            CHashItem *Item = nullptr;
             Pos = Find(Key, Item);
             if (Pos >= 0) {
                 Hash = HashOf(Key) % (unsigned) m_BucketSize;
@@ -676,29 +684,24 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CString* CMemIniFile::ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault,
-                CString* ReturnedString) {
+        void CMemIniFile::ReadString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszDefault,
+                CString &ReturnedString) {
             int I;
             size_t Length;
             CStrings *Strings;
 
-            if (Assigned(ReturnedString)) {
+            chVERIFY(SUCCEEDED(StringCchLength(lpszKeyName, _INT_T_LEN, &Length)));
 
-                chVERIFY(SUCCEEDED(StringCchLength(lpszKeyName, _INT_T_LEN, &Length)));
+            ReturnedString = lpszDefault;
 
-                *ReturnedString = lpszDefault;
-
-                I = m_Sections->IndexOf(lpszSectionName);
+            I = m_Sections->IndexOf(lpszSectionName);
+            if (I >= 0) {
+                Strings = (CStrings *) m_Sections->Objects(I);
+                I = Strings->IndexOfName(lpszKeyName);
                 if (I >= 0) {
-                    Strings = (CStrings *) m_Sections->Objects(I);
-                    I = Strings->IndexOfName(lpszKeyName);
-                    if (I >= 0) {
-                        *ReturnedString = Strings->Strings(I).SubString(Length + 1);
-                    }
+                    ReturnedString = Strings->Strings(I).SubString(Length + 1);
                 }
             }
-
-            return ReturnedString;
         }
         //--------------------------------------------------------------------------------------------------------------
 
