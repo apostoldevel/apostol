@@ -24,16 +24,15 @@ Author:
 #ifndef APOSTOL_APOSTOL_HPP
 #define APOSTOL_APOSTOL_HPP
 
-#include "Header.hpp"
 #include "../../version.h"
 //----------------------------------------------------------------------------------------------------------------------
 
-#define AWS_NAME         _T(APOSTOL_NAME)
-#define AWS_DESCRIPTION  _T(APOSTOL_DESCRIPTION)
-#define AWS_VERSION      _T(AUTO_VERSION)
-#define AWS_VER          AWS_NAME _T("/") AWS_VERSION
-#define AWS_VAR          _T("APOSTOL")
-#define AWS_OLDPID_EXT   _T(".oldbin")
+#define APP_VERSION      AUTO_VERSION
+#define APP_VER          APP_NAME "/" APP_VERSION
+//----------------------------------------------------------------------------------------------------------------------
+
+#include "Core.hpp"
+#include "Modules.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C++" {

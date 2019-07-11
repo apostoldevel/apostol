@@ -1,8 +1,8 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -21,7 +21,7 @@ Author:
 
 --*/
 
-#include "Apostol.hpp"
+#include "Core.hpp"
 #include "Process.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -120,7 +120,7 @@ namespace Apostol {
 
             m_pData = nullptr;
 
-            Name(PROCESS_TYPE_NAME[m_Type]);
+            m_ProcessName = PROCESS_TYPE_NAME[m_Type];
         }
         //--------------------------------------------------------------------------------------------------------------
 

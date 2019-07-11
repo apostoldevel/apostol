@@ -1,8 +1,8 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -21,7 +21,7 @@ Author:
 
 --*/
 
-#include "Apostol.hpp"
+#include "Core.hpp"
 #include "Log.hpp"
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -342,6 +342,7 @@ namespace Apostol {
 
             if (!UseStdErr() || ALevel > LOG_WARN || wrote_stderr)
             {
+                DebugMessage(errstr);
                 return;
             }
 

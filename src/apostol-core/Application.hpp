@@ -1,8 +1,8 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -59,7 +59,10 @@ namespace Apostol {
             CStringList         m_argv;
 
             CString             m_cmdline;
+
+            CString             m_name;
             CString             m_title;
+            CString             m_header;
 
         protected:
 
@@ -73,7 +76,7 @@ namespace Apostol {
             void Initialize();
             void SetEnviron();
 
-            void SetTitle(LPCTSTR Value);
+            void SetHeader(LPCTSTR Value);
 
         public:
 
@@ -94,10 +97,16 @@ namespace Apostol {
 
             const CString& CmdLine() { return m_cmdline; };
 
-            const CString& Title() { return m_title; };
+            CString& Name() { return m_name; };
+            const CString& Name() const { return m_name; };
 
-            void Title(const CString& Value) { SetTitle(Value.c_str()); };
-            void Title(LPCTSTR Value) { SetTitle(Value); };
+            CString& Title() { return m_title; };
+            const CString& Title() const { return m_title; };
+
+            CString& Header() { return m_header; };
+
+            void Header(const CString& Value) { SetHeader(Value.c_str()); };
+            void Header(LPCTSTR Value) { SetHeader(Value); };
 
         }; // class CCustomApplication
 

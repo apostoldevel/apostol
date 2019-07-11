@@ -28,7 +28,7 @@ Author:
   if (GLog != nullptr)                                      \
     GLog->Error(LOG_EMERG, 0, msg);                         \
   else                                                      \
-    std::cerr << AWS_NAME << ": " << (msg) << std::endl;    \
+    std::cerr << APP_NAME << ": " << (msg) << std::endl;    \
   exitcode = EXIT_FAILURE;                                  \
 }
 //----------------------------------------------------------------------------------------------------------------------
@@ -41,10 +41,10 @@ namespace Apostol {
 
         void CApostol::ShowVersioInfo() {
 
-            std::cerr << AWS_NAME " version: " AWS_VER " (" AWS_DESCRIPTION ")" LINEFEED << std::endl;
+            std::cerr << APP_NAME " version: " APP_VERSION " (" APP_DESCRIPTION ")" LINEFEED << std::endl;
 
             if (Config()->Flags().show_help) {
-                std::cerr << "Usage: " AWS_NAME " [-?hvVt] [-s signal] [-c filename]"
+                std::cerr << "Usage: " APP_NAME << " [-?hvVt] [-s signal] [-c filename]"
                              " [-p prefix] [-g directives]" LINEFEED
                              LINEFEED
                              "Options:" LINEFEED
@@ -53,14 +53,14 @@ namespace Apostol {
                              "  -V            : show version and configure options then exit" LINEFEED
                              "  -t            : test configuration and exit" LINEFEED
                              "  -s signal     : send signal to a master process: stop, quit, reopen, reload" LINEFEED
-                             #ifdef AWS_PREFIX
-                             "  -p prefix     : set prefix path (default: " AWS_PREFIX ")" LINEFEED
+                             #ifdef APP_PREFIX
+                             "  -p prefix     : set prefix path (default: " APP_PREFIX ")" LINEFEED
                              #else
                              "  -p prefix     : set prefix path (default: NONE)" LINEFEED
                              #endif
-                             "  -c filename   : set configuration file (default: " AWS_CONF_FILE ")" LINEFEED
+                             "  -c filename   : set configuration file (default: " APP_CONF_FILE ")" LINEFEED
                              "  -g directives : set global directives out of configuration file" LINEFEED
-                             "  -l locale     : set locale (default: " AWS_DEFAULT_LOCALE ")" LINEFEED
+                             "  -l locale     : set locale (default: " APP_DEFAULT_LOCALE ")" LINEFEED
                           << std::endl;
             }
         }
@@ -237,6 +237,8 @@ int main(int argc, char *argv[]) {
     try
     {
         Application = CApostol::Create(argc, argv);
+        Application->Name() = APP_NAME;
+        Application->Title() = APP_VER;
         Application->Run();
         exitcode = Application->ExitCode();
     }

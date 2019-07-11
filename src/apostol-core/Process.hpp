@@ -1,8 +1,8 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -63,7 +63,7 @@ Author:
   if (GLog != nullptr)                                      \
     GLog->Error(LOG_EMERG, 0, msg);                         \
   else                                                      \
-    std::cerr << AWS_NAME << ": " << (msg) << std::endl;    \
+    std::cerr << APP_NAME << ": " << (msg) << std::endl;    \
 }                                                           \
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -114,7 +114,7 @@ namespace Apostol {
             CProcessType m_Type;
 
             int m_Status;
-            CString m_Name;
+            CString m_ProcessName;
 
             bool m_respawn: true;
             bool m_just_spawn: true;
@@ -132,7 +132,7 @@ namespace Apostol {
 
             void SetPid(pid_t Value) { m_Pid = Value; };
 
-            void SetName(LPCTSTR Value) { m_Name = Value; };
+            void SetProcessName(LPCTSTR Value) { m_ProcessName = Value; };
             void SetData(Pointer Value) { m_pData = Value; };
             void SetStatus(int Value) { m_Status = Value; };
 
@@ -174,10 +174,11 @@ namespace Apostol {
 
             CCustomProcess *Parent() { return m_pParent; };
 
-            const CString& Name() { return m_Name; };
-            void Name(LPCTSTR Value) { SetName(Value); };
+            CString& ProcessName() { return m_ProcessName; };
+            const CString& ProcessName() const { return m_ProcessName; };
+            void ProcessName(LPCTSTR Value) { SetProcessName(Value); };
 
-            LPCTSTR ProcessName() { return m_Name.c_str(); };
+            LPCTSTR GetProcessName() { return m_ProcessName.c_str(); };
 
             Pointer Data() { return m_pData; };
             void Data(Pointer Value) { SetData(Value); };

@@ -1,8 +1,8 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 

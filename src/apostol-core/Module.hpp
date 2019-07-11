@@ -1,16 +1,16 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
-  Modules.hpp
+  Module.hpp
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -21,16 +21,14 @@ Author:
 
 --*/
 
-#ifndef APOSTOL_MODULES_HPP
-#define APOSTOL_MODULES_HPP
-//----------------------------------------------------------------------------------------------------------------------
+#ifndef APOSTOL_MODULE_HPP
+#define APOSTOL_MODULE_HPP
 
 extern "C++" {
 
 namespace Apostol {
 
-    namespace Modules {
-
+    namespace Module {
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -66,28 +64,8 @@ namespace Apostol {
     }
 }
 
-using namespace Apostol::Modules;
+using namespace Apostol::Module;
 }
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "WebServer/WebServer.hpp"
-#include "Client365/Client365.hpp"
-#include "Exchange/Exchange.hpp"
-//----------------------------------------------------------------------------------------------------------------------
-
-static CApostolModule* CreateModule(const CString &UserAgent) {
-
-    if (!UserAgent.IsEmpty()) {
-        if ((UserAgent.Find(_T("Client365/")) != CString::npos)) {
-            return CClient365::CreateModule();
-        }
-
-        if ((UserAgent.Find(_T("Exchange/")) != CString::npos)) {
-            return CExchange::CreateModule();
-        }
-    }
-
-    return CWebServer::CreateModule();
-}
-
-#endif //APOSTOL_MODULES_HPP
+#endif //APOSTOL_MODULE_HPP

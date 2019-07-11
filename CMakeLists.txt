@@ -8,40 +8,49 @@ add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 
+set( DELPHI_LIB_NAME delphi )
+set( MODULE_LIB_NAME apostol-modules )
+
 find_library(GCC_LIBRARY libgcc.a)
 find_library(GCC++_LIBRARY libgcc++.a)
 
-add_definitions(-static-libgcc)
+#add_definitions(-static-libgcc)
+#add_definitions(-D_UNICODE)
 
+add_definitions(-DAPP_DEFAULT_LOCALE="en_US.UTF-8")
+add_definitions(-DDELPHI_LIB_EXPORTS)
+add_definitions(-DSYS_ERRNO_COUNT=135)
+
+add_custom_target(
+        auto_increment_version
+        ${CMAKE_COMMAND}
+        -D VERSION_FILE=${CMAKE_SOURCE_DIR}/version.h
+        -P ${CMAKE_SOURCE_DIR}/AutoVersion.cmake
+)
+
+find_package(PostgreSQL REQUIRED)
+
+include_directories(src/lib/delphi src/apostol-core src/apostol-aws src/utils src/modules)
+
+file(GLOB delphi_files src/lib/delphi/*.hpp src/lib/delphi/*.cpp)
+file(GLOB core_files src/apostol-core/*.hpp src/apostol-core/*.cpp)
+file(GLOB apostol_files version.h src/apostol-aws/*.hpp src/apostol-aws/*.cpp)
+file(GLOB bitcoin_files version.h src/apostol-bitcoin/*.hpp src/apostol-bitcoin/*.cpp)
+file(GLOB utils_files src/utils/*.hpp src/utils/*.cpp)
+file(GLOB mod_files src/modules/Modules.* src/modules/*/*.hpp src/modules/*/*.cpp)
+
+link_libraries(pthread pq dl)
+
+# Apostol Web Service
+# ----------------------------------------------------------------------------------------------------------------------
 set(PROJECT_NAME "apostol")
 set(PROJECT_DESCRIPTION "Apostol Web Service")
 
 message(STATUS "Project name: ${PROJECT_NAME}")
 message(STATUS "Project description: ${PROJECT_DESCRIPTION}")
 
-set( DELPHI_LIB_NAME delphi )
-set( MODULE_LIB_NAME apostol-modules )
-
-#add_definitions(-D_UNICODE)
-
-add_definitions(-DDELPHI_LIB_EXPORTS)
-add_definitions(-DSYS_ERRNO_COUNT=135)
-add_definitions(-DAPOSTOL_NAME="${PROJECT_NAME}")
-add_definitions(-DAPOSTOL_DESCRIPTION="${PROJECT_DESCRIPTION}")
 add_definitions(-Dapplication_name="'${PROJECT_DESCRIPTION}'")
 add_definitions(-DWWWServerName="${PROJECT_DESCRIPTION}")
-
-find_package(PostgreSQL REQUIRED)
-
-include_directories(src/lib/delphi src/apostol-core src/apostol src/utils src/mod)
-
-file(GLOB delphi_files src/lib/delphi/*.hpp src/lib/delphi/*.cpp)
-file(GLOB core_files src/apostol-core/*.hpp src/apostol-core/*.cpp)
-file(GLOB apostol_files version.h src/apostol/*.hpp src/apostol/*.cpp)
-file(GLOB utils_files src/utils/*.hpp src/utils/*.cpp)
-file(GLOB mod_files src/mod/Modules.* src/mod/*/*.hpp src/mod/*/*.cpp)
-
-link_libraries(pthread pq dl)
 
 add_library(${DELPHI_LIB_NAME} STATIC ${delphi_files})
 target_link_libraries(${DELPHI_LIB_NAME})
@@ -50,15 +59,62 @@ add_library(${MODULE_LIB_NAME} STATIC ${utils_files} ${mod_files})
 target_link_libraries(${MODULE_LIB_NAME} ${DELPHI_LIB_NAME} crypto curl)
 
 add_executable(${PROJECT_NAME} ${core_files} ${apostol_files})
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+        APP_NAME="${PROJECT_NAME}"
+        APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
+        APP_VAR="${PROJECT_NAME}"
+        APP_OLDPID_EXT=".oldbin"
+        APP_PREFIX="/usr/local/${PROJECT_NAME}/"
+        APP_CONF_PREFIX="conf/"
+        APP_CACHE_PREFIX="cache/"
+        APP_SBIN_PATH="sbin/${PROJECT_NAME}"
+        APP_CONF_FILE="${PROJECT_NAME}.conf"
+        APP_PID_FILE="logs/${PROJECT_NAME}.pid"
+        APP_LOCK_FILE="logs/${PROJECT_NAME}.lock"
+        APP_ERROR_LOG_FILE="logs/error.log"
+        APP_ACCESS_LOG_FILE="logs/access.log"
+        APP_POSTGRES_LOG_FILE="logs/postgres.log"
+        APP_DOC_ROOT="www/"
+        )
+
 target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULE_LIB_NAME})
 
-add_custom_target(
-        auto_increment_version
-        ${CMAKE_COMMAND}
-        -D VERSION_FILE=${CMAKE_SOURCE_DIR}/version.h
-        -P ${CMAKE_SOURCE_DIR}/AutoVersion.cmake
-)
-add_dependencies(apostol auto_increment_version)
+add_dependencies(${PROJECT_NAME} auto_increment_version)
+# ----------------------------------------------------------------------------------------------------------------------
+
+# Apostol Bitcoin
+# ----------------------------------------------------------------------------------------------------------------------
+set(PROJECT_NAME "abc")
+set(PROJECT_DESCRIPTION "Apostol Bitcoin")
+
+message(STATUS "Project name: ${PROJECT_NAME}")
+message(STATUS "Project description: ${PROJECT_DESCRIPTION}")
+
+add_executable(${PROJECT_NAME} ${core_files} ${bitcoin_files})
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+        APP_NAME="${PROJECT_NAME}"
+        APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
+        APP_VAR="${PROJECT_NAME}"
+        APP_OLDPID_EXT=".oldbin"
+        APP_PREFIX="/usr/local/${PROJECT_NAME}/"
+        APP_CONF_PREFIX="conf/"
+        APP_CACHE_PREFIX="cache/"
+        APP_SBIN_PATH="sbin/${PROJECT_NAME}"
+        APP_CONF_FILE="${PROJECT_NAME}.conf"
+        APP_PID_FILE="logs/${PROJECT_NAME}.pid"
+        APP_LOCK_FILE="logs/${PROJECT_NAME}.lock"
+        APP_ERROR_LOG_FILE="logs/error.log"
+        APP_ACCESS_LOG_FILE="logs/access.log"
+        APP_POSTGRES_LOG_FILE="logs/postgres.log"
+        APP_DOC_ROOT="www/"
+        )
+
+target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULE_LIB_NAME})
+
+add_dependencies(${PROJECT_NAME} auto_increment_version)
+# ----------------------------------------------------------------------------------------------------------------------
 
 set(INSTALL_PATH "/etc/apostol")
 

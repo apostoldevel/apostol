@@ -1,8 +1,8 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -23,54 +23,6 @@ Author:
 
 #ifndef APOSTOL_CONFIG_HPP
 #define APOSTOL_CONFIG_HPP
-
-#ifndef AWS_DEFAULT_LOCALE
-#define AWS_DEFAULT_LOCALE  "en_US.UTF-8"
-#endif
-
-#ifndef AWS_PREFIX
-#define AWS_PREFIX  "/usr/local/apostol/"
-#endif
-
-#ifndef AWS_CONF_PREFIX
-#define AWS_CONF_PREFIX  "conf/"
-#endif
-
-#ifndef AWS_CACHE_PREFIX
-#define AWS_CACHE_PREFIX  "cache/"
-#endif
-
-#ifndef AWS_SBIN_PATH
-#define AWS_SBIN_PATH  "sbin/apostol"
-#endif
-
-#ifndef AWS_CONF_FILE
-#define AWS_CONF_FILE  "apostol.conf"
-#endif
-
-#ifndef AWS_PID_FILE
-#define AWS_PID_FILE  "logs/apostol.pid"
-#endif
-
-#ifndef AWS_LOCK_FILE
-#define AWS_LOCK_FILE  "logs/apostol.lock"
-#endif
-
-#ifndef AWS_ERROR_LOG_FILE
-#define AWS_ERROR_LOG_FILE  "logs/error.log"
-#endif
-
-#ifndef AWS_ACCESS_LOG_FILE
-#define AWS_ACCESS_LOG_FILE  "logs/access.log"
-#endif
-
-#ifndef AWS_POSTGRES_LOG_FILE
-#define AWS_POSTGRES_LOG_FILE  "logs/postgres.log"
-#endif
-
-#ifndef AWS_DOC_ROOT
-#define AWS_DOC_ROOT  "www/"
-#endif
 
 extern "C++" {
 

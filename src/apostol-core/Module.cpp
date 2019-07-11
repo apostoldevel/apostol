@@ -1,16 +1,16 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
-  Modules.cpp
+  Module.cpp
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -21,15 +21,15 @@ Author:
 
 --*/
 
-#include "Apostol.hpp"
-#include "Modules.hpp"
+#include "Core.hpp"
+#include "Module.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C++" {
 
 namespace Apostol {
 
-    namespace Modules {
+    namespace Module {
 
         CPQPollQuery *CApostolModule::GetQuery(CPollConnection *AConnection) {
             CPQPollQuery *LQuery = nullptr;

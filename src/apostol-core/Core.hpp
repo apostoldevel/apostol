@@ -1,16 +1,16 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
-  Header.hpp
+  Core.hpp
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -21,8 +21,8 @@ Author:
 
 --*/
 
-#ifndef APOSTOL_HEADER_HPP
-#define APOSTOL_HEADER_HPP
+#ifndef APOSTOL_CORE_HPP
+#define APOSTOL_CORE_HPP
 
 #include <iostream>
 #include <cstring>
@@ -89,4 +89,4 @@ public:
 #include "Application.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-#endif //APOSTOL_HEADER_HPP
+#endif //APOSTOL_CORE_HPP

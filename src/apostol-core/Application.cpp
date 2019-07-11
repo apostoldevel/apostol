@@ -1,8 +1,8 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -21,7 +21,7 @@ Author:
 
 --*/
 
-#include "Apostol.hpp"
+#include "Core.hpp"
 #include "Application.hpp"
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -64,6 +64,7 @@ namespace Apostol {
             }
 
             m_cmdline = m_argv[0];
+
             for (int i = 1; i < m_argc; ++i) {
                 m_cmdline += " ";
                 m_cmdline += m_argv[i];
@@ -111,7 +112,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CCustomApplication::SetTitle(LPCTSTR Value) {
+        void CCustomApplication::SetHeader(LPCTSTR Value) {
 
             char        *p;
 
@@ -123,7 +124,7 @@ namespace Apostol {
                 memset(p, '\0', m_os_argv_last - p);
             }
 
-            m_title = Value;
+            m_header = Value;
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -285,7 +286,7 @@ namespace Apostol {
 
             LServer = new CHTTPServer((ushort) Config()->Listen(), Config()->DocRoot().c_str());
 
-            LServer->ServerName() = AWS_VER;
+            LServer->ServerName() = Title();
 
             LServer->PollStack(APollStack);
 
@@ -360,7 +361,7 @@ namespace Apostol {
         void CApplication::StartProcess() {
             CPollStack *LPollStack = nullptr;
 
-            Log()->Message(MSG_PROCESS_START, ProcessName(), CmdLine().c_str());
+            Log()->Message(MSG_PROCESS_START, GetProcessName(), CmdLine().c_str());
 
             if (Config()->Master() && m_ProcessType == ptSingle) {
                 m_ProcessType = ptMaster;
@@ -391,7 +392,7 @@ namespace Apostol {
 
             delete LPollStack;
 
-            Log()->Message(MSG_PROCESS_STOP, ProcessName());
+            Log()->Message(MSG_PROCESS_STOP, GetProcessName());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -414,9 +415,9 @@ namespace Apostol {
             n = 2;
             env = (char **) Environ();
 
-            var = new char[sizeof(AWS_VAR) + Server()->Bindings()->Count() * (_INT32_LEN + 1) + 2];
+            var = new char[sizeof(APP_VAR) + Server()->Bindings()->Count() * (_INT32_LEN + 1) + 2];
 
-            p = MemCopy(var, AWS_VAR "=", sizeof(AWS_VAR));
+            p = MemCopy(var, APP_VAR "=", sizeof(APP_VAR));
 
             for (i = 0; i < Server()->Bindings()->Count(); i++) {
                 p = ld_sprintf(p, "%ud;", Server()->Bindings()->Handles(i)->Handle());
@@ -526,12 +527,12 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::BeforeRun() {
-            Log()->Message(MSG_PROCESS_START, ProcessName(), Application()->CmdLine().c_str());
+            Log()->Message(MSG_PROCESS_START, GetProcessName(), Application()->CmdLine().c_str());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::AfterRun() {
-            Log()->Message(MSG_PROCESS_STOP, ProcessName());
+            Log()->Message(MSG_PROCESS_STOP, GetProcessName());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -551,7 +552,7 @@ namespace Apostol {
             switch (pid) {
 
                 case -1:
-                    throw EOSError(errno, _T("fork() failed while spawning \"%s process\""), LProcess->ProcessName());
+                    throw EOSError(errno, _T("fork() failed while spawning \"%s process\""), LProcess->GetProcessName());
 
                 case 0:
 
@@ -566,7 +567,7 @@ namespace Apostol {
 
             LProcess->Exited(false);
 
-            Log()->Error(LOG_NOTICE, 0, _T("start %s %P"), LProcess->ProcessName(), LProcess->Pid());
+            Log()->Error(LOG_NOTICE, 0, _T("start %s %P"), LProcess->GetProcessName(), LProcess->Pid());
 
             if (Respawn >= 0) {
                 return pid;
@@ -637,7 +638,7 @@ namespace Apostol {
                     if (LProcess->Pid() == pid) {
                         LProcess->Status(status);
                         LProcess->Exited(true);
-                        process = LProcess->ProcessName();
+                        process = LProcess->GetProcessName();
                         break;
                     }
                 }
@@ -687,7 +688,7 @@ namespace Apostol {
 
             lpszPid = Config()->PidFile().c_str();
             Config()->PidFile().Copy(szOldPid, PATH_MAX);
-            lpszOldPid = ChangeFileExt(szOldPid, Config()->PidFile().c_str(), AWS_OLDPID_EXT);
+            lpszOldPid = ChangeFileExt(szOldPid, Config()->PidFile().c_str(), APP_OLDPID_EXT);
 
             if (Back) {
                 Result = ::rename(lpszOldPid, lpszPid);
@@ -780,9 +781,9 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessSingle::BeforeRun() {
-            Application()->Title(AWS_NAME ": single process " + Application()->CmdLine());
+            Application()->Header(Application()->Name() + ": single process " + Application()->CmdLine());
 
-            Log()->Message(MSG_PROCESS_START, ProcessName(), Application()->Title().c_str());
+            Log()->Message(MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
 
             InitSignals();
 
@@ -815,9 +816,8 @@ namespace Apostol {
 
         void CProcessSingle::Run() {
 
-#ifdef _DEBUG
-            Log()->AddLogFile("stderr:", LOG_DEBUG);
-#endif
+            //Log()->AddLogFile("stderr:", LOG_NOTICE);
+
             while (!(sig_terminate || sig_quit)) {
 
                 log_debug0(LOG_DEBUG_EVENT, Log(), 0, "single cycle");
@@ -855,8 +855,9 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessMaster::BeforeRun() {
-            Application()->Title(AWS_NAME ": master process " + Application()->CmdLine());
-            Log()->Message(MSG_PROCESS_START, ProcessName(), Application()->Title().c_str());
+            Application()->Header(Application()->Name() + ": master process " + Application()->CmdLine());
+
+            Log()->Message(MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
 
             InitSignals();
         }
@@ -907,7 +908,7 @@ namespace Apostol {
 
                     if (LProcess->Respawn() && !LProcess->Exiting() && !(sig_terminate || sig_quit)) {
                         if (SwapProcess(ptWorker, i) == -1) {
-                            Log()->Error(LOG_ALERT, 0, "could not respawn %s", LProcess->ProcessName());
+                            Log()->Error(LOG_ALERT, 0, "could not respawn %s", LProcess->GetProcessName());
                             continue;
                         }
 
@@ -965,7 +966,7 @@ namespace Apostol {
 
                 log_debug9(LOG_DEBUG_EVENT, Log(), 0,
                               "process (%s)\t: %P - %i %P e:%d t:%d d:%d r:%d j:%d",
-                               LProcess->ProcessName(),
+                               LProcess->GetProcessName(),
                                Pid(),
                                i,
                                LProcess->Pid(),
@@ -1214,9 +1215,9 @@ namespace Apostol {
         void CProcessWorker::BeforeRun() {
             sigset_t set;
 
-            Application()->Title(AWS_NAME ": worker process (" AWS_NAME ")");
+            Application()->Header(Application()->Name() + ": worker process");
 
-            Log()->Message(MSG_PROCESS_START, ProcessName(), Application()->Title().c_str());
+            Log()->Message(MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
 
             InitSignals();
 
@@ -1259,7 +1260,7 @@ namespace Apostol {
                     if (sig_quit) {
                         sig_quit = 0;
                         Log()->Error(LOG_NOTICE, 0, "gracefully shutting down");
-                        Application()->Title("worker process is shutting down");
+                        Application()->Header("worker process is shutting down");
                     }
 
                     Log()->Error(LOG_NOTICE, 0, "exiting worker process");

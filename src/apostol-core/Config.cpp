@@ -1,8 +1,8 @@
 /*++
 
-Programm name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol Web Service
+  Apostol Core
 
 Author:
 
@@ -21,7 +21,7 @@ Author:
 
 --*/
 
-#include "Apostol.hpp"
+#include "Core.hpp"
 #include "Config.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -351,20 +351,20 @@ namespace Apostol {
             m_nPostgresPollMin = 5;
             m_nPostgresPollMax = 10;
 
-            SetLocale(m_sLocale.empty() ? AWS_DEFAULT_LOCALE : m_sLocale.c_str());
+            SetLocale(m_sLocale.empty() ? APP_DEFAULT_LOCALE : m_sLocale.c_str());
 
-            SetPrefix(m_sPrefix.empty() ? AWS_PREFIX : m_sPrefix.c_str());
-            SetConfPrefix(m_sConfPrefix.empty() ? AWS_CONF_PREFIX : m_sConfPrefix.c_str());
-            SetCachePrefix(m_sCachePrefix.empty() ? AWS_CACHE_PREFIX : m_sCachePrefix.c_str());
-            SetConfFile(m_sConfFile.empty() ? AWS_CONF_FILE : m_sConfFile.c_str());
-            SetDocRoot(m_sDocRoot.empty() ? AWS_DOC_ROOT : m_sDocRoot.c_str());
+            SetPrefix(m_sPrefix.empty() ? APP_PREFIX : m_sPrefix.c_str());
+            SetConfPrefix(m_sConfPrefix.empty() ? APP_CONF_PREFIX : m_sConfPrefix.c_str());
+            SetCachePrefix(m_sCachePrefix.empty() ? APP_CACHE_PREFIX : m_sCachePrefix.c_str());
+            SetConfFile(m_sConfFile.empty() ? APP_CONF_FILE : m_sConfFile.c_str());
+            SetDocRoot(m_sDocRoot.empty() ? APP_DOC_ROOT : m_sDocRoot.c_str());
 
-            SetPidFile(m_sPidFile.empty() ? AWS_PID_FILE : m_sPidFile.c_str());
-            SetLockFile(m_sLockFile.empty() ? AWS_LOCK_FILE : m_sLockFile.c_str());
+            SetPidFile(m_sPidFile.empty() ? APP_PID_FILE : m_sPidFile.c_str());
+            SetLockFile(m_sLockFile.empty() ? APP_LOCK_FILE : m_sLockFile.c_str());
 
-            SetErrorLog(m_sErrorLog.empty() ? AWS_ERROR_LOG_FILE : m_sErrorLog.c_str());
-            SetAccessLog(m_sAccessLog.empty() ? AWS_ACCESS_LOG_FILE : m_sAccessLog.c_str());
-            SetPostgresLog(m_sPostgresLog.empty() ? AWS_POSTGRES_LOG_FILE : m_sPostgresLog.c_str());
+            SetErrorLog(m_sErrorLog.empty() ? APP_ERROR_LOG_FILE : m_sErrorLog.c_str());
+            SetAccessLog(m_sAccessLog.empty() ? APP_ACCESS_LOG_FILE : m_sAccessLog.c_str());
+            SetPostgresLog(m_sPostgresLog.empty() ? APP_POSTGRES_LOG_FILE : m_sPostgresLog.c_str());
         }
         //--------------------------------------------------------------------------------------------------------------
 
