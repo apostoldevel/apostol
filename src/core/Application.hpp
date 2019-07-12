@@ -224,7 +224,7 @@ namespace Apostol {
             void CreateLogFile();
             void Daemonize();
 
-            void StartProcess();
+            virtual void StartProcess();
 
         public:
 
@@ -240,6 +240,8 @@ namespace Apostol {
 
             CProcessType ProcessType() { return m_ProcessType; };
             void ProcessType(CProcessType Value) { SetProcessType(Value); };
+
+            void Run() override;
 
         }; // class CApplication
 

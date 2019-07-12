@@ -318,7 +318,7 @@ namespace Apostol {
 
             LPQServer = new CPQServer(Config()->PostgresPollMin(), Config()->PostgresPollMax());
 
-            LPQServer->ConnInfo().ApplicationName() = application_name;
+            LPQServer->ConnInfo().ApplicationName() = "'" + Title() + "'"; //application_name;
 
             LPQServer->PollStack(APollStack);
 
@@ -355,44 +355,6 @@ namespace Apostol {
             MkDir(Config()->ConfPrefix());
             MkDir(Config()->CachePrefix());
             //MkDir(Config()->DocRoot());
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CApplication::StartProcess() {
-            CPollStack *LPollStack = nullptr;
-
-            Log()->Message(MSG_PROCESS_START, GetProcessName(), CmdLine().c_str());
-
-            if (Config()->Master() && m_ProcessType == ptSingle) {
-                m_ProcessType = ptMaster;
-            }
-
-            if (m_ProcessType != ptSignaller) {
-                LPollStack = new CPollStack();
-
-                LPollStack->TimeOut(Config()->TimeOut());
-
-                CreateHTTPServer(LPollStack);
-                CreatePQServer(LPollStack);
-            }
-
-            if ( Config()->Daemon() ) {
-                Daemonize();
-
-                Log()->UseStdErr(false);
-                Log()->RedirectStdErr();
-            }
-
-            Start(CApplicationProcess::Create(this, m_ProcessType));
-
-            // Delete HTTPServer
-            SetServer(nullptr);
-            // Delete PQServer
-            SetPQServer(nullptr);
-
-            delete LPollStack;
-
-            Log()->Message(MSG_PROCESS_STOP, GetProcessName());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -476,6 +438,84 @@ namespace Apostol {
         void CApplication::DoAfterStartProcess(CApplicationProcess *AProcess) {
 
         }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApplication::StartProcess() {
+            CPollStack *LPollStack = nullptr;
+
+            Log()->Debug(0, MSG_PROCESS_START, GetProcessName(), CmdLine().c_str());
+
+            if (Config()->Master() && m_ProcessType == ptSingle) {
+                m_ProcessType = ptMaster;
+            }
+
+            if (m_ProcessType != ptSignaller) {
+                LPollStack = new CPollStack();
+
+                LPollStack->TimeOut(Config()->TimeOut());
+
+                CreateHTTPServer(LPollStack);
+                CreatePQServer(LPollStack);
+            }
+
+            if ( Config()->Daemon() ) {
+                Daemonize();
+
+                Log()->UseStdErr(false);
+                Log()->RedirectStdErr();
+            }
+
+            Start(CApplicationProcess::Create(this, m_ProcessType));
+
+            // Delete HTTPServer
+            SetServer(nullptr);
+            // Delete PQServer
+            SetPQServer(nullptr);
+
+            delete LPollStack;
+
+            Log()->Debug(0, MSG_PROCESS_STOP, GetProcessName());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApplication::Run() {
+
+            ParseCmdLine();
+
+            if (Config()->Flags().show_version) {
+                ShowVersioInfo();
+                ExitRun(0);
+            }
+
+            Config()->Reload();
+
+            if (Config()->Flags().test_config) {
+
+                if (!FileExists(Config()->ConfFile().c_str())) {
+                    Log()->Error(LOG_EMERG, 0, "configuration file %s not found", Config()->ConfFile().c_str());
+                    Log()->Error(LOG_EMERG, 0, "configuration file %s test failed", Config()->ConfFile().c_str());
+                    ExitRun(1);
+                }
+
+                if (Config()->ErrorCount() == 0) {
+                    Log()->Error(LOG_EMERG, 0, "configuration file %s test is successful", Config()->ConfFile().c_str());
+                    ExitRun(0);
+                }
+
+                Log()->Error(LOG_EMERG, 0, "configuration file %s test failed", Config()->ConfFile().c_str());
+                ExitRun(1);
+            }
+
+            Log()->Error(LOG_NOTICE, 0, "Config file: %s", Config()->ConfFile().c_str());
+
+            CreateDirectories();
+
+            DefaultLocale.SetLocale(Config()->Locale().c_str());
+
+            CreateLogFile();
+
+            StartProcess();
+        }
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -527,12 +567,12 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::BeforeRun() {
-            Log()->Message(MSG_PROCESS_START, GetProcessName(), Application()->CmdLine().c_str());
+            Log()->Debug(0, MSG_PROCESS_START, GetProcessName(), Application()->CmdLine().c_str());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::AfterRun() {
-            Log()->Message(MSG_PROCESS_STOP, GetProcessName());
+            Log()->Debug(0, MSG_PROCESS_STOP, GetProcessName());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -771,7 +811,6 @@ namespace Apostol {
 
         void CApplicationProcess::OnFilerError(Pointer Sender, int Error, LPCTSTR lpFormat, va_list args) {
             Log()->Error(LOG_ALERT, Error, lpFormat, args);
-            Log()->Debug(Error, lpFormat, args);
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -783,7 +822,7 @@ namespace Apostol {
         void CProcessSingle::BeforeRun() {
             Application()->Header(Application()->Name() + ": single process " + Application()->CmdLine());
 
-            Log()->Message(MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
+            Log()->Debug(0, MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
 
             InitSignals();
 
@@ -795,6 +834,7 @@ namespace Apostol {
         void CProcessSingle::AfterRun() {
             ServerStop();
             PQServerStop();
+            CApplicationProcess::AfterRun();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -815,8 +855,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessSingle::Run() {
-
-            //Log()->AddLogFile("stderr:", LOG_NOTICE);
 
             while (!(sig_terminate || sig_quit)) {
 
@@ -857,7 +895,7 @@ namespace Apostol {
         void CProcessMaster::BeforeRun() {
             Application()->Header(Application()->Name() + ": master process " + Application()->CmdLine());
 
-            Log()->Message(MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
+            Log()->Debug(0, MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
 
             InitSignals();
         }
@@ -878,7 +916,7 @@ namespace Apostol {
         void CProcessMaster::DoExit() {
             DeletePidFile();
 
-            Log()->Message(_T("exiting master process"));
+            Log()->Error(LOG_NOTICE, 0, _T("exiting master process"));
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1068,7 +1106,7 @@ namespace Apostol {
                 if (sig_reopen) {
                     sig_reopen = 0;
                     Log()->Error(LOG_NOTICE, 0, "reopening logs");
-//                    ngx_reopen_files(cycle, ccf->user);
+                    // TODO: reopen files;
                     SignalToProcesses(ptWorker, signal_value(SIG_REOPEN_SIGNAL));
                 }
 
@@ -1217,7 +1255,7 @@ namespace Apostol {
 
             Application()->Header(Application()->Name() + ": worker process");
 
-            Log()->Message(MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
+            Log()->Debug(0, MSG_PROCESS_START, GetProcessName(), Application()->Header().c_str());
 
             InitSignals();
 
@@ -1233,6 +1271,7 @@ namespace Apostol {
         void CProcessWorker::AfterRun() {
             ServerStop();
             PQServerStop();
+            CApplicationProcess::AfterRun();
         }
         //--------------------------------------------------------------------------------------------------------------
 

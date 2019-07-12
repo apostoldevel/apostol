@@ -186,40 +186,12 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApostol::Run() {
-
-            ParseCmdLine();
-
-            if (Config()->Flags().show_version) {
-                ShowVersioInfo();
-                ExitRun(0);
-            }
-
-            Config()->Reload();
-
-            if (Config()->Flags().test_config) {
-
-                if (!FileExists(Config()->ConfFile().c_str())) {
-                    Log()->Error(LOG_EMERG, 0, "configuration file %s not found", Config()->ConfFile().c_str());
-                    Log()->Error(LOG_EMERG, 0, "configuration file %s test failed", Config()->ConfFile().c_str());
-                    ExitRun(1);
-                }
-
-                if (Config()->ErrorCount() == 0) {
-                    Log()->Error(LOG_EMERG, 0, "configuration file %s test is successful", Config()->ConfFile().c_str());
-                    ExitRun(0);
-                }
-
-                Log()->Error(LOG_EMERG, 0, "configuration file %s test failed", Config()->ConfFile().c_str());
-                ExitRun(1);
-            }
-
-            CreateDirectories();
-
-            DefaultLocale.SetLocale(Config()->Locale().c_str());
-
-            CreateLogFile();
-
-            StartProcess();
+#ifdef _DEBUG
+            Log()->Error(LOG_NOTICE, 0, "%s version: %s (%s build)", APP_DESCRIPTION, APP_VERSION, "debug");
+#else
+            Log()->Error(LOG_NOTICE, 0, "%s version: %s (%s build)", APP_DESCRIPTION, APP_VERSION, "release");
+#endif
+            CApplication::Run();
         }
         //--------------------------------------------------------------------------------------------------------------
 
