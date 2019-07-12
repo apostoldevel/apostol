@@ -63,9 +63,9 @@ target_link_libraries(${DELPHI_LIB_NAME} pthread)
 add_library(${MODULES_LIB_NAME} STATIC ${utils_files} ${modules_files})
 target_link_libraries(${MODULES_LIB_NAME} ${DELPHI_LIB_NAME} crypto curl)
 
-add_library(${APOSTOL_LIB_NAME} STATIC ${core_files})
+add_executable(${PROJECT_NAME} ${core_files} ${apostol_files})
 
-target_compile_definitions(${APOSTOL_LIB_NAME} PUBLIC
+target_compile_definitions(${PROJECT_NAME} PUBLIC
         APP_NAME="${PROJECT_NAME}"
         APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
         APP_DEFAULT_LOCALE="en_US.UTF-8"
@@ -84,11 +84,7 @@ target_compile_definitions(${APOSTOL_LIB_NAME} PUBLIC
         APP_DOC_ROOT="www/"
         )
 
-target_link_libraries(${APOSTOL_LIB_NAME} ${DELPHI_LIB_NAME})
-
-add_executable(${PROJECT_NAME} ${apostol_files})
-
-target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULES_LIB_NAME} ${APOSTOL_LIB_NAME})
+target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${MODULES_LIB_NAME})
 
 add_dependencies(${PROJECT_NAME} auto_increment_version)
 # ----------------------------------------------------------------------------------------------------------------------
