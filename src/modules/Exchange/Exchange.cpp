@@ -86,7 +86,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CExchange::CExchange() : CApostolModule() {
+        CExchange::CExchange(CModuleManager *AManager) : CApostolModule(AManager) {
             curl_global_init(CURL_GLOBAL_DEFAULT);
             m_Exchanges = new CStringList(true);
             InitExchanges();
@@ -878,6 +878,14 @@ namespace Apostol {
             }
 
             AConnection->SendStockReply(CReply::not_implemented);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CExchange::CheckUrerArent(const CString &Value) {
+            if (!Value.IsEmpty()) {
+                return (Value.Find(_T("Exchange/")) != CString::npos);
+            }
+            return false;
         }
 
     }

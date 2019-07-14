@@ -118,7 +118,7 @@ namespace Delphi {
                 unsigned VUnsigned;
                 wchar_t VWideChar;
                 wchar_t *VPWideChar;
-                LPCSTR VAnsiString;
+                const char *VAnsiString;
                 float VFloat;
                 VarData *VVariant;
                 u_int64_t VUInt64;
@@ -217,7 +217,7 @@ namespace Delphi {
                 varPWideChar = Value;
             }
 
-            explicit VarData(LPCSTR Value): VarData() {
+            explicit VarData(const char *Value): VarData() {
                 VType = vtAnsiString;
                 varAnsiString = Value;
             }

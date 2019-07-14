@@ -124,7 +124,7 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CClient365::CClient365() : CApostolModule() {
+        CClient365::CClient365(CModuleManager *AManager) : CApostolModule(AManager) {
             m_Jobs = new CJobManager();
             UpdateCacheList();
         }
@@ -757,6 +757,14 @@ namespace Apostol {
             }
 
             AConnection->SendStockReply(CReply::not_implemented);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CClient365::CheckUrerArent(const CString &Value) {
+            if (!Value.IsEmpty()) {
+                return (Value.Find(_T("Client365/")) != CString::npos);
+            }
+            return false;
         }
 
     }

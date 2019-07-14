@@ -76,15 +76,17 @@ namespace Apostol {
 
         public:
 
-            CWebServer();
+            explicit CWebServer(CModuleManager *AManager);
 
             ~CWebServer() override;
 
-            static class CWebServer *CreateModule() {
-                return new CWebServer();
+            static class CWebServer *CreateModule(CModuleManager *AManager) {
+                return new CWebServer(AManager);
             }
 
             void Execute(CHTTPConnection *AConnection) override;
+
+            bool CheckUrerArent(const CString& Value) override { return true; };
 
             const CString& AllowedMethods() { return GetAllowedMethods(); };
 

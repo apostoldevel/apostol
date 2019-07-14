@@ -408,32 +408,26 @@ namespace Apostol {
             void InitializeServerHandlers();
         };
 
+
         //--------------------------------------------------------------------------------------------------------------
 
         //-- CModuleProcess --------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CModuleProcess: public CServerProcess {
-        private:
-
-            CStringList *m_pModules;
-
+        class CModuleProcess: public CModuleManager, public CServerProcess {
         protected:
 
-            void DoExecute(CTCPServerConnection *AConnection) override;
+            void DoBeforeExecuteModule(CApostolModule *AModule) override;
+            void DoAfterExecuteModule(CApostolModule *AModule) override;
 
-            CApostolModule *GetModule(CHTTPConnection *AConnection) const;
+            void DoExecute(CTCPServerConnection *AConnection) override;
 
         public:
 
             CModuleProcess(CProcessType AType, CCustomProcess *AParent);
 
-            ~CModuleProcess() override;
-
-            CApostolModule *Modules(CHTTPConnection *AConnection) const { return GetModule(AConnection); };
-
-            CApostolModule *operator[] (CHTTPConnection *AConnection) const { return GetModule(AConnection); };
+            ~CModuleProcess() override = default;
         };
 
     }

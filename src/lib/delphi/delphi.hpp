@@ -260,6 +260,10 @@ inline void chMB(LPCSTR szMsg);
 #    include "Postgres.hpp"
 #  endif
 
+#  ifndef DELPHI_POSTGRES_HPP
+#    include "Postgres.hpp"
+#  endif
+
 #else
 #  define LIB_DELPHI
 #endif

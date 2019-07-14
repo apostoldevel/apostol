@@ -163,15 +163,17 @@ namespace Apostol {
 
         public:
 
-            CExchange();
+            explicit CExchange(CModuleManager *AManager);
 
             ~CExchange() override;
 
-            static class CExchange *CreateModule() {
-                return new CExchange();
+            static class CExchange *CreateModule(CModuleManager *AManager) {
+                return new CExchange(AManager);
             }
 
             void Execute(CHTTPConnection *AConnection) override;
+
+            bool CheckUrerArent(const CString& Value) override;
 
             void Cleanup();
 

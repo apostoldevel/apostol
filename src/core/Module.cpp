@@ -49,6 +49,51 @@ namespace Apostol {
 
             return LQuery;
         }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CApostolModule --------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CApostolModule::CApostolModule(): CApostolModule((CModuleManager *) Application::Application) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CApostolModule::CApostolModule(CModuleManager *AManager): CCollectionItem(AManager), CGlobalComponent() {
+
+        }
+
+        void CModuleManager::ExecuteModule(CHTTPConnection *AConnection) {
+
+            CApostolModule *LModule = nullptr;
+
+            auto LRequest = AConnection->Request();
+
+            const CString &UserAgent = LRequest->Headers.Values(_T("user-agent"));
+
+            int Index = 0;
+            while (Index < ModuleCount() && !Modules(Index)->CheckUrerArent(UserAgent))
+                Index++;
+
+            if (Index == ModuleCount()) {
+                AConnection->SendStockReply(CReply::forbidden);
+                return;
+            }
+
+            LModule = Modules(Index);
+
+            DoBeforeExecuteModule(LModule);
+            try {
+                LModule->Execute(AConnection);
+            } catch (...) {
+                AConnection->SendStockReply(CReply::internal_server_error);
+                DoAfterExecuteModule(LModule);
+                throw;
+            }
+            DoAfterExecuteModule(LModule);
+        }
     }
 }
 }

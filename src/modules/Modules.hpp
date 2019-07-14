@@ -33,19 +33,10 @@ Author:
 #include "Exchange/Exchange.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-static CApostolModule* CreateModule(const CString &UserAgent) {
-
-    if (!UserAgent.IsEmpty()) {
-        if ((UserAgent.Find(_T("Client365/")) != CString::npos)) {
-            return CClient365::CreateModule();
-        }
-
-        if ((UserAgent.Find(_T("Exchange/")) != CString::npos)) {
-            return CExchange::CreateModule();
-        }
-    }
-
-    return CWebServer::CreateModule();
+static void CreateModule(CModuleManager *AManager) {
+    CClient365::CreateModule(AManager);
+    CExchange::CreateModule(AManager);
+    CWebServer::CreateModule(AManager);
 }
 
 #endif //APOSTOL_MODULES_HPP

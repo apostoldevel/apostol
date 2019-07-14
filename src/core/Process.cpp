@@ -880,67 +880,32 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CModuleProcess::CModuleProcess(CProcessType AType, CCustomProcess *AParent) : CServerProcess(AType, AParent) {
-            m_pModules = new CStringList(true);
+        CModuleProcess::CModuleProcess(CProcessType AType, CCustomProcess *AParent): CModuleManager(),
+            CServerProcess(AType, AParent) {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CModuleProcess::~CModuleProcess() {
-            delete m_pModules;
+        void CModuleProcess::DoBeforeExecuteModule(CApostolModule *AModule) {
+
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CApostolModule *CModuleProcess::GetModule(CHTTPConnection *AConnection) const {
+        void CModuleProcess::DoAfterExecuteModule(CApostolModule *AModule) {
 
-            CApostolModule *LModule = nullptr;
-
-            auto LRequest = AConnection->Request();
-
-            const CString &UserAgent = LRequest->Headers.Values(_T("user-agent"));
-
-            if (!UserAgent.IsEmpty()) {
-                int Index = m_pModules->IndexOf(UserAgent);
-                if (Index != -1) {
-                    LModule = (CApostolModule *) m_pModules->Objects(Index);
-                }
-            }
-
-            if (LModule == nullptr) {
-                LModule = CreateModule(UserAgent);
-                if (Assigned(LModule)) {
-                    if (!UserAgent.IsEmpty()) {
-                        m_pModules->AddObject(UserAgent, LModule);
-                        LModule->FreeAfterExecute(false);
-                    }
-                }
-            }
-
-            return LModule;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CModuleProcess::DoExecute(CTCPServerConnection *AConnection) {
             auto LConnection = dynamic_cast<CHTTPConnection *> (AConnection);
-            auto LModule = GetModule(LConnection);
-
-            if (LModule == nullptr) {
-                LConnection->SendStockReply(CReply::forbidden);
-                return;
-            }
 
             try {
                 clock_t start = clock();
 
-                LModule->Execute(LConnection);
+                ExecuteModule(LConnection);
 
                 Log()->Debug(0, _T("[Module] Runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
             } catch (Delphi::Exception::Exception &E) {
                 DoServerException(LConnection, &E);
-                LConnection->SendStockReply(CReply::internal_server_error);
-            }
-
-            if (LModule->FreeAfterExecute()) {
-                delete LModule;
             }
         }
         //--------------------------------------------------------------------------------------------------------------

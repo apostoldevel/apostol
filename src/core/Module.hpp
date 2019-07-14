@@ -30,17 +30,15 @@ namespace Apostol {
 
     namespace Module {
 
+        class CModuleManager;
+
         //--------------------------------------------------------------------------------------------------------------
 
         //-- CApostolModule --------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CApostolModule: public CObject, public CGlobalComponent {
-        private:
-
-            bool m_bFreeAfterExecute;
-
+        class CApostolModule: public CCollectionItem, public CGlobalComponent {
         protected:
 
             virtual void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) abstract;
@@ -48,17 +46,47 @@ namespace Apostol {
 
         public:
 
-            CApostolModule(): CObject(), CGlobalComponent(), m_bFreeAfterExecute(true) {};
+            CApostolModule();
+
+            explicit CApostolModule(CModuleManager *AManager);
 
             ~CApostolModule() override = default;
+
+            virtual bool CheckUrerArent(const CString& Value) abstract;
 
             virtual void Execute(CHTTPConnection *AConnection) abstract;
 
             CPQPollQuery *GetQuery(CPollConnection *AConnection);
 
-            bool FreeAfterExecute() { return m_bFreeAfterExecute; };
-            void FreeAfterExecute(bool Value) { m_bFreeAfterExecute = Value; };
+        };
 
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CModuleManager --------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CModuleManager: public CCollection {
+            typedef CCollection inherited;
+
+        protected:
+
+            virtual void DoBeforeExecuteModule(CApostolModule *AModule) abstract;
+            virtual void DoAfterExecuteModule(CApostolModule *AModule) abstract;
+
+        public:
+
+            explicit CModuleManager(): CCollection(this) {
+
+            };
+
+            void ExecuteModule(CHTTPConnection *AConnection);
+
+            int ModuleCount() { return inherited::Count(); };
+            void DeleteModule(int Index) { inherited::Delete(Index); };
+
+            CApostolModule *Modules(int Index) { return (CApostolModule *) inherited::GetItem(Index); }
+            void Modules(int Index, CApostolModule *Value) { inherited::SetItem(Index, (CCollectionItem *) Value); }
         };
 
     }

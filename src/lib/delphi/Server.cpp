@@ -1016,7 +1016,7 @@ namespace Delphi {
 
             CloseConnection(true);
 
-            m_Reply->CloseConnection = CloseConnection();
+            GetReply()->CloseConnection = CloseConnection();
 
             CReply::GetStockReply(m_Reply, AStatus);
 
@@ -1036,7 +1036,7 @@ namespace Delphi {
                 }
             }
 
-            m_Reply->CloseConnection = CloseConnection();
+            GetReply()->CloseConnection = CloseConnection();
 
             CReply::GetReply(m_Reply, AStatus, AContentType);
 
@@ -1046,7 +1046,7 @@ namespace Delphi {
 
         void CHTTPConnection::SendReply(bool ASendNow) {
 
-            m_Reply->ToBuffers(OutputBuffer());
+            GetReply()->ToBuffers(OutputBuffer());
 
             m_ConnectionStatus = csReplyReady;
 

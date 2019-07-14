@@ -120,15 +120,17 @@ namespace Apostol {
 
         public:
 
-            CClient365();
+            explicit CClient365(CModuleManager *AManager);
 
             ~CClient365() override;
 
-            static class CClient365 *CreateModule() {
-                return new CClient365();
+            static class CClient365 *CreateModule(CModuleManager *AManager) {
+                return new CClient365(AManager);
             }
 
             void Execute(CHTTPConnection *AConnection) override;
+
+            bool CheckUrerArent(const CString& Value) override;
 
             bool CheckCache(const CString &FileName);
 

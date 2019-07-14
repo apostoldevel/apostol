@@ -30,7 +30,7 @@ namespace Apostol {
 
     namespace WebServer {
 
-        CWebServer::CWebServer(): CApostolModule() {
+        CWebServer::CWebServer(CModuleManager *AManager): CApostolModule(AManager) {
             m_Headers = new CStringList(true);
             InitHeaders();
         }
