@@ -64,6 +64,7 @@ namespace Apostol {
         CApostolModule::CApostolModule(CModuleManager *AManager): CCollectionItem(AManager), CGlobalComponent() {
 
         }
+        //--------------------------------------------------------------------------------------------------------------
 
         void CModuleManager::ExecuteModule(CHTTPConnection *AConnection) {
 
