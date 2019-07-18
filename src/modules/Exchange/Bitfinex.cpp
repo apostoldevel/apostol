@@ -161,7 +161,7 @@ namespace Apostol {
                            "market"
             );
 
-            CString payload_enc = base64_encode(reinterpret_cast<const uint8_t *>(payload.c_str()), payload.length());
+            CString payload_enc = base64_encode(payload);
 
             CString signature = hmac_sha384( SecretKey(), payload_enc );
 

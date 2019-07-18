@@ -739,12 +739,12 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CServerProcess::DoServerListenException(CSocketServer *AServer, Delphi::Exception::Exception *AException) {
+        void CServerProcess::DoServerListenException(CSocketEvent *Sender, Delphi::Exception::Exception *AException) {
             Log()->Error(LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CServerProcess::DoServerException(CTCPServerConnection *AConnection,
+        void CServerProcess::DoServerException(CTCPConnection *AConnection,
                                              Delphi::Exception::Exception *AException) {
             Log()->Error(LOG_EMERG, 0, AException->what());
         }
@@ -757,7 +757,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerConnected(CObject *Sender) {
-            auto LConnection = dynamic_cast<CHTTPConnection *>(Sender);
+            auto LConnection = dynamic_cast<CHTTPServerConnection *>(Sender);
             if (LConnection != nullptr) {
                 Log()->Message(_T("client \"%s:%d\" open connection"), LConnection->Socket()->Binding()->PeerIP(),
                                LConnection->Socket()->Binding()->PeerPort());
@@ -766,7 +766,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerDisconnected(CObject *Sender) {
-            auto LConnection = dynamic_cast<CHTTPConnection *>(Sender);
+            auto LConnection = dynamic_cast<CHTTPServerConnection *>(Sender);
 
             if (LConnection != nullptr) {
                 auto LPollQuery = PQServer()->FindQuryByConnection(LConnection);
@@ -780,14 +780,14 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CServerProcess::DoDebug(CSocketServer *AServer, CTCPServerConnection *AConnection, LPCTSTR AFormat,
+        void CServerProcess::DoDebug(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat,
                                      va_list args) {
             Log()->Debug(0, AFormat, args);
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CServerProcess::DoAccessLog(CTCPServerConnection *AConnection) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (AConnection);
+        void CServerProcess::DoAccessLog(CTCPConnection *AConnection) {
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (AConnection);
             auto LRequest = LConnection->Request();
             auto LReply = LConnection->Reply();
 
@@ -819,13 +819,13 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CServerProcess::DoNoCommandHandler(CSocketServer *AServer, LPCTSTR AData, CTCPServerConnection *AConnection) {
-            dynamic_cast<CHTTPConnection *> (AConnection)->SendStockReply(CReply::not_implemented);
+        void CServerProcess::DoNoCommandHandler(CSocketEvent *Sender, LPCTSTR AData, CTCPConnection *AConnection) {
+            dynamic_cast<CHTTPServerConnection *> (AConnection)->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoOptions(CCommand *ACommand) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (ACommand->Connection());
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (ACommand->Connection());
             auto LRequest = LConnection->Request();
 
             if (LRequest->Uri == _T("/quit"))
@@ -836,42 +836,42 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoGet(CCommand *ACommand) {
-            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
+            dynamic_cast<CHTTPServerConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoHead(CCommand *ACommand) {
-            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
+            dynamic_cast<CHTTPServerConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPost(CCommand *ACommand) {
-            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
+            dynamic_cast<CHTTPServerConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPut(CCommand *ACommand) {
-            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
+            dynamic_cast<CHTTPServerConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPatch(CCommand *ACommand) {
-            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
+            dynamic_cast<CHTTPServerConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoDelete(CCommand *ACommand) {
-            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
+            dynamic_cast<CHTTPServerConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoTrace(CCommand *ACommand) {
-            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
+            dynamic_cast<CHTTPServerConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoConnect(CCommand *ACommand) {
-            dynamic_cast<CHTTPConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
+            dynamic_cast<CHTTPServerConnection *> (ACommand->Connection())->SendStockReply(CReply::not_implemented);
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -895,18 +895,22 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CModuleProcess::DoExecute(CTCPServerConnection *AConnection) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (AConnection);
+        bool CModuleProcess::DoExecute(CTCPConnection *AConnection) {
+
+            bool Result = false;
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (AConnection);
 
             try {
                 clock_t start = clock();
 
-                ExecuteModule(LConnection);
+                Result = ExecuteModule(LConnection);
 
                 Log()->Debug(0, _T("[Module] Runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
             } catch (Delphi::Exception::Exception &E) {
                 DoServerException(LConnection, &E);
             }
+
+            return Result;
         }
         //--------------------------------------------------------------------------------------------------------------
 

@@ -400,6 +400,19 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
+        class LIB_DELPHI EHTTPServerError : public Exception {
+            typedef Exception inherited;
+
+        public:
+
+            EHTTPServerError() : inherited() {};
+
+            explicit EHTTPServerError(LPCTSTR lpMsg) : Exception(lpMsg) {};
+
+            ~EHTTPServerError() override = default;
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
         class LIB_DELPHI EPollServerError : public Exception {
             typedef Exception inherited;
 

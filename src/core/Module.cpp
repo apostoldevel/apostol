@@ -66,7 +66,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CModuleManager::ExecuteModule(CHTTPConnection *AConnection) {
+        bool CModuleManager::ExecuteModule(CHTTPServerConnection *AConnection) {
 
             CApostolModule *LModule = nullptr;
 
@@ -80,7 +80,7 @@ namespace Apostol {
 
             if (Index == ModuleCount()) {
                 AConnection->SendStockReply(CReply::forbidden);
-                return;
+                return false;
             }
 
             LModule = Modules(Index);
@@ -94,6 +94,8 @@ namespace Apostol {
                 throw;
             }
             DoAfterExecuteModule(LModule);
+
+            return true;
         }
     }
 }

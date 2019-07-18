@@ -510,7 +510,7 @@ namespace Apostol {
 
             CreateDirectories();
 
-            DefaultLocale.SetLocale(Config()->Locale().c_str());
+            //DefaultLocale.SetLocale(Config()->Locale().c_str());
 
             CreateLogFile();
 

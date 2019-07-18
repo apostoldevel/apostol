@@ -31,7 +31,7 @@ namespace Apostol {
 
     namespace WebServer {
 
-        typedef std::function<void (CHTTPConnection *AConnection)> COnHeaderHandlerEvent;
+        typedef std::function<void (CHTTPServerConnection *AConnection)> COnHeaderHandlerEvent;
         //--------------------------------------------------------------------------------------------------------------
 
         class CHeaderHandler: CObject {
@@ -47,7 +47,7 @@ namespace Apostol {
 
             bool Allow() { return m_Allow; };
 
-            void Handler(CHTTPConnection *AConnection) {
+            void Handler(CHTTPServerConnection *AConnection) {
                 if (m_Allow && m_Handler)
                     m_Handler(AConnection);
             }
@@ -61,9 +61,9 @@ namespace Apostol {
 
             CString m_AllowedMethods;
 
-            void DoOptions(CHTTPConnection *AConnection);
-            void DoGet(CHTTPConnection *AConnection);
-            void MethodNotAllowed(CHTTPConnection *AConnection);
+            void DoOptions(CHTTPServerConnection *AConnection);
+            void DoGet(CHTTPServerConnection *AConnection);
+            void MethodNotAllowed(CHTTPServerConnection *AConnection);
 
         protected:
 
@@ -84,7 +84,7 @@ namespace Apostol {
                 return new CWebServer(AManager);
             }
 
-            void Execute(CHTTPConnection *AConnection) override;
+            void Execute(CHTTPServerConnection *AConnection) override;
 
             bool CheckUrerArent(const CString& Value) override { return true; };
 

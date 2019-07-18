@@ -169,7 +169,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQConnectionEvent::CPQConnectionEvent(): CPollConnection(this) {
+        CPQConnectionEvent::CPQConnectionEvent(CPollManager *AManager): CPollConnection(this, AManager) {
             m_OnReceiver = nullptr;
             m_OnProcessor = nullptr;
 
@@ -223,7 +223,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQConnection::CPQConnection(): CPQConnectionEvent() {
+        CPQConnection::CPQConnection(CPollManager *AManager): CPQConnectionEvent(AManager) {
             m_Handle = nullptr;
             m_Socket = INVALID_SOCKET;
             m_TryConnect = false;
@@ -232,7 +232,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQConnection::CPQConnection(const CPQConnInfo &AConnInfo): CPQConnection() {
+        CPQConnection::CPQConnection(const CPQConnInfo &AConnInfo, CPollManager *AManager): CPQConnection(AManager) {
             m_ConnInfo = AConnInfo;
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -457,7 +457,6 @@ namespace Delphi {
         void CPQConnection::Disconnect() {
             if (m_TryConnect) {
                 DoDisconnected(this);
-                ClosePoll();
                 Finish();
             }
         }
@@ -482,7 +481,8 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQPollConnection::CPQPollConnection(const CPQConnInfo &AConnInfo): CPQConnection(AConnInfo) {
+        CPQPollConnection::CPQPollConnection(const CPQConnInfo &AConnInfo, CPollManager *AManager):
+                CPQConnection(AConnInfo, AManager) {
             m_ConnectionStatus = qsConnect;
             m_WorkQuery = nullptr;
         }
@@ -786,9 +786,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQPollQuery::CPQPollQuery(CPQConnectPoll *AServer): CPQQuery(),
-            CCollectionItem(AServer) {
-
+        CPQPollQuery::CPQPollQuery(CPQConnectPoll *AServer): CPQQuery(), CCollectionItem(AServer->PollQueryManager()) {
             m_Server = AServer;
             m_PollConnection = nullptr;
 
@@ -934,7 +932,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQConnectPoll::CPQConnectPoll(size_t ASizeMin, size_t ASizeMax): CPQConnectPollEvent(), CCollection(this) {
+        CPQConnectPoll::CPQConnectPoll(size_t ASizeMin, size_t ASizeMax): CPQConnectPollEvent() {
             m_Active = false;
 
             m_SizeMin = ASizeMin;
@@ -944,6 +942,9 @@ namespace Delphi {
 
             m_PollStack = new CPollStack(ASizeMax);
             m_Queue = new CQueue;
+
+            m_PollQueryManager = new CPQPollQueryManager();
+            m_PollManager = new CPollManager;
 
             m_FreePollStack = true;
 
@@ -963,6 +964,8 @@ namespace Delphi {
             StopAll();
             FreeAndNil(m_Queue);
             FreeAndNil(m_EventHandlers);
+            FreeAndNil(m_PollManager);
+            FreeAndNil(m_PollQueryManager);
             if (m_FreePollStack)
                 FreeAndNil(m_PollStack);
         }
@@ -985,7 +988,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CPQPollConnection *CPQConnectPoll::GetConnection(CPollEventHandler *AHandler) {
-            return dynamic_cast<CPQPollConnection *> (AHandler->PollConnection());
+            return dynamic_cast<CPQPollConnection *> (AHandler->Binding());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1031,9 +1034,9 @@ namespace Delphi {
                 LEventHandler->OnReadEvent(std::bind(&CPQConnectPoll::DoReadEvent, this, _1));
                 LEventHandler->OnWriteEvent(std::bind(&CPQConnectPoll::DoWriteEvent, this, _1));
 
-                LEventHandler->PollConnection(AConnection);
+                LEventHandler->Binding(AConnection);
+                LEventHandler->Start(etWork);
 
-                LEventHandler->EventType(etWork);
             } catch (Exception::Exception &E) {
                 DoServerException(&E);
                 FreeAndNil(LEventHandler);
@@ -1050,7 +1053,7 @@ namespace Delphi {
             if (AOldSocket != SOCKET_ERROR) {
                 LEventHandler = m_EventHandlers->FindHandlerBySocket(AOldSocket);
                 if (Assigned(LEventHandler)) {
-                    LEventHandler->Close();
+                    LEventHandler->Stop();
                 }
             }
 
@@ -1064,7 +1067,7 @@ namespace Delphi {
 
         bool CPQConnectPoll::NewConnection() {
             int PingCount = 0;
-            auto LConnection = new CPQPollConnection(m_ConnInfo);
+            auto LConnection = new CPQPollConnection(m_ConnInfo, m_PollManager);
 
             try {
 
@@ -1279,9 +1282,9 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CPQPollQuery *CPQServer::FindQuryByConnection(CPollConnection *APollConnection) {
-            for (int I = 0; I < QueryCount(); ++I) {
-                if (Querys(I)->PollConnection() == APollConnection)
-                    return Querys(I);
+            for (int I = 0; I < PollQueryManager()->QueryCount(); ++I) {
+                if (PollQueryManager()->Querys(I)->PollConnection() == APollConnection)
+                    return PollQueryManager()->Querys(I);
             }
             return nullptr;
         }

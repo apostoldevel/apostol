@@ -283,7 +283,7 @@ namespace Delphi {
         void CDefaultLocale::SetLocale(LPCSTR Value) {
             if (m_LocaleName != Value) {
                 if (m_Locale != nullptr) {
-                    //::freelocale(m_Locale); //!!! don`t call freelocale
+                    ::freelocale(m_Locale);
                     m_Locale = nullptr;
                 }
 

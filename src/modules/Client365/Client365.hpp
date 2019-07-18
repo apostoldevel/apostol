@@ -108,12 +108,12 @@ namespace Apostol {
             void PQResultToJson(CPQResult *Result, CString& Json);
             void QueryToJson(CPQPollQuery *Query, CString& Json, CString &Session);
 
-            bool QueryStart(CHTTPConnection *AConnection, const CStringList& ASQL, const CString& ACacheFile);
+            bool QueryStart(CHTTPServerConnection *AConnection, const CStringList& ASQL, const CString& ACacheFile);
 
         protected:
 
-            void Post(CHTTPConnection *AConnection);
-            void Get(CHTTPConnection *AConnection);
+            void Post(CHTTPServerConnection *AConnection);
+            void Get(CHTTPServerConnection *AConnection);
 
             void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) override;
             void DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) override;
@@ -128,7 +128,7 @@ namespace Apostol {
                 return new CClient365(AManager);
             }
 
-            void Execute(CHTTPConnection *AConnection) override;
+            void Execute(CHTTPServerConnection *AConnection) override;
 
             bool CheckUrerArent(const CString& Value) override;
 

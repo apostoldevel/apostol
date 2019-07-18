@@ -65,8 +65,8 @@ namespace Delphi {
                 return *this;
             };
 
-            inline bool operator!= (const http_header& Value) { return Name != Value.Name; };
-            inline bool operator== (const http_header& Value) { return Name == Value.Name; };
+            inline bool operator!= (const http_header& AValue) { return Name != AValue.Name; };
+            inline bool operator== (const http_header& AValue) { return Name == AValue.Name; };
 
         } CHeader, *PHeader;
 
@@ -79,7 +79,7 @@ namespace Delphi {
         class CHeaders {
         private:
 
-            TList<CHeader> *m_pList;
+            TList<CHeader> m_pList;
 
             CString m_NullValue;
 
@@ -97,7 +97,7 @@ namespace Delphi {
 
         public:
 
-            CHeaders();
+            CHeaders() = default;
 
             ~CHeaders();
 
@@ -238,7 +238,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CHTTPConnection;
+        class CHTTPServerConnection;
         //--------------------------------------------------------------------------------------------------------------
 
         typedef struct http_reply
@@ -315,7 +315,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CHTTPConnection -------------------------------------------------------------------------------------------
+        //-- CHTTPServerConnection -------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -325,7 +325,7 @@ namespace Delphi {
         enum CHTTPConnectionStatus { csConnected = 0, csWaitRequest, csRequestOk, csRequestError, csReplyReady, csReplySent };
         //--------------------------------------------------------------------------------------------------------------
 
-        class CHTTPConnection: public CTCPServerConnection {
+        class CHTTPServerConnection: public CTCPServerConnection {
             typedef CTCPServerConnection inherited;
 
         private:
@@ -340,6 +340,7 @@ namespace Delphi {
 
             bool m_CloseConnection;
 
+            CNotifyEvent m_OnRequest;
             CNotifyEvent m_OnReply;
 
         protected:
@@ -348,13 +349,14 @@ namespace Delphi {
 
             CReply *GetReply();
 
+            void DoRequest();
             void DoReply();
 
         public:
 
-            explicit CHTTPConnection(CHTTPServer *AServer);
+            explicit CHTTPServerConnection(CPollSocketServer *AServer);
 
-            ~CHTTPConnection() override;
+            ~CHTTPServerConnection() override;
 
             void ParseInput();
 
@@ -380,10 +382,46 @@ namespace Delphi {
 
             void SendStockReply(CReply::status_type AStatus, bool ASendNow = false);
 
+            const CNotifyEvent &OnRequest() { return m_OnRequest; }
+            void OnRequest(CNotifyEvent && Value) { m_OnRequest = Value; }
+
             const CNotifyEvent &OnReply() { return m_OnReply; }
             void OnReply(CNotifyEvent && Value) { m_OnReply = Value; }
 
-        }; // CHTTPConnection
+        }; // CHTTPServerConnection
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CHTTPClientConnection -------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CHTTPClientConnection: public CTCPClientConnection {
+            typedef CTCPClientConnection inherited;
+
+        private:
+
+            CRequest *m_Request;
+
+            CNotifyEvent m_OnRequest;
+
+        protected:
+
+            CRequest *GetRequest();
+
+            void DoRequest();
+
+        public:
+
+            explicit CHTTPClientConnection(CPollSocketClient *AClient);
+
+            ~CHTTPClientConnection() override;
+
+            void Clear();
+
+            CRequest *Request() { return GetRequest(); }
+
+        }; // CHTTPServerConnection
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -391,7 +429,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CHTTPServer: public CPollServer {
+        class CHTTPServer: public CAsyncServer {
         private:
 
             CString m_sDocRoot;
@@ -408,11 +446,13 @@ namespace Delphi {
 
             void DoWrite(CPollEventHandler* AHandler) override;
 
-            void DoCommand(CTCPServerConnection *AConnection);
+            bool DoCommand(CTCPConnection *AConnection) override;
 
-            bool DoExecute(CTCPServerConnection *AConnection) override;
+            bool DoExecute(CTCPConnection *AConnection) override;
 
             void DoReply(CObject *Sender);
+
+            void InitializeCommandHandlers() override {};
 
         public:
 
@@ -427,6 +467,40 @@ namespace Delphi {
 
         };
 
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CHTTPClient -----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CHTTPClient: public CAsyncClient {
+        private:
+
+            CHTTPClientConnection *m_Connection;
+
+        protected:
+
+            void DoTimeOut(CPollEventHandler* AHandler) override;
+
+            void DoConnect(CPollEventHandler* AHandler) override;
+
+            void DoRead(CPollEventHandler* AHandler) override;
+
+            void DoWrite(CPollEventHandler* AHandler) override;
+
+            bool DoExecute(CTCPConnection *AConnection) override;
+
+            bool DoCommand(CTCPConnection *AConnection) override;
+
+        public:
+
+            explicit CHTTPClient(LPCTSTR AHost, unsigned short APort);
+
+            ~CHTTPClient() override = default;
+
+            CHTTPClientConnection *Connection() { return m_Connection; };
+
+        };
     }
 }
 

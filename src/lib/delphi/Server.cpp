@@ -121,29 +121,23 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CHeaders::CHeaders() {
-            m_pList = new TList<CHeader>();
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         CHeaders::~CHeaders() {
             Clear();
-            delete m_pList;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CHeaders::Put(int Index, const CHeader &Header) {
-            m_pList->Insert(Index, Header);
+            m_pList.Insert(Index, Header);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         CHeader &CHeaders::Get(int Index) {
-            return m_pList->Items(Index);
+            return m_pList.Items(Index);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         const CHeader &CHeaders::Get(int Index) const {
-            return m_pList->Items(Index);
+            return m_pList.Items(Index);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -168,7 +162,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CHeaders::Clear() {
-            m_pList->Clear();
+            m_pList.Clear();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -185,12 +179,12 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CHeaders::Delete(int Index) {
-            m_pList->Delete(Index);
+            m_pList.Delete(Index);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         int CHeaders::GetCount() const {
-            return m_pList->GetCount();
+            return m_pList.GetCount();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -219,12 +213,12 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CHeader &CHeaders::First() {
-            return m_pList->First();
+            return m_pList.First();
         }
         //--------------------------------------------------------------------------------------------------------------
 
         CHeader &CHeaders::Last() {
-            return m_pList->Last();
+            return m_pList.Last();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -928,11 +922,12 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CHTTPConnection -------------------------------------------------------------------------------------------
+        //-- CHTTPServerConnection -------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CHTTPConnection::CHTTPConnection(CHTTPServer *AServer) : CTCPServerConnection(AServer) {
+        CHTTPServerConnection::CHTTPServerConnection(CPollSocketServer *AServer):
+                CTCPServerConnection(AServer) {
             m_CloseConnection = true;
             m_ConnectionStatus = csConnected;
             m_Request = nullptr;
@@ -942,20 +937,20 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CHTTPConnection::~CHTTPConnection() {
+        CHTTPServerConnection::~CHTTPServerConnection() {
             Clear();
             delete m_RequestParser;
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CRequest *CHTTPConnection::GetRequest() {
+        CRequest *CHTTPServerConnection::GetRequest() {
             if (m_Request == nullptr)
                 m_Request = new CRequest();
             return m_Request;
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CReply *CHTTPConnection::GetReply() {
+        CReply *CHTTPServerConnection::GetReply() {
             if (m_Reply == nullptr) {
                 m_Reply = new CReply;
                 m_Reply->ServerName = Server()->ServerName().c_str();
@@ -965,14 +960,14 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPConnection::Clear() {
+        void CHTTPServerConnection::Clear() {
             m_RequestParser->Reset();
             FreeAndNil(m_Request);
             FreeAndNil(m_Reply);
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPConnection::ParseInput() {
+        void CHTTPServerConnection::ParseInput() {
             int LResult;
             CMemoryStream *LStream = nullptr;
 
@@ -988,12 +983,13 @@ namespace Delphi {
 
                         switch (LResult) {
                             case 0:
-                                Tag(clock());
+                                //Tag(clock());
                                 m_ConnectionStatus = csRequestError;
                                 break;
 
                             case 1:
-                                Tag(clock());
+                                //Tag(clock());
+                                DoRequest();
                                 m_ConnectionStatus = csRequestOk;
                                 break;
 
@@ -1009,10 +1005,9 @@ namespace Delphi {
                 delete LStream;
             }
         }
-
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPConnection::SendStockReply(http_reply::status_type AStatus, bool ASendNow) {
+        void CHTTPServerConnection::SendStockReply(http_reply::status_type AStatus, bool ASendNow) {
 
             CloseConnection(true);
 
@@ -1024,7 +1019,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPConnection::SendReply(http_reply::status_type AStatus, LPCTSTR AContentType, bool ASendNow) {
+        void CHTTPServerConnection::SendReply(http_reply::status_type AStatus, LPCTSTR AContentType, bool ASendNow) {
 
             CloseConnection(true);
 
@@ -1044,7 +1039,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPConnection::SendReply(bool ASendNow) {
+        void CHTTPServerConnection::SendReply(bool ASendNow) {
 
             GetReply()->ToBuffers(OutputBuffer());
 
@@ -1059,9 +1054,51 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPConnection::DoReply() {
+        void CHTTPServerConnection::DoRequest() {
+            if (m_OnRequest != nullptr) {
+                m_OnRequest(this);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPServerConnection::DoReply() {
             if (m_OnReply != nullptr) {
                 m_OnReply(this);
+            }
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CHTTPClientConnection -------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CHTTPClientConnection::CHTTPClientConnection(CPollSocketClient *AClient): CTCPClientConnection(AClient) {
+            m_Request = nullptr;
+            m_OnRequest = nullptr;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CHTTPClientConnection::~CHTTPClientConnection() {
+            Clear();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CRequest *CHTTPClientConnection::GetRequest() {
+            if (m_Request == nullptr)
+                m_Request = new CRequest();
+            return m_Request;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClientConnection::Clear() {
+            FreeAndNil(m_Request);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClientConnection::DoRequest() {
+            if (m_OnRequest != nullptr) {
+                m_OnRequest(this);
             }
         }
 
@@ -1071,7 +1108,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CHTTPServer::CHTTPServer(unsigned short AListen, LPCTSTR lpDocRoot) : CPollServer() {
+        CHTTPServer::CHTTPServer(unsigned short AListen, LPCTSTR lpDocRoot): CAsyncServer() {
             DefaultPort(AListen);
             SetDocRoot(lpDocRoot);
         }
@@ -1106,7 +1143,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CHTTPServer::DoTimeOut(CPollEventHandler *AHandler) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (AHandler->PollConnection());
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (AHandler->Binding());
             try {
                 if (LConnection->ConnectionStatus() >= csRequestOk) {
                     if (LConnection->ConnectionStatus() == csRequestOk) {
@@ -1124,13 +1161,13 @@ namespace Delphi {
         void CHTTPServer::DoAccept(CPollEventHandler* AHandler) {
             CIOHandlerSocket *LIOHandler = nullptr;
             CPollEventHandler *LEventHandler = nullptr;
-            CHTTPConnection *LConnection = nullptr;
+            CHTTPServerConnection *LConnection = nullptr;
 
             try {
                 LIOHandler = (CIOHandlerSocket *) IOHandler()->Accept(AHandler->Socket(), SOCK_NONBLOCK);
 
                 if (Assigned(LIOHandler)) {
-                    LConnection = new CHTTPConnection(this);
+                    LConnection = new CHTTPServerConnection(this);
 
                     LConnection->OnDisconnected(std::bind(&CHTTPServer::DoDisconnected, this, _1));
                     LConnection->OnReply(std::bind(&CHTTPServer::DoReply, this, _1));
@@ -1140,10 +1177,10 @@ namespace Delphi {
                     LIOHandler->AfterAccept();
 
                     LEventHandler = EventHandlers()->Add(LIOHandler->Binding()->Handle());
-                    LEventHandler->PollConnection(LConnection);
-                    LEventHandler->EventType(etWork);
+                    LEventHandler->Binding(LConnection);
+                    LEventHandler->Start(etWork);
 
-                    DoConnected((CObject *) LConnection);
+                    DoConnected(LConnection);
                 } else {
                     throw ETCPServerError(_T("TCP Server Error..."));
                 }
@@ -1155,7 +1192,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CHTTPServer::DoRead(CPollEventHandler* AHandler) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (AHandler->PollConnection());
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (AHandler->Binding());
             try {
                 LConnection->ParseInput();
                 switch (LConnection->ConnectionStatus()) {
@@ -1178,7 +1215,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CHTTPServer::DoWrite(CPollEventHandler* AHandler) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (AHandler->PollConnection());
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (AHandler->Binding());
             try {
                 if (LConnection->WriteAsync()) {
                     if (LConnection->ConnectionStatus() == csReplyReady) {
@@ -1198,21 +1235,13 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CHTTPServer::DoExecute(CTCPServerConnection *AConnection) {
-            if (m_OnExecute != nullptr) {
-                m_OnExecute(AConnection);
-            } else {
-                DoCommand(AConnection);
-            }
-            return true;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CHTTPServer::DoCommand(CTCPServerConnection *AConnection) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (AConnection);
+        bool CHTTPServer::DoCommand(CTCPConnection *AConnection) {
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (AConnection);
             auto LRequest = LConnection->Request();
 
-            if (CommandHandlers()->Count() > 0) {
+            bool Result = CommandHandlers()->Count() > 0;
+
+            if (Result) {
                 DoBeforeCommandHandler(AConnection, LRequest->Method.c_str());
                 try {
                     int i;
@@ -1231,12 +1260,97 @@ namespace Delphi {
                 }
                 DoAfterCommandHandler(AConnection);
             }
+
+            return Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CHTTPServer::DoExecute(CTCPConnection *AConnection) {
+            if (m_OnExecute != nullptr) {
+                return m_OnExecute(AConnection);
+            }
+            return DoCommand(AConnection);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CHTTPServer::DoReply(CObject *Sender) {
-            DoAccessLog(dynamic_cast<CHTTPConnection *> (Sender));
+            DoAccessLog(dynamic_cast<CHTTPServerConnection *> (Sender));
         }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CHTTPClient -----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CHTTPClient::CHTTPClient(LPCTSTR AHost, unsigned short APort): CAsyncClient(AHost, APort) {
+            m_Connection = nullptr;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClient::DoTimeOut(CPollEventHandler *AHandler) {
+            CEPollClient::DoTimeOut(AHandler);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClient::DoConnect(CPollEventHandler *AHandler) {
+            try {
+                if (IOHandler()->Binding()->CheckConnection()) {
+                    m_Connection = new CHTTPClientConnection(this);
+
+                    m_Connection->OnDisconnected(std::bind(&CHTTPClient::DoDisconnected, this, _1));
+                    m_Connection->IOHandler(IOHandler());
+
+                    AHandler->Binding(m_Connection);
+                    AHandler->Start(etWork);
+
+                    DoConnected(m_Connection);
+                }
+            } catch (Exception::Exception &E) {
+                DoListenException(&E);
+                throw ESocketError(E.ErrorCode(), "Connection failed ");
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClient::DoRead(CPollEventHandler *AHandler) {
+            auto LConnection = dynamic_cast<CHTTPClientConnection *> (AHandler->Binding());
+            try {
+                if (LConnection->ReadAsync()) {
+
+                }
+            } catch (Delphi::Exception::Exception &E) {
+                DoException(LConnection, &E);
+                LConnection->Disconnect();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClient::DoWrite(CPollEventHandler *AHandler) {
+            auto LConnection = dynamic_cast<CHTTPClientConnection *> (AHandler->Binding());
+            try {
+                if (LConnection->WriteAsync()) {
+
+                }
+            } catch (Delphi::Exception::Exception &E) {
+                DoException(LConnection, &E);
+                LConnection->Disconnect();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CHTTPClient::DoExecute(CTCPConnection *AConnection) {
+            if (m_OnExecute != nullptr) {
+                return m_OnExecute(AConnection);
+            }
+            return DoCommand(AConnection);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CHTTPClient::DoCommand(CTCPConnection *AConnection) {
+            return false;
+        }
+        //--------------------------------------------------------------------------------------------------------------
 
     }
 }

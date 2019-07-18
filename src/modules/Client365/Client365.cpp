@@ -408,7 +408,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CClient365::DoPostgresQueryExecuted(CPQPollQuery *APollQuery) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (APollQuery->PollConnection());
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (APollQuery->PollConnection());
 
             CString Session;
 
@@ -465,7 +465,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CClient365::DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) {
-            auto LConnection = dynamic_cast<CHTTPConnection *> (APollQuery->PollConnection());
+            auto LConnection = dynamic_cast<CHTTPServerConnection *> (APollQuery->PollConnection());
 
             if (LConnection != nullptr) {
                 auto LReply = LConnection->Reply();
@@ -510,7 +510,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CClient365::Get(CHTTPConnection *AConnection) {
+        void CClient365::Get(CHTTPServerConnection *AConnection) {
             auto LRequest = AConnection->Request();
 
             CString JobId = LRequest->Uri.SubString(1);
@@ -542,7 +542,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CClient365::Post(CHTTPConnection *AConnection) {
+        void CClient365::Post(CHTTPServerConnection *AConnection) {
             auto LRequest = AConnection->Request();
             int LVersion = -1;
 
@@ -705,7 +705,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CClient365::QueryStart(CHTTPConnection *AConnection, const CStringList& ASQL, const CString& ACacheFile) {
+        bool CClient365::QueryStart(CHTTPServerConnection *AConnection, const CStringList& ASQL, const CString& ACacheFile) {
             auto LQuery = GetQuery(AConnection);
 
             if (LQuery == nullptr) {
@@ -739,7 +739,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CClient365::Execute(CHTTPConnection *AConnection) {
+        void CClient365::Execute(CHTTPServerConnection *AConnection) {
             auto LRequest = AConnection->Request();
             auto LReply = AConnection->Reply();
 

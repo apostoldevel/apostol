@@ -54,7 +54,7 @@ namespace Apostol {
 
             virtual bool CheckUrerArent(const CString& Value) abstract;
 
-            virtual void Execute(CHTTPConnection *AConnection) abstract;
+            virtual void Execute(CHTTPServerConnection *AConnection) abstract;
 
             CPQPollQuery *GetQuery(CPollConnection *AConnection);
 
@@ -80,7 +80,7 @@ namespace Apostol {
 
             };
 
-            void ExecuteModule(CHTTPConnection *AConnection);
+            bool ExecuteModule(CHTTPServerConnection *AConnection);
 
             int ModuleCount() { return inherited::Count(); };
             void DeleteModule(int Index) { inherited::Delete(Index); };

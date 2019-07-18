@@ -232,7 +232,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::GetTradingPairs(CHTTPConnection *AConnection) {
+        void CExchange::GetTradingPairs(CHTTPServerConnection *AConnection) {
             auto LReply = AConnection->Reply();
 
             Log()->Debug(0, "GetTradingPairs");
@@ -247,7 +247,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::Quote(const CStringList& Params, CHTTPConnection *AConnection) {
+        void CExchange::Quote(const CStringList& Params, CHTTPServerConnection *AConnection) {
 
             Log()->Debug(0, "Quote");
 
@@ -273,7 +273,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::Trade(const CStringList &Params, CHTTPConnection *AConnection) {
+        void CExchange::Trade(const CStringList &Params, CHTTPServerConnection *AConnection) {
 
             Log()->Debug(0, "[Trade] Start");
 
@@ -301,7 +301,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::Split(const CStringList &Params, CHTTPConnection *AConnection) {
+        void CExchange::Split(const CStringList &Params, CHTTPServerConnection *AConnection) {
 
             Log()->Debug(0, "Split");
 
@@ -657,7 +657,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::Post(CHTTPConnection *AConnection) {
+        void CExchange::Post(CHTTPServerConnection *AConnection) {
 
             auto LRequest = AConnection->Request();
             int LVersion = -1;
@@ -723,7 +723,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::Get(CHTTPConnection *AConnection) {
+        void CExchange::Get(CHTTPServerConnection *AConnection) {
 
             auto LRequest = AConnection->Request();
             int LVersion = -1;
@@ -807,7 +807,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CExchange::SaveOrder(CHTTPConnection *AConnection, const CStringList &Params) {
+        bool CExchange::SaveOrder(CHTTPServerConnection *AConnection, const CStringList &Params) {
             auto LQuery = GetQuery(AConnection);
 
             if (LQuery == nullptr) {
@@ -834,7 +834,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CExchange::UpdateOrder(CHTTPConnection *AConnection, const CStringList &Params, const CString &Response) {
+        bool CExchange::UpdateOrder(CHTTPServerConnection *AConnection, const CStringList &Params, const CString &Response) {
             auto LQuery = GetQuery(AConnection);
 
             if (LQuery == nullptr) {
@@ -858,7 +858,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CExchange::Execute(CHTTPConnection *AConnection) {
+        void CExchange::Execute(CHTTPServerConnection *AConnection) {
 
             auto LRequest = AConnection->Request();
             auto LReply = AConnection->Reply();

@@ -25,7 +25,7 @@
 
 */
 
-#include "Apostol.hpp"
+#include "delphi.hpp"
 #include "base64.hpp"
 
 
@@ -39,7 +39,11 @@ static bool is_base64(unsigned char c)
   return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-CString base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
+CString base64_encode(const CString &S) {
+    return base64_encode(reinterpret_cast<const uint8_t *>(S.c_str()), S.length());
+}
+
+CString base64_encode(const unsigned char *bytes_to_encode, unsigned int len)
 {
   CString ret;
   int i = 0;
@@ -47,7 +51,7 @@ CString base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
   unsigned char char_array_3[3];
   unsigned char char_array_4[4];
 
-  while (in_len--)
+  while (len--)
   {
     char_array_3[i++] = *(bytes_to_encode++);
     if (i == 3)
@@ -83,9 +87,12 @@ CString base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
   return ret;
 }
 
-CString base64_decode(CString const& encoded_string)
+CString base64_decode(const CString &S) {
+    return base64_decode(reinterpret_cast<const uint8_t *>(S.c_str()), S.length());
+}
+
+CString base64_decode(const unsigned char *bytes_to_decode, unsigned int len)
 {
-  int in_len = encoded_string.size();
   int i = 0;
   int j = 0;
   int in_ = 0;
@@ -93,9 +100,9 @@ CString base64_decode(CString const& encoded_string)
   TCHAR char_array_4[4], char_array_3[3];
   CString ret;
 
-  while (in_len-- && ( encoded_string[in_] != '=') && is_base64(encoded_string[in_]))
+  while (len-- && ( bytes_to_decode[in_] != '=') && is_base64(bytes_to_decode[in_]))
   {
-    char_array_4[i++] = encoded_string[in_]; in_++;
+    char_array_4[i++] = bytes_to_decode[in_]; in_++;
     if (i == 4)
     {
       for (i = 0; i <4; i++)

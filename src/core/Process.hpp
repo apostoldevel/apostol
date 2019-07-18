@@ -362,10 +362,10 @@ namespace Apostol {
 
         protected:
 
-            virtual void DoExecute(CTCPServerConnection *AConnection) abstract;
+            virtual bool DoExecute(CTCPConnection *AConnection) abstract;
 
-            void DoDebug(CSocketServer *AServer, CTCPServerConnection *AConnection, LPCTSTR AFormat, va_list args);
-            void DoAccessLog(CTCPServerConnection *AConnection);
+            void DoDebug(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args);
+            void DoAccessLog(CTCPConnection *AConnection);
 
             void DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException);
             void DoPQConnectException(CPQConnection *AConnection, Delphi::Exception::Exception *AException);
@@ -383,14 +383,14 @@ namespace Apostol {
             void DoPQResultStatus(CPQResult *AResult);
             void DoPQResult(CPQResult *AResult, ExecStatusType AExecStatus);
 
-            void DoServerListenException(CSocketServer *AServer, Delphi::Exception::Exception *AException);
-            void DoServerException(CTCPServerConnection *AConnection, Delphi::Exception::Exception *AException);
+            void DoServerListenException(CSocketEvent *Sender, Delphi::Exception::Exception *AException);
+            void DoServerException(CTCPConnection *AConnection, Delphi::Exception::Exception *AException);
             void DoServerEventHandlerException(CPollEventHandler *AHandler, Delphi::Exception::Exception *AException);
 
             void DoServerConnected(CObject *Sender);
             void DoServerDisconnected(CObject *Sender);
 
-            void DoNoCommandHandler(CSocketServer *AServer, LPCTSTR AData, CTCPServerConnection *AConnection);
+            void DoNoCommandHandler(CSocketEvent *Sender, LPCTSTR AData, CTCPConnection *AConnection);
 
             void SetServer(CHTTPServer *Value);
             void SetPQServer(CPQServer *Value);
@@ -421,7 +421,7 @@ namespace Apostol {
             void DoBeforeExecuteModule(CApostolModule *AModule) override;
             void DoAfterExecuteModule(CApostolModule *AModule) override;
 
-            void DoExecute(CTCPServerConnection *AConnection) override;
+            bool DoExecute(CTCPConnection *AConnection) override;
 
         public:
 

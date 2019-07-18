@@ -344,6 +344,14 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
+        int CStack::GetSocketError(CSocket ASocket) {
+            int Result;
+            socklen_t len = sizeof(Result);
+            CheckForSocketError(GetSockOpt(ASocket, SOL_SOCKET, SO_ERROR, (void *) &Result, &len), egSocket);
+            return Result;
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
         int CStack::GetLastError() {
             return errno;
         };
@@ -388,7 +396,7 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        void CStack::GetHostByName(char *AName, char *VHost, size_t ASize) {
+        void CStack::GetHostByName(const char *AName, char *VHost, size_t ASize) {
             struct hostent *host = nullptr;
             struct in_addr addr = {0};
 
@@ -408,7 +416,7 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        void CStack::GetIPByName(char *AName, char *VIP, size_t ASize) {
+        void CStack::GetIPByName(const char *AName, char *VIP, size_t ASize) {
             struct hostent *host = nullptr;
             struct in_addr addr = {0};
 
@@ -505,7 +513,7 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        CSocketComponent::CSocketComponent(): CPersistent(this) {
+        CSocketComponent::CSocketComponent() {
             AddSocket();
         };
         //--------------------------------------------------------------------------------------------------------------
@@ -723,7 +731,7 @@ namespace Delphi {
                 // SO_LINGER is false - socket may take a little while to actually close after this
                 GStack->CloseSocket(m_Handle);
                 // Reset all data
-                //Reset();
+                Reset();
             }
         };
         //--------------------------------------------------------------------------------------------------------------
@@ -733,8 +741,13 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        void CSocketHandle::GetHostByName(char *AName, char *VHost, size_t ASize) {
+        void CSocketHandle::GetHostByName(const char *AName, char *VHost, size_t ASize) {
             GStack->GetHostByName(AName, VHost, ASize);
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketHandle::GetIPByName(const char *AName, char *VIP, size_t ASize) {
+            GStack->GetIPByName(AName, VIP, ASize);
         };
         //--------------------------------------------------------------------------------------------------------------
 
@@ -750,16 +763,50 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        int CSocketHandle::Connect(sa_family_t AFamily) {
-            int SocketError = GStack->Connect(Handle(), AFamily, PeerIP(), PeerPort());
+        int CSocketHandle::Connect(sa_family_t AFamily, LPCSTR AHost, unsigned short APort) {
+            char IP[NI_MAXIP] = {0};
+            int Ignore[] = {EINPROGRESS, EALREADY};
 
-            if (SocketError != SOCKET_ERROR) {
+            GStack->GetIPByName(AHost, IP, sizeof(IP));
+
+            int SocketError = GStack->Connect(Handle(), AFamily, IP, APort);
+
+            if (!GStack->CheckForSocketError(SocketError, Ignore, chARRAY(Ignore), egSystem)) {
                 UpdateBindingLocal();
                 UpdateBindingPeer();
             }
 
             return SocketError;
         };
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CSocketHandle::CheckConnection() {
+
+            int Ignore[] = {EINPROGRESS, EALREADY};
+            int SocketError = GetSocketError();
+
+            if ((SocketError == 0) || (SocketError == EISCONN)) {
+
+                UpdateBindingLocal();
+                UpdateBindingPeer();
+
+            } else {
+
+                for (int i : Ignore) {
+                    if (SocketError == i)
+                        return false;
+                }
+
+                GStack->RaiseSocketError(SocketError);
+            }
+
+            return true;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CSocketHandle::GetSocketError() {
+            return GStack->GetSocketError(Handle());
+        }
         //--------------------------------------------------------------------------------------------------------------
 
         void CSocketHandle::GetSockOpt(int ALevel, int AOptName, void *AOptVal, socklen_t AOptLen) {
@@ -881,6 +928,16 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
+        bool CSocketHandle::SelectWrite(CSocket ASocket, int ATimeOut) {
+            auto WriteList = new CList;
+            WriteList->Add(&ASocket);
+            bool fSuccess = (GStack->Select(nullptr, WriteList, nullptr, ATimeOut) == 1);
+            FreeAndNil(WriteList);
+
+            return fSuccess;
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
         void CSocketHandle::UpdateBindingLocal() {
             sa_family_t LFamily;
             GStack->GetSockName(Handle(), &LFamily, m_IP, chARRAY(m_IP), &m_Port);
@@ -914,7 +971,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CSocketHandles::CSocketHandles() : CCollection(this) {
+        CSocketHandles::CSocketHandles(): CCollection(this) {
             m_DefaultPort = 0;
         };
         //--------------------------------------------------------------------------------------------------------------
@@ -974,6 +1031,14 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
+        void CIOHandlerSocket::Open() {
+            if (m_Binding == nullptr)
+                m_Binding = new CSocketHandle(nullptr);
+            else
+                m_Binding->Reset(true);
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
         void CIOHandlerSocket::Close() {
             if (m_Binding != nullptr)
                 m_Binding->CloseSocket();
@@ -985,14 +1050,6 @@ namespace Delphi {
             if (bResult)
                 bResult = m_Binding->HandleAllocated();
             return bResult;
-        };
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CIOHandlerSocket::Open() {
-            if (m_Binding == nullptr)
-                m_Binding = new CSocketHandle(nullptr);
-            else
-                m_Binding->Reset(true);
         };
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1017,7 +1074,8 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPollConnection::CPollConnection(CPollConnection *APollConnection) {
+        CPollConnection::CPollConnection(CPollConnection *APollConnection, CPollManager *AManager):
+                CCollectionItem(AManager) {
             m_EventHandler = nullptr;
             m_PollConnection = APollConnection;
         }
@@ -1026,14 +1084,14 @@ namespace Delphi {
         void CPollConnection::SetEventHandler(CPollEventHandler *AValue) {
             if (m_EventHandler != AValue) {
                 m_EventHandler = AValue;
-                m_EventHandler->PollConnection(m_PollConnection);
+                m_EventHandler->Binding(m_PollConnection);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CPollConnection::ClosePoll() {
             if (Assigned(m_EventHandler))
-                m_EventHandler->Close();
+                m_EventHandler->Stop();
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -1042,7 +1100,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CTCPConnection::CTCPConnection(): CPollConnection(this) {
+        CTCPConnection::CTCPConnection(CPollManager *AManager): CPollConnection(this, AManager) {
             m_IOHandler = nullptr;
             m_Socket = nullptr;
 
@@ -1648,7 +1706,7 @@ namespace Delphi {
 
         void CTCPConnection::DoDisconnected() {
             if (m_OnDisconnected != nullptr)
-                m_OnDisconnected((Delphi::Classes::CObject *) this);
+                m_OnDisconnected(this);
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -1657,13 +1715,30 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CTCPServerConnection::CTCPServerConnection(CEventSocketServer *AServer) : CTCPConnection() {
+        CTCPServerConnection::CTCPServerConnection(CPollSocketServer *AServer):
+                CTCPConnection(AServer) {
             m_Server = AServer;
         };
         //--------------------------------------------------------------------------------------------------------------
 
         CTCPServerConnection::~CTCPServerConnection() {
             m_Server = nullptr;
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CTCPClientConnection --------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CTCPClientConnection::CTCPClientConnection(CPollSocketClient *AClient):
+                CTCPConnection(AClient) {
+            m_Client = AClient;
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
+        CTCPClientConnection::~CTCPClientConnection() {
+            m_Client = nullptr;
         };
 
         //--------------------------------------------------------------------------------------------------------------
@@ -1690,11 +1765,123 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        //-- CClientIOHandler ------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CClientIOHandler::CClientIOHandler(): CIOHandlerSocket() {
+            m_MaxTries = 5;
+            m_Attempts = 0;
+            Open();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CClientIOHandler::~CClientIOHandler() {
+            Close();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CClientIOHandler::Connect(LPCSTR AHost, unsigned short APort) {
+
+            int ErrorCode = m_Binding->Connect(AF_INET, AHost, APort);
+
+            if (ErrorCode == -1) {
+                m_MaxTries++;
+                if (m_MaxTries == m_Attempts) {
+                    m_Attempts = 0;
+                    throw ESocketError(ENOTCONN);
+                }
+            }
+
+            return (ErrorCode == 0) || (m_Binding->LastError() == EISCONN);
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CSocketEvent ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CSocketEvent::CSocketEvent(): CSocketComponent() {
+            m_OnDebug = nullptr;
+            m_OnAccessLog = nullptr;
+            m_OnExecute = nullptr;
+            m_OnException = nullptr;
+            m_OnListenException = nullptr;
+            m_OnConnected = nullptr;
+            m_OnDisconnected = nullptr;
+            m_OnAfterCommandHandler = nullptr;
+            m_OnBeforeCommandHandler = nullptr;
+            m_OnNoCommandHandler = nullptr;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoDebug(CTCPConnection *AConnection, LPCTSTR AFormat, ...) {
+            va_list args;
+            if (m_OnDebug != nullptr) {
+                va_start(args, AFormat);
+                m_OnDebug(this, AConnection, AFormat, args);
+                va_end(args);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoAfterCommandHandler(CTCPConnection *AConnection) {
+            if (m_OnAfterCommandHandler != nullptr)
+                m_OnAfterCommandHandler(this, AConnection);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoBeforeCommandHandler(CTCPConnection *AConnection, LPCTSTR ALine) {
+            if (m_OnBeforeCommandHandler != nullptr)
+                m_OnBeforeCommandHandler(this, ALine, AConnection);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoAccessLog(CTCPConnection *AConnection) {
+            if (m_OnAccessLog != nullptr)
+                m_OnAccessLog(AConnection);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoConnected(CObject *Sender) {
+            if (m_OnConnected != nullptr)
+                m_OnConnected(Sender);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoDisconnected(CObject *Sender) {
+            if (m_OnDisconnected != nullptr)
+                m_OnDisconnected(Sender);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoException(CTCPConnection *AConnection, Exception::Exception *AException) {
+            if (m_OnException != nullptr)
+                m_OnException(AConnection, AException);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoListenException(Exception::Exception *AException) {
+            if (m_OnListenException != nullptr)
+                m_OnListenException(this, AException);
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CSocketEvent::DoNoCommandHandler(LPCTSTR AData, CTCPConnection *AConnection) {
+            if (m_OnNoCommandHandler != nullptr)
+                m_OnNoCommandHandler(this, AData, AConnection);
+            else
+                throw ETCPServerError(_T("No command handler found."));
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
         //-- CSocketServer ---------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CSocketServer::CSocketServer(): CPersistent(this) {
+        CSocketServer::CSocketServer(): CSocketComponent() {
             m_ServerName = WWWServerName;
             m_AllowedMethods = WWWAllowedMethods;
             m_Bindings = new CSocketHandles();
@@ -1717,81 +1904,12 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CEventSocketServer ----------------------------------------------------------------------------------------
+        //-- CSocketClient ---------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CEventSocketServer::CEventSocketServer(): CSocketServer() {
-            m_OnDebug = nullptr;
-            m_OnAccessLog = nullptr;
-            m_OnExecute = nullptr;
-            m_OnException = nullptr;
-            m_OnListenException = nullptr;
-            m_OnConnected = nullptr;
-            m_OnDisconnected = nullptr;
-            m_OnAfterCommandHandler = nullptr;
-            m_OnBeforeCommandHandler = nullptr;
-            m_OnNoCommandHandler = nullptr;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoDebug(CTCPServerConnection *AConnection, LPCTSTR AFormat, ...) {
-            va_list args;
-            if (m_OnDebug != nullptr) {
-                va_start(args, AFormat);
-                m_OnDebug(this, AConnection, AFormat, args);
-                va_end(args);
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoAfterCommandHandler(CTCPServerConnection *AConnection) {
-            if (m_OnAfterCommandHandler != nullptr)
-                m_OnAfterCommandHandler(this, AConnection);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoBeforeCommandHandler(CTCPServerConnection *AConnection, LPCTSTR ALine) {
-            if (m_OnBeforeCommandHandler != nullptr)
-                m_OnBeforeCommandHandler(this, ALine, AConnection);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoAccessLog(CTCPServerConnection *AConnection) {
-            if (m_OnAccessLog != nullptr)
-                m_OnAccessLog(AConnection);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoConnected(CObject *Sender) {
-            if (m_OnConnected != nullptr)
-                m_OnConnected(Sender);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoDisconnected(CObject *Sender) {
-            if (m_OnDisconnected != nullptr)
-                m_OnDisconnected(Sender);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoException(CTCPServerConnection *AConnection, Exception::Exception *AException) {
-            if (m_OnException != nullptr)
-                m_OnException(AConnection, AException);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoListenException(Exception::Exception *AException) {
-            if (m_OnListenException != nullptr)
-                m_OnListenException(this, AException);
-        };
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CEventSocketServer::DoNoCommandHandler(LPCTSTR AData, CTCPServerConnection *AConnection) {
-            if (m_OnNoCommandHandler != nullptr)
-                m_OnNoCommandHandler(this, AData, AConnection);
-            else
-                throw ETCPServerError(_T("No command handler found."));
+        CSocketClient::CSocketClient(): CSocketComponent() {
+            m_Port = 0;
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -1840,15 +1958,15 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CUDPClient::CUDPClient() : CSocketComponent() {
-            m_Active = false;
+        CUDPClient::CUDPClient(): CSocketClient() {
             m_Socket = new CSocketHandle(nullptr);
+            m_Active = false;
         };
         //--------------------------------------------------------------------------------------------------------------
 
         CUDPClient::~CUDPClient() {
             SetActive(false);
-            delete m_Socket;
+            FreeAndNil(m_Socket);
         };
         //--------------------------------------------------------------------------------------------------------------
 
@@ -2028,7 +2146,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CPeerThread::AfterRun() {
-            m_Connection->Server()->DoDisconnected((CObject *) m_Connection);
+            m_Connection->Server()->DoDisconnected(m_Connection);
         };
         //--------------------------------------------------------------------------------------------------------------
 
@@ -2044,7 +2162,7 @@ namespace Delphi {
                 throw;
             }
 
-            m_Connection->Server()->DoConnected((CObject *) m_Connection);
+            m_Connection->Server()->DoConnected(m_Connection);
 
             // Stop this thread if we were disconnected
             if (!m_Connection->Connected())
@@ -2198,7 +2316,7 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CCommandHandler::Check(LPCTSTR AData, size_t ASize, CTCPServerConnection *AConnection) {
+        bool CCommandHandler::Check(LPCTSTR AData, size_t ASize, CTCPConnection *AConnection) {
             bool Result = false;
 
             LPTSTR lpCommand = nullptr;
@@ -2341,7 +2459,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CTCPServer::CTCPServer(): CEventSocketServer() {
+        CTCPServer::CTCPServer(): CPollSocketServer() {
             m_ThreadMgr = nullptr;
             m_ListenerThreads = nullptr;
             m_IOHandler = nullptr;
@@ -2510,7 +2628,7 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CTCPServer::DoExecute(CTCPServerConnection *AConnection) {
+        bool CTCPServer::DoExecute(CTCPConnection *AConnection) {
             int i;
             bool Result = false;
             CMemoryStream *LStream = nullptr;
@@ -2627,7 +2745,7 @@ namespace Delphi {
 
         void CPollStack::Ctl(int AOption, CPollEventHandler *AEventHandler) {
             CSocket Socket;
-            uint32_t events;
+            uint32_t Events;
             struct epoll_event ee = {0};
 
             if (!Assigned(AEventHandler))
@@ -2637,10 +2755,7 @@ namespace Delphi {
                 Create(0);
 
             Socket = AEventHandler->Socket();
-
-            events = EPOLLIN;
-            if (AEventHandler->EventType() == etWork)
-                events|= EPOLLOUT | EPOLLET;
+            Events = AEventHandler->Events();
 
             ee.data.fd = Socket;
 
@@ -2649,7 +2764,7 @@ namespace Delphi {
                 ee.events = 0;
             } else {
                 ee.data.ptr = AEventHandler;
-                ee.events = events;
+                ee.events = Events;
             }
 
             if (epoll_ctl(m_Handle, AOption, Socket, &ee) != 0)
@@ -2705,8 +2820,8 @@ namespace Delphi {
         CPollEventHandler::CPollEventHandler(CPollEventHandlers *AEventHandlers, CSocket ASocket):
             CCollectionItem(AEventHandlers) {
             m_Socket = ASocket;
-            m_EventType = etDisabled;
-            m_PollConnection = nullptr;
+            m_EventType = etClose;
+            m_Binding = nullptr;
             m_EventHandlers = AEventHandlers;
             m_OnTimeOutEvent = nullptr;
             m_OnReadEvent = nullptr;
@@ -2715,35 +2830,56 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CPollEventHandler::~CPollEventHandler() {
-            Close();
-            delete m_PollConnection;
+            m_Binding = nullptr;
+            Stop();
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CPollEventHandler::SetEventType(CPollEvenType Value) {
             if (m_EventType != Value) {
-                m_EventType = Value;
                 switch (Value) {
-                    case etDisabled:
-                    case etClosed:
-                        m_EventHandlers->Disable(this);
+                    case etClose:
+                        m_Events = 0;
+                        m_EventHandlers->PollDel(this);
+                        break;
+                    case etAccept:
+                        m_Events = EPOLLIN;
+                        m_EventHandlers->PollAdd(this);
                         break;
                     case etConnect:
-                    case etWork:
-                        m_EventHandlers->Enable(this);
+                        m_Events = EPOLLOUT;
+                        m_EventHandlers->PollAdd(this);
                         break;
+                    case etWork:
+                        m_Events = EPOLLIN | EPOLLOUT | EPOLLET;
+                        if (m_EventType == etClose)
+                            m_EventHandlers->PollAdd(this);
+                        else
+                            m_EventHandlers->PollMod(this);
+                        break;
+                }
+                m_EventType = Value;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CPollEventHandler::SetBinding(CPollConnection *Value) {
+            if (m_Binding != Value) {
+                m_Binding = Value;
+                if (Value != nullptr) {
+                    Value->EventHandler(this);
                 }
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollEventHandler::SetPollConnection(CPollConnection *Value) {
-            if (m_PollConnection != Value) {
-                m_PollConnection = Value;
-                if (Value != nullptr) {
-                    Value->EventHandler(this);
-                }
-            }
+        void CPollEventHandler::Start(CPollEvenType AEventType) {
+            SetEventType(AEventType);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CPollEventHandler::Stop() {
+            SetEventType(etClose);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -2793,7 +2929,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollEventHandlers::Enable(CPollEventHandler *AHandler) {
+        void CPollEventHandlers::PollAdd(CPollEventHandler *AHandler) {
             try {
                 m_PollStack->Add(AHandler);
             } catch (Exception::Exception &E) {
@@ -2802,7 +2938,16 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollEventHandlers::Disable(CPollEventHandler *AHandler) {
+        void CPollEventHandlers::PollMod(CPollEventHandler *AHandler) {
+            try {
+                m_PollStack->Mod(AHandler);
+            } catch (Exception::Exception &E) {
+                DoException(AHandler, &E);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CPollEventHandlers::PollDel(CPollEventHandler *AHandler) {
             try {
                 m_PollStack->Del(AHandler);
             } catch (Exception::Exception &E) {
@@ -2829,18 +2974,14 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CPollServer -----------------------------------------------------------------------------------------------
+        //-- CEPollServer ----------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPollServer::CPollServer(): CEventSocketServer() {
-            m_IOHandler = nullptr;
+        CEPollServer::CEPollServer(): CPollSocketServer() {
             m_EventHandlers = nullptr;
 
             m_PollStack = new CPollStack();
-            m_CommandHandlers = new CCommandHandlers(this);
-
-            m_ActiveLevel = alShutDown;
 
             m_FreePollStack = true;
 
@@ -2850,23 +2991,20 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CPollServer::~CPollServer() {
-            SetActiveLevel(alShutDown);
-
-            FreeAndNil(m_CommandHandlers);
+        CEPollServer::~CEPollServer() {
             FreeAndNil(m_EventHandlers);
             if (m_FreePollStack)
                 FreeAndNil(m_PollStack);
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::CreatePollEventHandlers() {
+        void CEPollServer::CreatePollEventHandlers() {
             m_EventHandlers = new CPollEventHandlers(m_PollStack);
-            m_EventHandlers->OnException(std::bind(&CPollServer::DoEventHandlersException, this, _1, _2));
+            m_EventHandlers->OnException(std::bind(&CAsyncServer::DoEventHandlersException, this, _1, _2));
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::SetPollStack(CPollStack *Value) {
+        void CEPollServer::SetPollStack(CPollStack *Value) {
             if (m_PollStack != Value) {
                 FreeAndNil(m_PollStack);
                 m_PollStack = Value;
@@ -2876,129 +3014,225 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        int CPollServer::GetTimeOut() {
+        int CEPollServer::GetTimeOut() {
             return m_PollStack->TimeOut();
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::SetTimeOut(int Value) {
+        void CEPollServer::SetTimeOut(int Value) {
             m_PollStack->TimeOut(Value);
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::SetIOHandler(CServerIOHandler *Value) {
-            if (Assigned(m_IOHandler))
-                FreeAndNil(m_IOHandler);
-            m_IOHandler = Value;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CPollServer::SetActiveLevel(CActiveLevel AValue) {
-
-            CPollEventHandler *LEventHandler = nullptr;
-
-            if (m_ActiveLevel != AValue ) {
-
-                if (m_ActiveLevel < AValue) {
-
-                    if (m_CommandHandlers->Count() == 0)
-                        InitializeCommandHandlers();
-
-                    if (m_IOHandler == nullptr)
-                        m_IOHandler = new CServerIOHandler();
-
-                    if (m_Bindings->Count() == 0)
-                        m_Bindings->Add();
-
-                    for (int i = 0; i < m_Bindings->Count(); ++i) {
-                        if (AValue >= alBinding && !m_Bindings->Handles(i)->HandleAllocated()) {
-                            m_Bindings->Handles(i)->AllocateSocket(SOCK_STREAM, IPPROTO_IP, O_NONBLOCK);
-                            m_Bindings->Handles(i)->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, (void *) &SO_True,
-                                                               sizeof(SO_True));
-
-                            m_Bindings->Handles(i)->Bind();
-                            m_Bindings->Handles(i)->Listen(SOMAXCONN);
-                        }
-
-                        if (AValue == alActive) {
-                            LEventHandler = m_EventHandlers->Add(m_Bindings->Handles(i)->Handle());
-                            LEventHandler->EventType(etConnect);
-                        }
-                    }
-
-                } else {
-
-                    if (AValue <= alBinding)
-                        m_EventHandlers->Clear();
-
-                    if (AValue == alShutDown) {
-                        for (int i = 0; i < m_Bindings->Count(); ++i) {
-                            m_Bindings->Handles(i)->CloseSocket();
-                        }
-
-                        FreeAndNil(m_IOHandler);
-                    }
-                }
-
-                m_ActiveLevel = AValue;
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        bool CPollServer::DoExecute(CTCPServerConnection *AConnection) {
-            int i;
-            bool Result = false;
-            CMemoryStream *LStream = nullptr;
-
-            if (CommandHandlers()->Count() > 0) {
-                Result = true;
-
-                if (AConnection->Connected()) {
-                    LStream = new CMemoryStream();
-                    LStream->SetSize(MaxLineLengthDefault);
-                    LStream->SetSize(AConnection->ReadLn((char *) LStream->Memory()));
-
-                    if (LStream->Size() > 0 && LStream->Size() < MaxLineLengthDefault) {
-                        DoBeforeCommandHandler(AConnection, (char *) LStream->Memory());
-                        try {
-                            for (i = 0; i < CommandHandlers()->Count(); ++i) {
-                                if (CommandHandlers()->Commands(i)->Enabled()) {
-                                    if (CommandHandlers()->Commands(i)->Check((char *) LStream->Memory(),
-                                            LStream->Size(), AConnection))
-                                        break;
-                                }
-                            }
-
-                            if (i == CommandHandlers()->Count())
-                                DoNoCommandHandler((char *) LStream->Memory(), AConnection);
-                        }
-                        catch (...) {
-                        }
-
-                        DoAfterCommandHandler(AConnection);
-                    }
-                }
-
-                delete LStream;
-            } else {
-                if (m_OnExecute != nullptr) {
-                    m_OnExecute(AConnection);
-                    Result = true;
-                }
-            };
-
-            return Result;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CPollServer::CheckHandler(CPollEventHandler *AHandler) {
-            if (AHandler->Closed()) {
+        void CEPollServer::CheckHandler(CPollEventHandler *AHandler) {
+            if (AHandler->Stoped()) {
                 delete AHandler;
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CPollServer::Wait() {
+        bool CEPollServer::Wait() {
+
+            int LEvents, err, i;
+            uint32_t EEvents;
+
+            CPollEventHandler *LHandler = nullptr;
+            CPollEvent *LPollEvent = nullptr;
+
+            LEvents = m_PollStack->Wait();
+
+            err = (LEvents == -1) ? errno : 0;
+
+            if (err) {
+                throw ESocketError(err, _T("epoll: call waits for events failure: "));
+            }
+
+            if (LEvents == 0) {
+
+                if (m_PollStack->TimeOut() != INFINITE) {
+
+                    for (int I = 0; I < m_EventHandlers->Count(); ++I) {
+                        LHandler = m_EventHandlers->Handlers(I);
+                        if (LHandler->EventType() == etWork) {
+                            if (LHandler->OnTimeOutEvent() != nullptr) {
+                                LHandler->DoTimeOutEvent();
+                            } else {
+                                DoTimeOut(LHandler);
+                            }
+                        }
+                    }
+
+                    return true;
+                }
+
+                throw ESocketError(_T("epoll_wait() returned no events without timeout"));
+            }
+
+            for (i = 0; i < LEvents; ++i) {
+
+                LPollEvent = m_PollStack->Events(i);
+
+                LHandler = (CPollEventHandler *) LPollEvent->data.ptr;
+                EEvents = LPollEvent->events;
+
+                if (EEvents & (EPOLLERR|EPOLLHUP)) {
+                    /*
+                     * if the error events were returned, add EPOLLIN and EPOLLOUT
+                     * to handle the events at least in one active handler
+                     */
+
+                    EEvents |= EPOLLIN|EPOLLOUT;
+                }
+
+                if (LHandler->EventType() == etAccept) {
+
+                    if (EEvents & EPOLLIN) {
+                        if (LHandler->OnReadEvent() != nullptr) {
+                            LHandler->DoReadEvent();
+                        } else {
+                            DoAccept(LHandler);
+                        }
+                    }
+
+                } else if (LHandler->EventType() == etWork) {
+
+                    if (EEvents & EPOLLIN) {
+                        if (LHandler->OnReadEvent() != nullptr) {
+                            LHandler->DoReadEvent();
+                        } else {
+                            DoRead(LHandler);
+                        }
+                    }
+
+                    if (EEvents & EPOLLOUT) {
+                        if (LHandler->OnWriteEvent() != nullptr) {
+                            LHandler->DoWriteEvent();
+                        } else {
+                            DoWrite(LHandler);
+                        }
+                    }
+                }
+
+                CheckHandler(LHandler);
+            }
+
+            return true;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CEPollServer::DoExecute(CTCPConnection *AConnection) {
+            if (m_OnExecute != nullptr) {
+                return m_OnExecute(AConnection);
+            }
+            return DoCommand(AConnection);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollServer::DoTimeOut(CPollEventHandler *AHandler) {
+            auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
+            try {
+                LConnection->Disconnect();
+            } catch (Delphi::Exception::Exception &E) {
+                DoException(LConnection, &E);
+                LConnection->Disconnect();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollServer::DoAccept(CPollEventHandler *AHandler) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollServer::DoRead(CPollEventHandler* AHandler) {
+            auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
+            try {
+                DoExecute(LConnection);
+            } catch (Exception::Exception &E) {
+                DoException(LConnection, &E);
+                LConnection->Disconnect();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollServer::DoWrite(CPollEventHandler* AHandler) {
+            auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
+            try {
+                LConnection->CheckForDisconnect(true);
+                LConnection->FreeWriteBuffer();
+                LConnection->FlushOutputBuffer();
+            } catch (Delphi::Exception::Exception &E) {
+                DoException(LConnection, &E);
+                LConnection->Disconnect();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollServer::DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException) {
+            if (m_OnEventHandlerException != nullptr)
+                m_OnEventHandlerException(AHandler, AException);
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CEPollClient ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CEPollClient::CEPollClient(): CPollSocketClient() {
+            m_EventHandlers = nullptr;
+
+            m_PollStack = new CPollStack();
+
+            m_FreePollStack = true;
+
+            m_OnEventHandlerException = nullptr;
+
+            CreatePollEventHandlers();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CEPollClient::~CEPollClient() {
+            FreeAndNil(m_EventHandlers);
+            if (m_FreePollStack)
+                FreeAndNil(m_PollStack);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollClient::CreatePollEventHandlers() {
+            m_EventHandlers = new CPollEventHandlers(m_PollStack);
+            m_EventHandlers->OnException(std::bind(&CEPollClient::DoEventHandlersException, this, _1, _2));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollClient::SetPollStack(CPollStack *Value) {
+            if (m_PollStack != Value) {
+                FreeAndNil(m_PollStack);
+                m_PollStack = Value;
+                m_EventHandlers->PollStack(Value);
+                m_FreePollStack = false;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CEPollClient::GetTimeOut() {
+            return m_PollStack->TimeOut();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollClient::SetTimeOut(int Value) {
+            m_PollStack->TimeOut(Value);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollClient::CheckHandler(CPollEventHandler *AHandler) {
+            if (AHandler->Stoped()) {
+                delete AHandler;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CEPollClient::Wait() {
 
             int LEvents, err, i;
             uint32_t EEvents;
@@ -3053,11 +3287,11 @@ namespace Delphi {
 
                 if (LHandler->EventType() == etConnect) {
 
-                    if (EEvents & EPOLLIN) {
+                    if (EEvents & EPOLLOUT) {
                         if (LHandler->OnReadEvent() != nullptr) {
                             LHandler->DoReadEvent();
                         } else {
-                            DoAccept(LHandler);
+                            DoConnect(LHandler);
                         }
                     }
 
@@ -3087,44 +3321,32 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::DoTimeOut(CPollEventHandler *AHandler) {
-
+        bool CEPollClient::DoExecute(CTCPConnection *AConnection) {
+            if (m_OnExecute != nullptr) {
+                return m_OnExecute(AConnection);
+            }
+            return DoCommand(AConnection);
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::DoAccept(CPollEventHandler* AHandler) {
-            CIOHandlerSocket *LIOHandler = nullptr;
-            CPollEventHandler *LEventHandler = nullptr;
-            CTCPServerConnection *LConnection = nullptr;
-
+        void CEPollClient::DoTimeOut(CPollEventHandler *AHandler) {
+            auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
             try {
-                LIOHandler = (CIOHandlerSocket *) m_IOHandler->Accept(AHandler->Socket(), SOCK_NONBLOCK);
-
-                if (Assigned(LIOHandler)) {
-                    LConnection = new CTCPServerConnection(this);
-
-                    LConnection->OnDisconnected(std::bind(&CPollServer::DoDisconnected, this, _1));
-                    LConnection->IOHandler(LIOHandler);
-
-                    LIOHandler->AfterAccept();
-
-                    LEventHandler = m_EventHandlers->Add(LIOHandler->Binding()->Handle());
-                    LEventHandler->PollConnection(LConnection);
-                    LEventHandler->EventType(etWork);
-
-                    DoConnected((CObject *) LConnection);
-                } else {
-                    throw ETCPServerError(_T("TCP Server Error..."));
-                }
-            } catch (Exception::Exception &E) {
-                delete LConnection;
-                DoListenException(&E);
+                LConnection->Disconnect();
+            } catch (Delphi::Exception::Exception &E) {
+                DoException(LConnection, &E);
+                LConnection->Disconnect();
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::DoRead(CPollEventHandler* AHandler) {
-            auto LConnection = dynamic_cast<CTCPServerConnection *> (AHandler->PollConnection());
+        void CEPollClient::DoConnect(CPollEventHandler *AHandler) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CEPollClient::DoRead(CPollEventHandler* AHandler) {
+            auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
             try {
                 DoExecute(LConnection);
             } catch (Exception::Exception &E) {
@@ -3134,8 +3356,8 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::DoWrite(CPollEventHandler* AHandler) {
-            auto LConnection = dynamic_cast<CTCPServerConnection *> (AHandler->PollConnection());
+        void CEPollClient::DoWrite(CPollEventHandler* AHandler) {
+            auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
             try {
                 LConnection->CheckForDisconnect(true);
                 LConnection->FreeWriteBuffer();
@@ -3147,10 +3369,260 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPollServer::DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException) {
+        void CEPollClient::DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException) {
             if (m_OnEventHandlerException != nullptr)
                 m_OnEventHandlerException(AHandler, AException);
         }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CAsyncServer ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CAsyncServer::CAsyncServer(): CEPollServer() {
+            m_IOHandler = nullptr;
+            m_ActiveLevel = alShutDown;
+            m_CommandHandlers = new CCommandHandlers(this);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CAsyncServer::~CAsyncServer() {
+            SetActiveLevel(alShutDown);
+            FreeAndNil(m_CommandHandlers);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CAsyncServer::SetIOHandler(CServerIOHandler *Value) {
+            if (Assigned(m_IOHandler))
+                FreeAndNil(m_IOHandler);
+            m_IOHandler = Value;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CAsyncServer::SetActiveLevel(CActiveLevel AValue) {
+
+            CPollEventHandler *LEventHandler = nullptr;
+
+            if (m_ActiveLevel != AValue ) {
+
+                if (m_ActiveLevel < AValue) {
+
+                    if (CommandHandlers()->Count() == 0)
+                        InitializeCommandHandlers();
+
+                    if (m_IOHandler == nullptr)
+                        m_IOHandler = new CServerIOHandler();
+
+                    if (m_Bindings->Count() == 0)
+                        m_Bindings->Add();
+
+                    for (int i = 0; i < m_Bindings->Count(); ++i) {
+                        if (AValue >= alBinding && !m_Bindings->Handles(i)->HandleAllocated()) {
+                            m_Bindings->Handles(i)->AllocateSocket(SOCK_STREAM, IPPROTO_IP, O_NONBLOCK);
+                            m_Bindings->Handles(i)->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, (void *) &SO_True,
+                                                               sizeof(SO_True));
+
+                            m_Bindings->Handles(i)->Bind();
+                            m_Bindings->Handles(i)->Listen(SOMAXCONN);
+                        }
+
+                        if (AValue == alActive) {
+                            LEventHandler = EventHandlers()->Add(m_Bindings->Handles(i)->Handle());
+                            LEventHandler->Start(etAccept);
+                        }
+                    }
+
+                } else {
+
+                    if (AValue <= alBinding) {
+                        EventHandlers()->Clear();
+                        CloseAllConnection();
+                    }
+
+                    if (AValue == alShutDown) {
+                        for (int i = 0; i < m_Bindings->Count(); ++i) {
+                            m_Bindings->Handles(i)->CloseSocket();
+                        }
+
+                        FreeAndNil(m_IOHandler);
+                    }
+                }
+
+                m_ActiveLevel = AValue;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CAsyncServer::DoCommand(CTCPConnection *AConnection) {
+            int i;
+            CMemoryStream *LStream = nullptr;
+
+            bool Result = m_CommandHandlers->Count() > 0;
+
+            if (Result) {
+                if (AConnection->Connected()) {
+                    LStream = new CMemoryStream();
+                    LStream->SetSize(MaxLineLengthDefault);
+                    LStream->SetSize(AConnection->ReadLn((char *) LStream->Memory()));
+
+                    if (LStream->Size() > 0 && LStream->Size() < MaxLineLengthDefault) {
+                        DoBeforeCommandHandler(AConnection, (char *) LStream->Memory());
+                        try {
+                            for (i = 0; i < m_CommandHandlers->Count(); ++i) {
+                                if (m_CommandHandlers->Commands(i)->Enabled()) {
+                                    if (m_CommandHandlers->Commands(i)->Check((char *) LStream->Memory(),
+                                                                              LStream->Size(), AConnection))
+                                        break;
+                                }
+                            }
+
+                            if (i == m_CommandHandlers->Count())
+                                DoNoCommandHandler((char *) LStream->Memory(), AConnection);
+                        }
+                        catch (...) {
+                        }
+
+                        DoAfterCommandHandler(AConnection);
+                    }
+                }
+
+                delete LStream;
+            };
+
+            return Result;
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CAsyncClient ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CAsyncClient::CAsyncClient(LPCTSTR AHost, unsigned short APort): CEPollClient() {
+            m_IOHandler = nullptr;
+            m_Active = false;
+            m_Host = AHost;
+            m_Port = APort;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CAsyncClient::~CAsyncClient() {
+            SetActive(false);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CAsyncClient::SetActive(bool AValue) {
+
+            CPollEventHandler *LEventHandler = nullptr;
+
+            if (m_Active != AValue ) {
+
+                if (AValue) {
+
+                    if (m_IOHandler == nullptr)
+                        m_IOHandler = new CClientIOHandler();
+
+                    m_IOHandler->Binding()->AllocateSocket(SOCK_STREAM, IPPROTO_IP, O_NONBLOCK);
+                    m_IOHandler->Binding()->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, (void *) &SO_True, sizeof(SO_True));
+
+                    LEventHandler = EventHandlers()->Add(m_IOHandler->Binding()->Handle());
+                    LEventHandler->Start(etConnect);
+
+                    if (m_IOHandler->Binding()->Connect(AF_INET, m_Host.c_str(), m_Port) == 0)
+                        DoConnect(LEventHandler);
+
+                } else {
+                    EventHandlers()->Clear();
+                    CloseAllConnection();
+                }
+
+                m_Active = AValue;
+            }
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CTCPAsyncServer -------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CTCPAsyncServer::CTCPAsyncServer(unsigned short AListen, LPCTSTR lpDocRoot): CAsyncServer() {
+            DefaultPort(AListen);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CTCPServerConnection *CTCPAsyncServer::GetConnection(int AIndex) {
+            return (CTCPServerConnection *) CCollection::GetItem(AIndex);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CTCPAsyncServer::SetConnection(int AIndex, CTCPServerConnection *AValue) {
+            CCollection::SetItem(AIndex, AValue);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CTCPAsyncServer::DoAccept(CPollEventHandler *AHandler) {
+
+            CIOHandlerSocket *LIOHandler = nullptr;
+            CPollEventHandler *LEventHandler = nullptr;
+            CTCPServerConnection *LConnection = nullptr;
+
+            try {
+                LIOHandler = (CIOHandlerSocket *) IOHandler()->Accept(AHandler->Socket(), SOCK_NONBLOCK);
+
+                if (Assigned(LIOHandler)) {
+                    LConnection = new CTCPServerConnection(this);
+
+                    LConnection->OnDisconnected(std::bind(&CTCPAsyncServer::DoDisconnected, this, _1));
+                    LConnection->IOHandler(LIOHandler);
+
+                    LIOHandler->AfterAccept();
+
+                    LEventHandler = EventHandlers()->Add(LIOHandler->Binding()->Handle());
+                    LEventHandler->Binding(LConnection);
+                    LEventHandler->Start(etWork);
+
+                    DoConnected(LConnection);
+                } else {
+                    throw ETCPServerError(_T("TCP Server Error..."));
+                }
+            } catch (Exception::Exception &E) {
+                delete LConnection;
+                DoListenException(&E);
+            }
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CTCPAsyncClient -------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CTCPAsyncClient::CTCPAsyncClient(LPCTSTR AHost, unsigned short APort) : CAsyncClient(AHost, APort) {
+            m_Connection = nullptr;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CTCPAsyncClient::DoConnect(CPollEventHandler *AHandler) {
+            try {
+                if (IOHandler()->Binding()->CheckConnection()) {
+                    m_Connection = new CTCPClientConnection(this);
+
+                    m_Connection->OnDisconnected(std::bind(&CTCPAsyncClient::DoDisconnected, this, _1));
+                    m_Connection->IOHandler(IOHandler());
+
+                    AHandler->Binding(m_Connection);
+                    AHandler->Start(etWork);
+
+                    DoConnected(m_Connection);
+                }
+            } catch (Exception::Exception &E) {
+                DoListenException(&E);
+                throw ESocketError(E.ErrorCode(), "Connection failed ");
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
 
     }; // namespace Socket
 

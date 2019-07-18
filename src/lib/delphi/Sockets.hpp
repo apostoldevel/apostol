@@ -188,6 +188,8 @@ namespace Delphi {
 
             bool GetHostName(char *AName, size_t ASize);
 
+            virtual int GetSocketError(CSocket ASocket);
+
             virtual int GetLastError();
 
             virtual void GetPeerName(CSocket ASocket, sa_family_t *AFamily, char *AIP, size_t ASize,
@@ -198,9 +200,9 @@ namespace Delphi {
 
             virtual void GetHostByAddr(SOCKADDR_IN *AAddr, char *VHost, size_t ASize);
 
-            virtual void GetHostByName(char *AName, char *VHost, size_t ASize);
+            virtual void GetHostByName(const char *AName, char *VHost, size_t ASize);
 
-            virtual void GetIPByName(char *AName, char *VIP, size_t ASize);
+            virtual void GetIPByName(const char *AName, char *VIP, size_t ASize);
 
             virtual void GetServByPort(SOCKADDR_IN *AName, char *VPort, size_t ASize);
 
@@ -229,7 +231,7 @@ namespace Delphi {
         } CWorkInfo;
         //--------------------------------------------------------------------------------------------------------------
 
-        class LIB_DELPHI CSocketComponent: public CPersistent {
+        class LIB_DELPHI CSocketComponent {
         protected:
 
             CWorkInfo m_WorkInfos[sizeof(CWorkInfo)];
@@ -238,7 +240,7 @@ namespace Delphi {
 
             CSocketComponent();
 
-            ~CSocketComponent() override;
+            ~CSocketComponent();
 
             void BeginWork(CWorkMode AWorkMode, ssize_t ASize = 0); // ASize = 0
 
@@ -323,8 +325,6 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         class LIB_DELPHI CSocketHandle: public CSocketComponent, public CCollectionItem {
-            typedef CCollectionItem inherited;
-
         private:
 
             CSocket m_Handle;
@@ -376,11 +376,17 @@ namespace Delphi {
 
             bool GetHostName(char *AName, size_t ASize);
 
-            void GetHostByName(char *AName, char *VHost, size_t ASize);
+            void GetHostByName(const char *AName, char *VHost, size_t ASize);
+
+            void GetIPByName(const char *AName, char *VIP, size_t ASize);
 
             bool GetHostIP(char *AIP, size_t ASize);
 
-            int Connect(sa_family_t AFamily);
+            int Connect(sa_family_t AFamily, LPCSTR AHost, unsigned short APort);
+
+            bool CheckConnection();
+
+            int GetSocketError();
 
             void GetSockOpt(int ALevel, int AOptName, void *AOptVal, socklen_t AOptLen);
 
@@ -401,6 +407,8 @@ namespace Delphi {
             void SetSockOpt(int ALevel, int AOptName, const void *AOptVal, socklen_t AOptLen);
 
             bool Select(CSocket ASocket, int ATimeOut);
+
+            bool SelectWrite(CSocket ASocket, int ATimeOut);
 
             void UpdateBindingLocal();
 
@@ -487,7 +495,7 @@ namespace Delphi {
 
             CIOHandler() : CSocketComponent() {};
 
-            ~CIOHandler() override { Close(); };
+            virtual ~CIOHandler() { Close(); };
 
             virtual void AfterAccept() {};
 
@@ -512,7 +520,7 @@ namespace Delphi {
         class LIB_DELPHI CIOHandlerSocket: public CIOHandler {
             typedef CIOHandler inherited;
 
-        private:
+        protected:
 
             CSocketHandle *m_Binding;
 
@@ -538,6 +546,25 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        //-- CPollManager ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CPollManager: public CCollection {
+        public:
+
+            explicit CPollManager(): CCollection(this) {
+
+            };
+
+            ~CPollManager() override = default;
+
+            void CloseAllConnection() { Clear(); };
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
         //-- CPollConnection -------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
@@ -545,7 +572,7 @@ namespace Delphi {
         class LIB_DELPHI CPollEventHandler;
         //--------------------------------------------------------------------------------------------------------------
 
-        class LIB_DELPHI CPollConnection: public CSocketComponent {
+        class LIB_DELPHI CPollConnection: public CSocketComponent, public CCollectionItem {
         private:
 
             CPollEventHandler *m_EventHandler;
@@ -560,7 +587,7 @@ namespace Delphi {
 
         public:
 
-            explicit CPollConnection(CPollConnection *APollConnection);
+            explicit CPollConnection(CPollConnection *APollConnection, CPollManager *AManager);
 
             CPollConnection *PollConnection() { return m_PollConnection; };
 
@@ -619,7 +646,7 @@ namespace Delphi {
 
         public:
 
-            CTCPConnection();
+            explicit CTCPConnection(CPollManager *AManager);
 
             ~CTCPConnection() override;
 
@@ -713,11 +740,113 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        //-- CSocketEvent ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CSocketEvent;
+        //--------------------------------------------------------------------------------------------------------------
+
+        typedef std::function<void (CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args)> COnSocketDebugEvent;
+
+        typedef std::function<bool (CTCPConnection *AConnection)> COnSocketExecuteEvent;
+
+        typedef std::function<void (CTCPConnection *AConnection)> COnSocketConnectionEvent;
+
+        typedef std::function<void (CSocketEvent *Sender, Exception::Exception *AException)> COnSocketListenExceptionEvent;
+
+        typedef std::function<void (CTCPConnection *AConnection, Exception::Exception *AException)> COnSocketExceptionEvent;
+
+        typedef std::function<void (CSocketEvent *Sender, LPCTSTR AData, CTCPConnection *AConnection)> COnSocketBeforeCommandHandlerEvent;
+
+        typedef std::function<void (CSocketEvent *Sender, LPCTSTR AData, CTCPConnection *AConnection)> COnSocketNoCommandHandlerEvent;
+
+        typedef std::function<void (CSocketEvent *Sender, CTCPConnection *AConnection)> COnSocketAfterCommandHandlerEvent;
+
+        typedef std::function<void (CCommand *ACommand)> COnSocketServerCommandEvent;
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CSocketEvent: public CSocketComponent {
+            friend CPeerThread;
+
+        protected:
+
+            COnSocketDebugEvent m_OnDebug;
+            COnSocketConnectionEvent m_OnAccessLog;
+
+            COnSocketExecuteEvent m_OnExecute;
+
+            CNotifyEvent m_OnConnected;
+            CNotifyEvent m_OnDisconnected;
+
+            COnSocketExceptionEvent m_OnException;
+            COnSocketListenExceptionEvent m_OnListenException;
+
+            COnSocketBeforeCommandHandlerEvent m_OnBeforeCommandHandler;
+            COnSocketAfterCommandHandlerEvent m_OnAfterCommandHandler;
+            COnSocketNoCommandHandlerEvent m_OnNoCommandHandler;
+
+            virtual void DoDebug(CTCPConnection *AConnection, LPCTSTR AFormat, ...);
+
+            virtual bool DoCommand(CTCPConnection *AConnection) abstract;
+
+            virtual bool DoExecute(CTCPConnection *AConnection) abstract;
+
+            virtual void DoAccessLog(CTCPConnection *AConnection);
+
+            virtual void DoConnected(CObject *Sender);
+            virtual void DoDisconnected(CObject *Sender);
+
+            virtual void DoException(CTCPConnection *AConnection, Exception::Exception *AException);
+            virtual void DoListenException(Exception::Exception *AException);
+
+            virtual void DoBeforeCommandHandler(CTCPConnection *AConnection, LPCTSTR ALine);
+            virtual void DoAfterCommandHandler(CTCPConnection *AConnection);
+            virtual void DoNoCommandHandler(LPCTSTR AData, CTCPConnection *AConnection);
+
+        public:
+
+            CSocketEvent();
+
+            const COnSocketDebugEvent &OnDebug() { return m_OnDebug; }
+            void OnDebug(COnSocketDebugEvent && Value) { m_OnDebug = Value; }
+
+            const COnSocketExecuteEvent &OnExecute() { return m_OnExecute; }
+            void OnExecute(COnSocketExecuteEvent && Value) { m_OnExecute = Value; }
+
+            const COnSocketConnectionEvent &OnAccessLog() { return m_OnAccessLog; }
+            void OnAccessLog(COnSocketConnectionEvent && Value) { m_OnAccessLog = Value; }
+
+            const CNotifyEvent &OnConnected() { return m_OnConnected; }
+            void OnConnected(CNotifyEvent && Value) { m_OnConnected = Value; }
+
+            const CNotifyEvent &OnDisconnected() { return m_OnDisconnected; }
+            void OnDisconnected(CNotifyEvent && Value) { m_OnDisconnected = Value; }
+
+            const COnSocketExceptionEvent &OnException() { return m_OnException; }
+            void OnException(COnSocketExceptionEvent && Value) { m_OnException = Value; }
+
+            const COnSocketListenExceptionEvent OnListenException() { return m_OnListenException; }
+            void OnListenException(COnSocketListenExceptionEvent && Value) { m_OnListenException = Value; }
+
+            COnSocketBeforeCommandHandlerEvent &OnBeforeCommandHandler() { return m_OnBeforeCommandHandler; }
+            void OnBeforeCommandHandler(COnSocketBeforeCommandHandlerEvent && Value) { m_OnBeforeCommandHandler = Value; }
+
+            COnSocketAfterCommandHandlerEvent &OnAfterCommandHandler() { return m_OnAfterCommandHandler; }
+            void OnAfterCommandHandler(COnSocketAfterCommandHandlerEvent && Value) { m_OnAfterCommandHandler = Value; }
+
+            const COnSocketNoCommandHandlerEvent &OnNoCommandHandler() { return m_OnNoCommandHandler; }
+            void OnNoCommandHandler(COnSocketNoCommandHandlerEvent && Value) { m_OnNoCommandHandler = Value; }
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
         //-- CSocketServer ---------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class LIB_DELPHI CSocketServer: public CPersistent {
+        class LIB_DELPHI CSocketServer: public CSocketComponent {
         private:
 
             unsigned short GetDefaultPort();
@@ -735,7 +864,7 @@ namespace Delphi {
 
             CSocketServer();
 
-            ~CSocketServer() override;
+            ~CSocketServer();
 
             unsigned short DefaultPort() { return GetDefaultPort(); }
             void DefaultPort(unsigned short Value) { SetDefaultPort(Value); }
@@ -751,101 +880,83 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        //-- CSocketClient ---------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CSocketClient: public CSocketComponent {
+        protected:
+
+            CString m_Host;
+
+            unsigned short m_Port;
+
+        public:
+
+            CSocketClient();
+
+            ~CSocketClient() = default;
+
+            const CString &Host() const { return m_Host; }
+
+            unsigned short Port() { return m_Port; }
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
         //-- CEventSocketServer ----------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        typedef std::function<void (CSocketServer *AServer, CTCPServerConnection *AConnection, LPCTSTR AFormat, va_list args)> COnSocketServerDebugEvent;
-
-        typedef std::function<void (CTCPServerConnection *AConnection)> COnSocketServerExecuteEvent;
-
-        typedef std::function<void (CTCPServerConnection *AConnection)> COnSocketServerConnectionEvent;
-
-        typedef std::function<void (CSocketServer *AServer, Exception::Exception *AException)> COnSocketServerListenExceptionEvent;
-
-        typedef std::function<void (CTCPServerConnection *AConnection, Exception::Exception *AException)> COnSocketServerExceptionEvent;
-
-        typedef std::function<void (CSocketServer *AServer, LPCTSTR AData, CTCPServerConnection *AConnection)> COnSocketServerBeforeCommandHandlerEvent;
-
-        typedef std::function<void (CSocketServer *AServer, LPCTSTR AData, CTCPServerConnection *AConnection)> COnSocketServerNoCommandHandlerEvent;
-
-        typedef std::function<void (CSocketServer *AServer, CTCPServerConnection *AConnection)> COnSocketServerAfterCommandHandlerEvent;
-
-        typedef std::function<void (CCommand *ACommand)> COnSocketServerCommandEvent;
-        //--------------------------------------------------------------------------------------------------------------
-
-        class LIB_DELPHI CEventSocketServer: public CSocketServer {
-            typedef CSocketServer inherited;
-
-            friend CPeerThread;
-
-        protected:
-
-            COnSocketServerDebugEvent m_OnDebug;
-            COnSocketServerConnectionEvent m_OnAccessLog;
-
-            COnSocketServerExecuteEvent m_OnExecute;
-
-            CNotifyEvent m_OnConnected;
-            CNotifyEvent m_OnDisconnected;
-
-            COnSocketServerExceptionEvent m_OnException;
-            COnSocketServerListenExceptionEvent m_OnListenException;
-
-            COnSocketServerBeforeCommandHandlerEvent m_OnBeforeCommandHandler;
-            COnSocketServerAfterCommandHandlerEvent m_OnAfterCommandHandler;
-            COnSocketServerNoCommandHandlerEvent m_OnNoCommandHandler;
-
-            virtual void DoDebug(CTCPServerConnection *AConnection, LPCTSTR AFormat, ...);
-
-            virtual bool DoExecute(CTCPServerConnection *AConnection) abstract;
-
-            virtual void DoAccessLog(CTCPServerConnection *AConnection);
-
-            virtual void DoConnected(CObject *Sender);
-            virtual void DoDisconnected(CObject *Sender);
-
-            virtual void DoException(CTCPServerConnection *AConnection, Exception::Exception *AException);
-            virtual void DoListenException(Exception::Exception *AException);
-
-            virtual void DoBeforeCommandHandler(CTCPServerConnection *AConnection, LPCTSTR ALine);
-            virtual void DoAfterCommandHandler(CTCPServerConnection *AConnection);
-            virtual void DoNoCommandHandler(LPCTSTR AData, CTCPServerConnection *AConnection);
-
+        class LIB_DELPHI CEventSocketServer: public CSocketEvent, public CSocketServer {
         public:
 
-            CEventSocketServer();
+            CEventSocketServer(): CSocketEvent(), CSocketServer() {};
 
-            const COnSocketServerDebugEvent &OnDebug() { return m_OnDebug; }
-            void OnDebug(COnSocketServerDebugEvent && Value) { m_OnDebug = Value; }
+            ~CEventSocketServer() = default;
+        };
 
-            const COnSocketServerExecuteEvent &OnExecute() { return m_OnExecute; }
-            void OnExecute(COnSocketServerExecuteEvent && Value) { m_OnExecute = Value; }
+        //--------------------------------------------------------------------------------------------------------------
 
-            const COnSocketServerConnectionEvent &OnAccessLog() { return m_OnAccessLog; }
-            void OnAccessLog(COnSocketServerConnectionEvent && Value) { m_OnAccessLog = Value; }
+        //-- CEventSocketClient ----------------------------------------------------------------------------------------
 
-            const CNotifyEvent &OnConnected() { return m_OnConnected; }
-            void OnConnected(CNotifyEvent && Value) { m_OnConnected = Value; }
+        //--------------------------------------------------------------------------------------------------------------
 
-            const CNotifyEvent &OnDisconnected() { return m_OnDisconnected; }
-            void OnDisconnected(CNotifyEvent && Value) { m_OnDisconnected = Value; }
+        class LIB_DELPHI CEventSocketClient: public CSocketEvent, public CSocketClient {
+        public:
 
-            const COnSocketServerExceptionEvent &OnException() { return m_OnException; }
-            void OnException(COnSocketServerExceptionEvent && Value) { m_OnException = Value; }
+            CEventSocketClient(): CSocketEvent(), CSocketClient() {};
 
-            const COnSocketServerListenExceptionEvent OnListenException() { return m_OnListenException; }
-            void OnListenException(COnSocketServerListenExceptionEvent && Value) { m_OnListenException = Value; }
+            ~CEventSocketClient() = default;
+        };
 
-            COnSocketServerBeforeCommandHandlerEvent &OnBeforeCommandHandler() { return m_OnBeforeCommandHandler; }
-            void OnBeforeCommandHandler(COnSocketServerBeforeCommandHandlerEvent && Value) { m_OnBeforeCommandHandler = Value; }
+        //--------------------------------------------------------------------------------------------------------------
 
-            COnSocketServerAfterCommandHandlerEvent &OnAfterCommandHandler() { return m_OnAfterCommandHandler; }
-            void OnAfterCommandHandler(COnSocketServerAfterCommandHandlerEvent && Value) { m_OnAfterCommandHandler = Value; }
+        //-- CPollSocketServer -----------------------------------------------------------------------------------------
 
-            const COnSocketServerNoCommandHandlerEvent &OnNoCommandHandler() { return m_OnNoCommandHandler; }
-            void OnNoCommandHandler(COnSocketServerNoCommandHandlerEvent && Value) { m_OnNoCommandHandler = Value; }
+        //--------------------------------------------------------------------------------------------------------------
 
+        class LIB_DELPHI CPollSocketServer: public CEventSocketServer, public CPollManager {
+        public:
+
+            CPollSocketServer(): CEventSocketServer(), CPollManager() {};
+
+            ~CPollSocketServer() override = default;
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CPollSocketClient -----------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CPollSocketClient: public CEventSocketClient, public CPollManager {
+        public:
+
+            CPollSocketClient(): CEventSocketClient(), CPollManager() {};
+
+            ~CPollSocketClient() override = default;
         };
 
         //--------------------------------------------------------------------------------------------------------------
@@ -854,16 +965,19 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        class CAsyncServer;
+        //--------------------------------------------------------------------------------------------------------------
+
         class LIB_DELPHI CTCPServerConnection: public CTCPConnection {
             typedef CTCPConnection inherited;
 
         private:
 
-            CEventSocketServer *m_Server;
+            CPollSocketServer *m_Server;
 
         public:
 
-            explicit CTCPServerConnection(CEventSocketServer *AServer);
+            explicit CTCPServerConnection(CPollSocketServer *AServer);
 
             ~CTCPServerConnection() override;
 
@@ -873,20 +987,67 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        //-- CTCPClientConnection --------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CTCPClientConnection: public CTCPConnection {
+            typedef CTCPConnection inherited;
+
+        private:
+
+            CPollSocketClient *m_Client;
+
+        public:
+
+            explicit CTCPClientConnection(CPollSocketClient *AClient);
+
+            ~CTCPClientConnection() override;
+
+            virtual CPollSocketClient *Server() { return m_Client; }
+
+        }; // CTCPClientConnection
+
+        //--------------------------------------------------------------------------------------------------------------
+
         //-- CServerIOHandler ------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class LIB_DELPHI CServerIOHandler : public CSocketComponent {
-            typedef CSocketComponent inherited;
+        class LIB_DELPHI CServerIOHandler : public CIOHandlerSocket {
+            typedef CIOHandlerSocket inherited;
 
         public:
 
-            CServerIOHandler() : CSocketComponent() {};
+            CServerIOHandler() : CIOHandlerSocket() {};
 
-            ~CServerIOHandler() override = default;;
+            ~CServerIOHandler() = default;
 
             CIOHandler *Accept(CSocket ASocket, int AFlags);
+
+        }; // CServerIOHandler
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CClientIOHandler ------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CClientIOHandler : public CIOHandlerSocket {
+            typedef CIOHandlerSocket inherited;
+        private:
+
+            int m_MaxTries;
+
+            int m_Attempts;
+
+        public:
+
+            CClientIOHandler();
+
+            ~CClientIOHandler();
+
+            bool Connect(LPCSTR AHost, unsigned short APort);
 
         }; // CServerIOHandler
 
@@ -896,7 +1057,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class LIB_DELPHI CUDPServer : public CSocketServer {
+        class LIB_DELPHI CUDPServer: public CSocketServer {
             typedef CSocketServer inherited;
 
         private:
@@ -911,7 +1072,7 @@ namespace Delphi {
 
             CUDPServer();
 
-            ~CUDPServer() override;
+            ~CUDPServer();
 
             bool Active() { return m_Active; }
             void Active(bool Value) { SetActive(Value); }
@@ -924,12 +1085,13 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class LIB_DELPHI CUDPClient : public CSocketComponent {
+        class LIB_DELPHI CUDPClient: public CSocketClient {
             typedef CSocketHandle inherited;
 
         private:
 
             CSocketHandle *m_Socket;
+
             bool m_Active;
 
         protected:
@@ -940,12 +1102,13 @@ namespace Delphi {
 
             CUDPClient();
 
-            ~CUDPClient() override;
+            ~CUDPClient();
 
             bool Active() { return m_Active; }
             void Active(bool Value) { SetActive(Value); }
 
             CSocketHandle *Socket() { return m_Socket; }
+
         };
 
         //--------------------------------------------------------------------------------------------------------------
@@ -1208,7 +1371,7 @@ namespace Delphi {
 
             ~CCommandHandler() override = default;
 
-            virtual bool Check(LPCTSTR AData, size_t ALen, CTCPServerConnection *AConnection);
+            virtual bool Check(LPCTSTR AData, size_t ALen, CTCPConnection *AConnection);
 
             Pointer Data() { return m_Data; }
             void Data(Pointer Value) { m_Data = Value; }
@@ -1292,7 +1455,7 @@ namespace Delphi {
 
         protected:
 
-            CTCPServerConnection *m_Connection;
+            CTCPConnection *m_Connection;
             CCommandHandler *m_CommandHandler;
             CStringList *m_Params;
             bool m_PerformReply;
@@ -1307,7 +1470,7 @@ namespace Delphi {
 
             ~CCommand() override;
 
-            CTCPServerConnection *Connection() { return m_Connection; }
+            CTCPConnection *Connection() { return m_Connection; }
 
             CCommandHandler *CommandHandler() { return m_CommandHandler; }
 
@@ -1327,8 +1490,8 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class LIB_DELPHI CTCPServer : public CEventSocketServer {
-            typedef CEventSocketServer inherited;
+        class LIB_DELPHI CTCPServer: public CPollSocketServer {
+            typedef CSocketServer inherited;
 
             friend CPeerThread;
             friend CListenerThread;
@@ -1357,7 +1520,7 @@ namespace Delphi {
 
             void TerminateListenerThreads();
 
-            bool DoExecute(CTCPServerConnection *AConnection) override;
+            bool DoExecute(CTCPConnection *AConnection) override;
 
         public:
 
@@ -1390,14 +1553,14 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CPollEventHandler;
+        class LIB_DELPHI CPollEventHandler;
         //--------------------------------------------------------------------------------------------------------------
 
         typedef int CSocketPoll;
         typedef struct epoll_event CPollEvent;
         //--------------------------------------------------------------------------------------------------------------
 
-        class CPollStack: public CObject {
+        class LIB_DELPHI CPollStack: public CObject {
         private:
 
             CSocketPoll m_Handle;
@@ -1456,25 +1619,28 @@ namespace Delphi {
         typedef std::function<void (CPollEventHandler *AHandler)> COnPollEventHandlerEvent;
         //--------------------------------------------------------------------------------------------------------------
 
-        enum CPollEvenType { etDisabled, etConnect, etWork, etClosed };
+        enum CPollEvenType { etClose, etAccept, etConnect, etWork };
         //--------------------------------------------------------------------------------------------------------------
 
-        class CPollServer;
-        class CPollEventHandlers;
+        class LIB_DELPHI CEPollServer;
+        class LIB_DELPHI CEPollClient;
+        class LIB_DELPHI CPollEventHandlers;
         //--------------------------------------------------------------------------------------------------------------
 
         class LIB_DELPHI CPollEventHandler: public CCollectionItem {
             typedef CCollectionItem inherited;
+            friend CEPollServer;
+            friend CEPollClient;
 
-            friend CPollServer;
-
-        protected:
+        private:
 
             CSocket m_Socket;
 
+            uint32_t m_Events;
+
             CPollEvenType m_EventType;
 
-            CPollConnection *m_PollConnection;
+            CPollConnection *m_Binding;
 
             CPollEventHandlers *m_EventHandlers;
 
@@ -1482,13 +1648,17 @@ namespace Delphi {
             COnPollEventHandlerEvent m_OnReadEvent;
             COnPollEventHandlerEvent m_OnWriteEvent;
 
+        protected:
+
             void SetEventType(CPollEvenType Value);
 
-            void SetPollConnection(CPollConnection *Value);
+            void SetBinding(CPollConnection *Value);
 
             void DoTimeOutEvent();
             void DoReadEvent();
             void DoWriteEvent();
+
+            //void EventType (CPollEvenType Value) { SetEventType(Value); }
 
         public:
 
@@ -1498,14 +1668,17 @@ namespace Delphi {
 
             CSocket Socket() { return m_Socket; }
 
-            CPollConnection *PollConnection() { return m_PollConnection; }
-            void PollConnection(CPollConnection *Value) { SetPollConnection(Value); }
+            uint32_t Events() { return m_Events; }
+
+            CPollConnection *Binding() { return m_Binding; }
+            void Binding(CPollConnection *Value) { SetBinding(Value); }
+
+            void Start(CPollEvenType AEventType = etWork);
+            void Stop();
+
+            bool Stoped() { return m_EventType == etClose; };
 
             CPollEvenType EventType() { return m_EventType; }
-            void EventType (CPollEvenType Value) { SetEventType(Value); }
-
-            void Close() { SetEventType(etClosed); };
-            bool Closed() { return m_EventType == etClosed; };
 
             const COnPollEventHandlerEvent &OnTimeOutEvent() { return m_OnTimeOutEvent; }
             void OnTimeOutEvent(COnPollEventHandlerEvent && Value) { m_OnTimeOutEvent = Value; }
@@ -1523,7 +1696,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CPollServer;
+        class LIB_DELPHI CAsyncServer;
         //--------------------------------------------------------------------------------------------------------------
 
         typedef std::function<void (CPollEventHandler *AHandler, Exception::Exception *AException)> COnPollEventHandlerExceptionEvent;
@@ -1545,8 +1718,9 @@ namespace Delphi {
             CPollEventHandler *GetItem(int AIndex) override;
             void SetItem(int AIndex, CPollEventHandler *AValue);
 
-            void Enable(CPollEventHandler *AHandler);
-            void Disable(CPollEventHandler *AHandler);
+            void PollAdd(CPollEventHandler *AHandler);
+            void PollMod(CPollEventHandler *AHandler);
+            void PollDel(CPollEventHandler *AHandler);
 
             void DoException(CPollEventHandler *AHandler, Exception::Exception *AException);
 
@@ -1573,27 +1747,18 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CPollServer -----------------------------------------------------------------------------------------------
+        //-- CEPollServer ----------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        enum CActiveLevel {alShutDown, alBinding, alActive};
-        //--------------------------------------------------------------------------------------------------------------
-
-        class LIB_DELPHI CPollServer: public CEventSocketServer {
-            typedef CEventSocketServer inherited;
+        class LIB_DELPHI CEPollServer: public CPollSocketServer {
+            typedef CPollSocketServer inherited;
 
         private:
 
             CPollStack *m_PollStack;
 
-            CServerIOHandler *m_IOHandler;
-
-            CCommandHandlers *m_CommandHandlers;
-
             CPollEventHandlers *m_EventHandlers;
-
-            CActiveLevel m_ActiveLevel;
 
             COnPollEventHandlerExceptionEvent m_OnEventHandlerException;
 
@@ -1611,12 +1776,6 @@ namespace Delphi {
 
             void SetTimeOut(int Value);
 
-            virtual void SetActiveLevel(CActiveLevel AValue);
-
-            virtual void SetIOHandler(CServerIOHandler *Value);
-
-            virtual void InitializeCommandHandlers() {};
-
             virtual void DoTimeOut(CPollEventHandler *AHandler);
 
             virtual void DoAccept(CPollEventHandler* AHandler);
@@ -1625,38 +1784,223 @@ namespace Delphi {
 
             virtual void DoWrite(CPollEventHandler* AHandler);
 
-            void DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException);
+            bool DoExecute(CTCPConnection *AConnection) override;
 
-            bool DoExecute(CTCPServerConnection *AConnection) override;
+            void DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException);
 
         public:
 
-            explicit CPollServer();
+            CEPollServer();
 
-            ~CPollServer() override;
+            ~CEPollServer() override;
 
             CPollStack *PollStack() { return m_PollStack; };
             void PollStack(CPollStack *Value) { SetPollStack(Value); };
-
-            CActiveLevel ActiveLevel() { return m_ActiveLevel; }
-            void ActiveLevel(CActiveLevel Value) { SetActiveLevel(Value); }
 
             int TimeOut() { return GetTimeOut(); };
             void TimeOut(int Value) { SetTimeOut(Value); };
 
             bool Wait();
 
-            CServerIOHandler *IOHandler() { return m_IOHandler; }
-            void IOHandler(CServerIOHandler *Value) { SetIOHandler(Value); }
+            CPollEventHandlers *EventHandlers() { return m_EventHandlers; }
+            void EventHandlers(CPollEventHandlers *Value) { m_EventHandlers = Value; }
+
+            const COnPollEventHandlerExceptionEvent &OnEventHandlerException() { return m_OnEventHandlerException; }
+            void OnEventHandlerException(COnPollEventHandlerExceptionEvent && Value) { m_OnEventHandlerException = Value; }
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CEPollClient ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CEPollClient: public CPollSocketClient {
+            typedef CPollSocketClient inherited;
+
+        private:
+
+            CPollStack *m_PollStack;
+
+            CPollEventHandlers *m_EventHandlers;
+
+            COnPollEventHandlerExceptionEvent m_OnEventHandlerException;
+
+            bool m_FreePollStack;
+
+            void SetPollStack(CPollStack *Value);
+
+            void CheckHandler(CPollEventHandler* AHandler);
+
+            void CreatePollEventHandlers();
+
+        protected:
+
+            int GetTimeOut();
+
+            void SetTimeOut(int Value);
+
+            virtual void DoTimeOut(CPollEventHandler *AHandler);
+
+            virtual void DoConnect(CPollEventHandler* AHandler);
+
+            virtual void DoRead(CPollEventHandler* AHandler);
+
+            virtual void DoWrite(CPollEventHandler* AHandler);
+
+            bool DoExecute(CTCPConnection *AConnection) override;
+
+            void DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException);
+
+        public:
+
+            CEPollClient();
+
+            ~CEPollClient() override;
+
+            CPollStack *PollStack() { return m_PollStack; };
+            void PollStack(CPollStack *Value) { SetPollStack(Value); };
+
+            int TimeOut() { return GetTimeOut(); };
+            void TimeOut(int Value) { SetTimeOut(Value); };
+
+            bool Wait();
 
             CPollEventHandlers *EventHandlers() { return m_EventHandlers; }
             void EventHandlers(CPollEventHandlers *Value) { m_EventHandlers = Value; }
 
+            const COnPollEventHandlerExceptionEvent &OnEventHandlerException() { return m_OnEventHandlerException; }
+            void OnEventHandlerException(COnPollEventHandlerExceptionEvent && Value) { m_OnEventHandlerException = Value; }
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CAsyncServer ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        enum CActiveLevel {alShutDown, alBinding, alActive};
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CAsyncServer: public CEPollServer {
+        private:
+
+            CServerIOHandler *m_IOHandler;
+
+            CActiveLevel m_ActiveLevel;
+
+            CCommandHandlers *m_CommandHandlers;
+
+        protected:
+
+            void SetActiveLevel(CActiveLevel AValue);
+
+            void SetIOHandler(CServerIOHandler *Value);
+
+            virtual void InitializeCommandHandlers() abstract;
+
+            bool DoCommand(CTCPConnection *AConnection) override;
+
+        public:
+
+            CAsyncServer();
+
+            ~CAsyncServer() override;
+
+            CActiveLevel ActiveLevel() { return m_ActiveLevel; }
+            void ActiveLevel(CActiveLevel Value) { SetActiveLevel(Value); }
+
+            CServerIOHandler *IOHandler() { return m_IOHandler; }
+            void IOHandler(CServerIOHandler *Value) { SetIOHandler(Value); }
+
             CCommandHandlers *CommandHandlers() { return m_CommandHandlers; }
             void CommandHandlers(CCommandHandlers *Value) { m_CommandHandlers = Value; }
 
-            const COnPollEventHandlerExceptionEvent &OnEventHandlerException() { return m_OnEventHandlerException; }
-            void OnEventHandlerException(COnPollEventHandlerExceptionEvent && Value) { m_OnEventHandlerException = Value; }
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CAsyncClient ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CAsyncClient: public CEPollClient {
+            typedef CEPollClient inherited;
+
+        private:
+
+            CClientIOHandler *m_IOHandler;
+
+            bool m_Active;
+
+        protected:
+
+            virtual void SetActive(bool AValue);
+
+        public:
+
+            explicit CAsyncClient(LPCTSTR AHost, unsigned short APort);
+
+            ~CAsyncClient() override;
+
+            CClientIOHandler *IOHandler() { return m_IOHandler; }
+
+            bool Active() { return m_Active; }
+            void Active(bool Value) { SetActive(Value); }
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CTCPAsyncServer -------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CTCPAsyncServer: public CAsyncServer {
+        protected:
+
+            CTCPServerConnection *GetConnection(int AIndex);
+            void SetConnection(int AIndex, CTCPServerConnection *AValue);
+
+            void DoAccept(CPollEventHandler* AHandler) override;
+
+        public:
+
+            explicit CTCPAsyncServer(unsigned short AListen, LPCTSTR lpDocRoot);
+
+            ~CTCPAsyncServer() override = default;
+
+            CTCPServerConnection *Connections(int Index) { return GetConnection(Index); }
+            void Connections(int Index, CTCPServerConnection *Value) { SetConnection(Index, Value); }
+
+            CTCPServerConnection *operator[] (int Index) override { return Connections(Index); };
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CTCPAsyncClient -------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CTCPAsyncClient: public CAsyncClient {
+        private:
+
+            CTCPClientConnection *m_Connection;
+
+        protected:
+
+            void DoConnect(CPollEventHandler* AHandler) override;
+
+        public:
+
+            explicit CTCPAsyncClient(LPCTSTR AHost, unsigned short APort);
+
+            ~CTCPAsyncClient() override = default;
+
+            CTCPClientConnection *Connection() { return m_Connection; };
 
         };
 

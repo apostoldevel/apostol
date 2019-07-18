@@ -133,11 +133,11 @@ namespace Apostol {
 
             void InitExchanges();
 
-            void Post(CHTTPConnection *AConnection);
-            void Get(CHTTPConnection *AConnection);
+            void Post(CHTTPServerConnection *AConnection);
+            void Get(CHTTPServerConnection *AConnection);
 
-            bool SaveOrder(CHTTPConnection *AConnection, const CStringList& Params);
-            bool UpdateOrder(CHTTPConnection *AConnection, const CStringList& Params, const CString& Response);
+            bool SaveOrder(CHTTPServerConnection *AConnection, const CStringList& Params);
+            bool UpdateOrder(CHTTPServerConnection *AConnection, const CStringList& Params, const CString& Response);
 
             void FindBestPrice(const CStringList& Params, const CStringList& Requests, CString& Result);
             bool CalcBestPrice(const CJSONValue &Data, CAmountPrice &Price);
@@ -151,11 +151,11 @@ namespace Apostol {
 
         protected:
 
-            void GetTradingPairs(CHTTPConnection *AConnection);
+            void GetTradingPairs(CHTTPServerConnection *AConnection);
 
-            void Quote(const CStringList& Params, CHTTPConnection *AConnection);
-            void Trade(const CStringList& Params, CHTTPConnection *AConnection);
-            void Split(const CStringList& Params, CHTTPConnection *AConnection);
+            void Quote(const CStringList& Params, CHTTPServerConnection *AConnection);
+            void Trade(const CStringList& Params, CHTTPServerConnection *AConnection);
+            void Split(const CStringList& Params, CHTTPServerConnection *AConnection);
 
             void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) override;
 
@@ -171,7 +171,7 @@ namespace Apostol {
                 return new CExchange(AManager);
             }
 
-            void Execute(CHTTPConnection *AConnection) override;
+            void Execute(CHTTPServerConnection *AConnection) override;
 
             bool CheckUrerArent(const CString& Value) override;
 

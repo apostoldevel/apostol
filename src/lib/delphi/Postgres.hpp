@@ -158,7 +158,7 @@ namespace Delphi {
 
         public:
 
-            CPQConnectionEvent();
+            explicit CPQConnectionEvent(CPollManager *AManager);
 
             ~CPQConnectionEvent() override = default;
 
@@ -225,9 +225,9 @@ namespace Delphi {
 
         public:
 
-            CPQConnection();
+            explicit CPQConnection(CPollManager *AManager);
 
-            explicit CPQConnection(const CPQConnInfo &AConnInfo);
+            explicit CPQConnection(const CPQConnInfo &AConnInfo, CPollManager *AManager);
 
             ~CPQConnection() override;
 
@@ -298,7 +298,7 @@ namespace Delphi {
 
         public:
 
-            explicit CPQPollConnection(const CPQConnInfo &AConnInfo);
+            explicit CPQPollConnection(const CPQConnInfo &AConnInfo, CPollManager *AManager);
 
             void QueryStart(CPQQuery *AQuery);
             void QueryStop();
@@ -540,6 +540,29 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        //-- CPQPollQueryManager ---------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class CPQPollQueryManager: public CCollection {
+        public:
+
+            explicit CPQPollQueryManager(): CCollection(this) {
+
+            };
+
+            ~CPQPollQueryManager() override = default;
+
+            int QueryCount() { return CCollection::Count(); };
+
+            CPQPollQuery *Querys(int Index) { return (CPQPollQuery *) CCollection::Items(Index); };
+
+            CPQPollQuery *operator[] (int Index) override { return Querys(Index); };
+
+        };
+
+        //--------------------------------------------------------------------------------------------------------------
+
         //-- CPQConnectPollEvent ---------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
@@ -612,7 +635,7 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CPQConnectPoll: public CPQConnectPollEvent, public CCollection {
+        class CPQConnectPoll: public CPQConnectPollEvent {
             friend CPQPollQuery;
 
         private:
@@ -622,6 +645,10 @@ namespace Delphi {
             CPollStack *m_PollStack;
 
             CPollEventHandlers *m_EventHandlers;
+
+            CPQPollQueryManager *m_PollQueryManager;
+
+            CPollManager *m_PollManager;
 
             CQueue *m_Queue;
 
@@ -687,15 +714,11 @@ namespace Delphi {
 
             CQueue *Queue() { return m_Queue; };
 
-            int QueryCount() { return CCollection::Count(); };
+            CPQPollQueryManager *PollQueryManager() { return m_PollQueryManager; };
 
             size_t SizeMin() { return m_SizeMin; }
 
             size_t SizeMax() { return m_SizeMax; }
-
-            CPQPollQuery *Querys(int Index) { return (CPQPollQuery *) CCollection::Items(Index); };
-
-            CPQPollQuery *operator[] (int Index) override { return Querys(Index); };
 
             const COnPollEventHandlerExceptionEvent &OnEventHandlerException() { return m_OnEventHandlerException; }
             void OnEventHandlerException(COnPollEventHandlerExceptionEvent && Value) { m_OnEventHandlerException = Value; }

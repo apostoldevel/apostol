@@ -73,7 +73,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CWebServer::MethodNotAllowed(CHTTPConnection *AConnection) {
+        void CWebServer::MethodNotAllowed(CHTTPServerConnection *AConnection) {
             auto LReply = AConnection->Reply();
 
             CReply::GetStockReply(LReply, CReply::not_allowed);
@@ -85,7 +85,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CWebServer::DoOptions(CHTTPConnection *AConnection) {
+        void CWebServer::DoOptions(CHTTPServerConnection *AConnection) {
 
             auto LReply = AConnection->Reply();
 #ifdef _DEBUG
@@ -102,7 +102,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CWebServer::DoGet(CHTTPConnection *AConnection) {
+        void CWebServer::DoGet(CHTTPServerConnection *AConnection) {
 
             auto LServer = dynamic_cast<CHTTPServer *> (AConnection->Server());
             auto LRequest = AConnection->Request();
@@ -146,7 +146,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CWebServer::Execute(CHTTPConnection *AConnection) {
+        void CWebServer::Execute(CHTTPServerConnection *AConnection) {
 
             int i = 0;
             auto LRequest = AConnection->Request();
