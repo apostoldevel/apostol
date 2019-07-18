@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
 
     int exitcode;
 
-    //DefaultLocale.SetLocale(setlocale(LC_ALL, ""));
+    DefaultLocale.SetLocale("");
 
     try
     {

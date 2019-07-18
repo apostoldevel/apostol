@@ -41,7 +41,7 @@ namespace Delphi {
             LPTSTR lpMsgBuf;
             TCHAR S[MAX_ERROR_STR + sizeof(TCHAR)] = {0};
 
-            if (DefaultLocale.Locale() == nullptr) {
+            if (DefaultLocale.Locale() == LC_GLOBAL_LOCALE) {
                 lpMsgBuf = ::strerror_r(errno, S, MAX_ERROR_STR);
             } else {
                 lpMsgBuf = ::strerror_l(errno, DefaultLocale.Locale());

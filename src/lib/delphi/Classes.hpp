@@ -144,12 +144,16 @@ namespace Delphi {
         private:
 
             locale_t m_Locale;
+
             LPCSTR m_LocaleName;
+
+            int m_Category;
+
             int m_CategoryMask;
 
         public:
 
-            CDefaultLocale() noexcept;
+            explicit CDefaultLocale(locale_t ALocale = LC_GLOBAL_LOCALE) noexcept;
 
             explicit CDefaultLocale(LPCSTR Locale);
             ~CDefaultLocale();
@@ -158,8 +162,11 @@ namespace Delphi {
 
             LPCSTR LocaleName() { return m_LocaleName; };
 
+            int Category() { return m_Category; };
+            void Category(int Value) { m_Category = Value; };
+
             int CategoryMask() { return m_CategoryMask; };
-            void CategoryMask(int CategoryMask) { m_CategoryMask = CategoryMask; };
+            void CategoryMask(int Value) { m_CategoryMask = Value; };
 
             void SetLocale(LPCSTR Locale);
         };

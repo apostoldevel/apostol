@@ -263,9 +263,10 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CDefaultLocale::CDefaultLocale() noexcept {
-            m_Locale = nullptr;
+        CDefaultLocale::CDefaultLocale(locale_t ALocale) noexcept {
+            m_Locale = ALocale;
             m_LocaleName = nullptr;
+            m_Category = LC_ALL;
             m_CategoryMask = LC_ALL_MASK;
         };
         //--------------------------------------------------------------------------------------------------------------
@@ -282,21 +283,33 @@ namespace Delphi {
 
         void CDefaultLocale::SetLocale(LPCSTR Value) {
             if (m_LocaleName != Value) {
-                if (m_Locale != nullptr) {
-                    ::freelocale(m_Locale);
+                if ((m_Locale != LC_GLOBAL_LOCALE) && (m_Locale != nullptr)) {
+                    freelocale(m_Locale); // !!! WARNING: Valgrind error
                     m_Locale = nullptr;
                 }
 
                 m_LocaleName = Value;
 
                 if (m_LocaleName != nullptr) {
-                    m_Locale = ::newlocale(m_CategoryMask, m_LocaleName, m_Locale);
 
-                    if (m_Locale == nullptr) {
-                        throw EOSError(errno, "Could not set locale argument \"%s\" failed: ", m_LocaleName);
+                    if (m_Locale != LC_GLOBAL_LOCALE) {
+
+                        if (m_LocaleName[0] == '\0') {
+                            m_LocaleName = setlocale(m_Category, "");
+                        }
+
+                        locale_t Locale = newlocale(m_CategoryMask, m_LocaleName, m_Locale);
+
+                        if (Locale == nullptr) {
+                            throw EOSError(errno, "Could not set locale argument \"%s\" failed: ", m_LocaleName);
+                        }
+
+                        m_Locale = Locale;
+
+                        uselocale(m_Locale);
+                    } else {
+                        setlocale(m_Category, m_LocaleName);
                     }
-
-                    uselocale(m_Locale);
                 }
             }
         };
@@ -3026,7 +3039,7 @@ namespace Delphi {
             char S[MAX_ERROR_STR + 1];
 
             for (int I = 0; I < SYS_ERRNO_COUNT; I++) {
-                if (DefaultLocale.Locale() == nullptr) {
+                if (DefaultLocale.Locale() == LC_GLOBAL_LOCALE) {
                     M = ::strerror_r(I, S, MAX_ERROR_STR);
                 } else {
                     M = ::strerror_l(I, DefaultLocale.Locale());
