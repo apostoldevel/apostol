@@ -43,18 +43,17 @@ include_directories(src/lib/delphi src/apostol src/core src/utils src/modules)
 
 file(GLOB delphi_files src/lib/delphi/*.hpp src/lib/delphi/*.cpp)
 file(GLOB core_files src/core/*.hpp src/core/*.cpp)
-file(GLOB utils_files src/utils/*.hpp src/utils/*.cpp)
 file(GLOB apostol_files version.h src/apostol/*.hpp src/apostol/*.cpp)
 file(GLOB modules_files src/modules/Modules.hpp src/modules/*/*.hpp src/modules/*/*.cpp)
 
-link_libraries(pq dl)
+link_libraries(dl)
 
 # Delphi classes for C++
 # ----------------------------------------------------------------------------------------------------------------------
 add_definitions(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
 add_library(${DELPHI_LIB_NAME} STATIC ${delphi_files})
-target_link_libraries(${DELPHI_LIB_NAME} pthread)
+target_link_libraries(${DELPHI_LIB_NAME} pthread pq sqlite3)
 
 # Apostol Core
 # ----------------------------------------------------------------------------------------------------------------------
@@ -83,7 +82,7 @@ target_link_libraries(${APOSTOL_LIB_NAME} ${DELPHI_LIB_NAME})
 
 # Apostol modules
 # ----------------------------------------------------------------------------------------------------------------------
-add_library(${MODULES_LIB_NAME} STATIC ${utils_files} ${modules_files})
+add_library(${MODULES_LIB_NAME} STATIC ${modules_files})
 target_link_libraries(${MODULES_LIB_NAME} ${DELPHI_LIB_NAME} ${APOSTOL_LIB_NAME} crypto curl)
 
 # Apostol Web Service

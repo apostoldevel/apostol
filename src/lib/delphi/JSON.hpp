@@ -450,9 +450,9 @@ namespace Delphi {
 
             virtual const CJSONValue &GetValue(const CString &String) const abstract;
 
-            virtual CJSONValue &GetValue(reference String) abstract;;
+            virtual CJSONValue &GetValue(reference String) abstract;
 
-            virtual const CJSONValue &GetValue(reference String) const abstract;;
+            virtual const CJSONValue &GetValue(reference String) const abstract;
 
             void SetValue(const CString &String, const CJSONValue &Value);
 

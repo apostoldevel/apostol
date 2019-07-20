@@ -228,6 +228,10 @@ inline void chMB(LPCSTR szMsg);
 #    include "Classes.hpp"
 #  endif
 
+#  ifndef DELPHI_BASE64_HPP
+#    include "Base64.hpp"
+#  endif
+
 #  ifndef DELPHI_VARIANT_HPP
 #    include "Variant.hpp"
 #  endif
@@ -252,12 +256,12 @@ inline void chMB(LPCSTR szMsg);
 #    include "Sockets.hpp"
 #  endif
 
-#  ifndef DELPHI_SERVER_HPP
-#    include "Server.hpp"
+#  ifndef DELPHI_HTTP_HPP
+#    include "HTTP.hpp"
 #  endif
 
-#  ifndef DELPHI_POSTGRES_HPP
-#    include "Postgres.hpp"
+#  ifndef DELPHI_SQLLITE_HPP
+#    include "SQLite.hpp"
 #  endif
 
 #  ifndef DELPHI_POSTGRES_HPP

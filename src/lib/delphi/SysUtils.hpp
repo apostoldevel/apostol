@@ -137,12 +137,12 @@ namespace Delphi {
         LIB_DELPHI void HexStrToByteW(LPBYTE pbDest, size_t cbDest, LPCWSTR pszSrc, size_t cchSrc, char chDelim = 0);
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI LPSTR IntToStrA(int Value, LPSTR Str, size_t Size, int Base = 10);
-        LIB_DELPHI LPWSTR IntToStrW(int Value, LPWSTR Str, size_t Size, int Base = 10);
+        LIB_DELPHI LPSTR IntToStrA(int Value, LPSTR Str = nullptr, size_t Size = 0, int Base = 10);
+        LIB_DELPHI LPWSTR IntToStrW(int Value, LPWSTR Str = nullptr, size_t Size = 0, int Base = 10);
         //--------------------------------------------------------------------------------------------------------------
 
-        LIB_DELPHI LPSTR FloatToStrA(double Value, LPSTR Str, size_t Size, LPCSTR Format = "%f");
-        LIB_DELPHI LPWSTR FloatToStrW(double Value, LPWSTR Str, size_t Size, LPCWSTR Format = L"%f");
+        LIB_DELPHI LPSTR FloatToStrA(double Value, LPSTR Str = nullptr, size_t Size = 0, LPCSTR Format = "%f");
+        LIB_DELPHI LPWSTR FloatToStrW(double Value, LPWSTR Str = nullptr, size_t Size = 0, LPCWSTR Format = L"%f");
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI bool ValA(LPCSTR S, long int *val);

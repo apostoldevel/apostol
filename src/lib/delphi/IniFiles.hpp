@@ -90,6 +90,8 @@ namespace Delphi {
                     LPTSTR lpszReturnedString, DWORD nSize) abstract;
 
             virtual BOOL WriteString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszString) abstract;
+            virtual BOOL WriteString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, const CString &String) abstract;
+            virtual BOOL WriteString(const CString &SectionName, const CString &KeyName, const CString &String) abstract;
 
             virtual INT ReadInteger(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, INT Default);
             virtual BOOL WriteInteger(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, UINT Value);
@@ -208,10 +210,6 @@ namespace Delphi {
 
             void UpdateNameHash();
 
-        protected:
-
-            virtual void Changed();
-
         public:
 
             CHashedStringList(): CStringList() {
@@ -241,6 +239,8 @@ namespace Delphi {
 
             int IndexOfName(const CString &Name) override;
             int IndexOfName(LPCTSTR Name) override;
+
+            void Changed();
         };
 
         //--------------------------------------------------------------------------------------------------------------
@@ -265,8 +265,6 @@ namespace Delphi {
 
             CStrings *AddSection(LPCTSTR lpszSectionName);
 
-            void LoadValues();
-
             bool GetCaseSensitive();
             void SetCaseSensitive(bool Value);
 
@@ -275,6 +273,10 @@ namespace Delphi {
 
             bool GetAutoSave() { return m_AutoSave; };
             void SetAutoSave(bool Value) { m_AutoSave = Value; };
+
+        protected:
+
+            void LoadValues();
 
             int GetKeyLine(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName) override;
 
@@ -295,6 +297,8 @@ namespace Delphi {
                              LPTSTR lpszReturnedString, DWORD nSize) override;
 
             BOOL WriteString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszString) override;
+            BOOL WriteString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, const CString &String) override;
+            BOOL WriteString(const CString &SectionName, const CString &KeyName, const CString &String) override;
 
             void Clear();
 
@@ -328,6 +332,17 @@ namespace Delphi {
             inline void ReadSections(LPCTSTR lpszSectionName, CStrings *Strings) override {
                 CCustomIniFile::ReadSections(lpszSectionName, Strings);
             }
+
+            CStrings &Sections(int Index);
+            const CStrings &Sections(int Index) const;
+
+            CStrings &Sections(LPCTSTR Section);
+            const CStrings &Sections(LPCTSTR Section) const;
+
+            CStrings &operator[] (int Index) { return Sections(Index); }
+            const CStrings &operator[] (int Index) const { return Sections(Index); }
+
+            const CStrings &operator[] (LPCTSTR Section) const { return Sections(Section); }
 
         };
 

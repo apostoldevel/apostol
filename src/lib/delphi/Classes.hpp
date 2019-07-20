@@ -1286,10 +1286,10 @@ namespace Delphi {
                 return *this;
             }
 
-            CString &operator[] (int Index) { return Strings(Index); }
-            const CString &operator[] (int Index) const { return Strings(Index); }
+            virtual CString &operator[] (int Index) { return Strings(Index); }
+            virtual const CString &operator[] (int Index) const { return Strings(Index); }
 
-            const CString &operator[] (reference Name) const { return Values(Name); }
+            virtual const CString &operator[] (reference Name) const { return Values(Name); }
         };
 
         //--------------------------------------------------------------------------------------------------------------

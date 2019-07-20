@@ -786,6 +786,12 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPSTR IntToStrA(int Value, LPSTR Str, size_t Size, int Base) {
+            char szStr[_INT_T_LEN + 1] = {0};
+
+            if (Str == nullptr) {
+                Str = szStr;
+                Size = _INT_T_LEN;
+            }
 
             switch (Base) {
                 case 8:
@@ -805,6 +811,13 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPWSTR IntToStrW(int Value, LPWSTR Str, size_t Size, int Base) {
+            wchar_t szStr[_INT_T_LEN + 1] = {0};
+
+            if (Str == nullptr) {
+                Str = szStr;
+                Size = _INT_T_LEN;
+            }
+
             switch (Base) {
                 case 8:
                     swprintf(Str, Size, L"%o", Value);
@@ -824,12 +837,26 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPSTR FloatToStrA(double Value, LPSTR Str, size_t Size, LPCSTR Format) {
+            char szStr[_INT_T_LEN + 1] = {0};
+
+            if (Str == nullptr) {
+                Str = szStr;
+                Size = _INT_T_LEN;
+            }
+
             snprintf(Str, Size, Format, Value);
             return Str;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPWSTR FloatToStrW(double Value, LPWSTR Str, size_t Size, LPCWSTR Format) {
+            wchar_t szStr[_INT_T_LEN + 1] = {0};
+
+            if (Str == nullptr) {
+                Str = szStr;
+                Size = _INT_T_LEN;
+            }
+
             swprintf(Str, Size, Format, Value);
             return Str;
         }

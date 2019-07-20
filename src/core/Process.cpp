@@ -311,29 +311,29 @@ namespace Apostol {
         void CSignalProcess::CreateSignals() {
             if (Type() == ptSignaller) {
 
-                AddSignal(signal_value(SIG_RECONFIGURE_SIGNAL), "SIG" value(SIG_RECONFIGURE_SIGNAL), "reload", nullptr);
-                AddSignal(signal_value(SIG_REOPEN_SIGNAL), "SIG" value(SIG_REOPEN_SIGNAL), "reopen", nullptr);
-                AddSignal(signal_value(SIG_TERMINATE_SIGNAL), "SIG" value(SIG_TERMINATE_SIGNAL), "stop", nullptr);
-                AddSignal(signal_value(SIG_SHUTDOWN_SIGNAL), "SIG" value(SIG_SHUTDOWN_SIGNAL), "quit", nullptr);
+                AddSignal(signal_value(SIG_RECONFIGURE_SIGNAL), "SIG" sig_value(SIG_RECONFIGURE_SIGNAL), "reload", nullptr);
+                AddSignal(signal_value(SIG_REOPEN_SIGNAL), "SIG" sig_value(SIG_REOPEN_SIGNAL), "reopen", nullptr);
+                AddSignal(signal_value(SIG_TERMINATE_SIGNAL), "SIG" sig_value(SIG_TERMINATE_SIGNAL), "stop", nullptr);
+                AddSignal(signal_value(SIG_SHUTDOWN_SIGNAL), "SIG" sig_value(SIG_SHUTDOWN_SIGNAL), "quit", nullptr);
 
             } else {
 
-                AddSignal(signal_value(SIG_RECONFIGURE_SIGNAL), "SIG" value(SIG_RECONFIGURE_SIGNAL),
+                AddSignal(signal_value(SIG_RECONFIGURE_SIGNAL), "SIG" sig_value(SIG_RECONFIGURE_SIGNAL),
                           "reload", signal_handler);
 
-                AddSignal(signal_value(SIG_REOPEN_SIGNAL), "SIG" value(SIG_REOPEN_SIGNAL),
+                AddSignal(signal_value(SIG_REOPEN_SIGNAL), "SIG" sig_value(SIG_REOPEN_SIGNAL),
                           "reopen", signal_handler);
 
-                AddSignal(signal_value(SIG_NOACCEPT_SIGNAL), "SIG" value(SIG_NOACCEPT_SIGNAL),
+                AddSignal(signal_value(SIG_NOACCEPT_SIGNAL), "SIG" sig_value(SIG_NOACCEPT_SIGNAL),
                           "", signal_handler);
 
-                AddSignal(signal_value(SIG_TERMINATE_SIGNAL), "SIG" value(SIG_TERMINATE_SIGNAL),
+                AddSignal(signal_value(SIG_TERMINATE_SIGNAL), "SIG" sig_value(SIG_TERMINATE_SIGNAL),
                           "stop", signal_handler);
 
-                AddSignal(signal_value(SIG_SHUTDOWN_SIGNAL), "SIG" value(SIG_SHUTDOWN_SIGNAL),
+                AddSignal(signal_value(SIG_SHUTDOWN_SIGNAL), "SIG" sig_value(SIG_SHUTDOWN_SIGNAL),
                           "quit", signal_handler);
 
-                AddSignal(signal_value(SIG_CHANGEBIN_SIGNAL), "SIG" value(SIG_CHANGEBIN_SIGNAL),
+                AddSignal(signal_value(SIG_CHANGEBIN_SIGNAL), "SIG" sig_value(SIG_CHANGEBIN_SIGNAL),
                           "", signal_handler);
 
                 AddSignal(SIGINT, "SIGINT", nullptr, signal_handler);
@@ -896,7 +896,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         bool CModuleProcess::DoExecute(CTCPConnection *AConnection) {
-
             bool Result = false;
             auto LConnection = dynamic_cast<CHTTPServerConnection *> (AConnection);
 

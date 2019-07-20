@@ -41,8 +41,8 @@ Author:
 #define signal_value_helper(n)      SIG##n
 #define signal_value(n)             signal_value_helper(n)
 
-#define value_helper(n)             #n
-#define value(n)                    value_helper(n)
+#define sig_value_helper(n)             #n
+#define sig_value(n)                sig_value_helper(n)
 //----------------------------------------------------------------------------------------------------------------------
 
 #define SIG_SHUTDOWN_SIGNAL      QUIT
@@ -350,15 +350,15 @@ namespace Apostol {
             CHTTPServer *m_pServer;
             CPQServer *m_pPQServer;
 
-            virtual void DoOptions(CCommand *ACommand);
-            virtual void DoGet(CCommand *ACommand);
-            virtual void DoHead(CCommand *ACommand);
-            virtual void DoPost(CCommand *ACommand);
-            virtual void DoPut(CCommand *ACommand);
-            virtual void DoPatch(CCommand *ACommand);
-            virtual void DoDelete(CCommand *ACommand);
-            virtual void DoTrace(CCommand *ACommand);
-            virtual void DoConnect(CCommand *ACommand);
+            void DoOptions(CCommand *ACommand);
+            void DoGet(CCommand *ACommand);
+            void DoHead(CCommand *ACommand);
+            void DoPost(CCommand *ACommand);
+            void DoPut(CCommand *ACommand);
+            void DoPatch(CCommand *ACommand);
+            void DoDelete(CCommand *ACommand);
+            void DoTrace(CCommand *ACommand);
+            void DoConnect(CCommand *ACommand);
 
         protected:
 

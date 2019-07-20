@@ -662,7 +662,7 @@ namespace Delphi {
             bool OEM() { return m_OEM; }
             void OEM(bool Value) { m_OEM = Value; }
 
-            virtual bool Connected();
+            bool Connected();
 
             void Disconnect() override;
 
@@ -887,6 +887,8 @@ namespace Delphi {
         class LIB_DELPHI CSocketClient: public CSocketComponent {
         protected:
 
+            CString m_ClientName;
+
             CString m_Host;
 
             unsigned short m_Port;
@@ -897,9 +899,14 @@ namespace Delphi {
 
             ~CSocketClient() = default;
 
+            CString &ClientName() { return m_ClientName; }
+            const CString &ClientName() const { return m_ClientName; }
+
+            CString &Host() { return m_Host; }
             const CString &Host() const { return m_Host; }
 
             unsigned short Port() { return m_Port; }
+            void Port(unsigned short Value) { m_Port = Value; }
 
         };
 
@@ -981,7 +988,7 @@ namespace Delphi {
 
             ~CTCPServerConnection() override;
 
-            virtual CEventSocketServer *Server() { return m_Server; }
+            virtual CPollSocketServer *Server() { return m_Server; }
 
         }; // CTCPServerConnection
 
@@ -1004,7 +1011,7 @@ namespace Delphi {
 
             ~CTCPClientConnection() override;
 
-            virtual CPollSocketClient *Server() { return m_Client; }
+            virtual CPollSocketClient *Client() { return m_Client; }
 
         }; // CTCPClientConnection
 
@@ -1413,6 +1420,7 @@ namespace Delphi {
         private:
 
             CSocketServer *m_Server;
+            CSocketClient *m_Client;
 
             bool m_EnabledDefault;
             bool m_ParseParamsDefault;
@@ -1427,7 +1435,10 @@ namespace Delphi {
 
             explicit CCommandHandlers(CSocketServer *AServer);
 
+            explicit CCommandHandlers(CSocketClient *AClient);
+
             CSocketServer *Server() { return m_Server; }
+            CSocketClient *Client() { return m_Client; }
 
             CCommandHandler *Add();
 
@@ -1766,7 +1777,7 @@ namespace Delphi {
 
             void SetPollStack(CPollStack *Value);
 
-            void CheckHandler(CPollEventHandler* AHandler);
+            void CheckHandler(CPollEventHandler *AHandler);
 
             void CreatePollEventHandlers();
 
@@ -1778,11 +1789,11 @@ namespace Delphi {
 
             virtual void DoTimeOut(CPollEventHandler *AHandler);
 
-            virtual void DoAccept(CPollEventHandler* AHandler);
+            virtual void DoAccept(CPollEventHandler *AHandler);
 
-            virtual void DoRead(CPollEventHandler* AHandler);
+            virtual void DoRead(CPollEventHandler *AHandler);
 
-            virtual void DoWrite(CPollEventHandler* AHandler);
+            virtual void DoWrite(CPollEventHandler *AHandler);
 
             bool DoExecute(CTCPConnection *AConnection) override;
 
@@ -1831,7 +1842,7 @@ namespace Delphi {
 
             void SetPollStack(CPollStack *Value);
 
-            void CheckHandler(CPollEventHandler* AHandler);
+            void CheckHandler(CPollEventHandler *AHandler);
 
             void CreatePollEventHandlers();
 
@@ -1843,11 +1854,11 @@ namespace Delphi {
 
             virtual void DoTimeOut(CPollEventHandler *AHandler);
 
-            virtual void DoConnect(CPollEventHandler* AHandler);
+            virtual void DoConnect(CPollEventHandler *AHandler);
 
-            virtual void DoRead(CPollEventHandler* AHandler);
+            virtual void DoRead(CPollEventHandler *AHandler);
 
-            virtual void DoWrite(CPollEventHandler* AHandler);
+            virtual void DoWrite(CPollEventHandler *AHandler);
 
             bool DoExecute(CTCPConnection *AConnection) override;
 
@@ -1899,7 +1910,7 @@ namespace Delphi {
 
             void SetIOHandler(CServerIOHandler *Value);
 
-            virtual void InitializeCommandHandlers() abstract;
+            virtual void InitializeCommandHandlers() {};
 
             bool DoCommand(CTCPConnection *AConnection) override;
 
@@ -1933,23 +1944,33 @@ namespace Delphi {
 
             CClientIOHandler *m_IOHandler;
 
+            CCommandHandlers *m_CommandHandlers;
+
             bool m_Active;
 
         protected:
 
             virtual void SetActive(bool AValue);
 
+            virtual void InitializeCommandHandlers() {};
+
+            bool DoCommand(CTCPConnection *AConnection) override;
+
         public:
+
+            CAsyncClient();
 
             explicit CAsyncClient(LPCTSTR AHost, unsigned short APort);
 
             ~CAsyncClient() override;
 
-            CClientIOHandler *IOHandler() { return m_IOHandler; }
-
             bool Active() { return m_Active; }
             void Active(bool Value) { SetActive(Value); }
 
+            CClientIOHandler *IOHandler() { return m_IOHandler; }
+
+            CCommandHandlers *CommandHandlers() { return m_CommandHandlers; }
+            void CommandHandlers(CCommandHandlers *Value) { m_CommandHandlers = Value; }
         };
 
         //--------------------------------------------------------------------------------------------------------------
@@ -1964,7 +1985,7 @@ namespace Delphi {
             CTCPServerConnection *GetConnection(int AIndex);
             void SetConnection(int AIndex, CTCPServerConnection *AValue);
 
-            void DoAccept(CPollEventHandler* AHandler) override;
+            void DoAccept(CPollEventHandler *AHandler) override;
 
         public:
 
@@ -1992,9 +2013,11 @@ namespace Delphi {
 
         protected:
 
-            void DoConnect(CPollEventHandler* AHandler) override;
+            void DoConnect(CPollEventHandler *AHandler) override;
 
         public:
+
+            CTCPAsyncClient();
 
             explicit CTCPAsyncClient(LPCTSTR AHost, unsigned short APort);
 

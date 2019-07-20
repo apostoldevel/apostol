@@ -507,6 +507,7 @@ namespace Delphi {
             CHashedStringList *Result = CHashedStringList::Create(true); // OwnsObject = true
             try {
                 m_Sections->AddObject(lpszSectionName, Result);
+                ((CHashedStringList *) m_Sections)->Changed();
             } catch (...) {
                 delete Result;
                 throw;
@@ -808,6 +809,16 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        BOOL CMemIniFile::WriteString(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, const CString &String) {
+            return WriteString(lpszSectionName, lpszKeyName, String.c_str());
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
+        BOOL CMemIniFile::WriteString(const CString &SectionName, const CString &KeyName, const CString &String) {
+            return WriteString(SectionName.c_str(), KeyName.c_str(), String.c_str());
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
         int CMemIniFile::GetKeyLine(LPCTSTR lpszSectionName, LPCTSTR lpszKeyName) {
             int I;
             CKeyLine *KeyLine;
@@ -824,6 +835,34 @@ namespace Delphi {
             }
 
             return -1;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CStrings &CMemIniFile::Sections(int Index) {
+            if ((Index < 0) || (Index >= m_Sections->Count()))
+                throw ExceptionFrm(SListIndexError, Index);
+
+            auto Strings = (CHashedStringList *) m_Sections->Objects(Index);
+            return *Strings;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        const CStrings &CMemIniFile::Sections(int Index) const {
+            if ((Index < 0) || (Index >= m_Sections->Count()))
+                throw ExceptionFrm(SListIndexError, Index);
+
+            auto Strings = (CHashedStringList *) m_Sections->Objects(Index);
+            return *Strings;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CStrings &CMemIniFile::Sections(LPCTSTR Section) {
+            return Sections(m_Sections->IndexOf(Section));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        const CStrings &CMemIniFile::Sections(LPCTSTR Section) const {
+            return Sections(m_Sections->IndexOf(Section));
         }
 
         //--------------------------------------------------------------------------------------------------------------

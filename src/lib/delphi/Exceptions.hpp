@@ -114,8 +114,6 @@ namespace Delphi {
 
             ExceptionFrm() : inherited() {};
 
-            explicit ExceptionFrm(LPCTSTR lpMsg) : inherited(lpMsg) {};
-
             explicit ExceptionFrm(LPCTSTR lpFormat, ...) : inherited() {
                 va_list argList;
                 va_start(argList, lpFormat);

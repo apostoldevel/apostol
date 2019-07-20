@@ -2401,6 +2401,15 @@ namespace Delphi {
 
         CCommandHandlers::CCommandHandlers(CSocketServer *AServer): CCollection(this) {
             m_Server = AServer;
+            m_Client = nullptr;
+            m_EnabledDefault = true;
+            m_ParseParamsDefault = true;
+        };
+        //--------------------------------------------------------------------------------------------------------------
+
+        CCommandHandlers::CCommandHandlers(CSocketClient *AClient): CCollection(this) {
+            m_Server = nullptr;
+            m_Client = AClient;
             m_EnabledDefault = true;
             m_ParseParamsDefault = true;
         };
@@ -3144,7 +3153,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CEPollServer::DoRead(CPollEventHandler* AHandler) {
+        void CEPollServer::DoRead(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
             try {
                 DoExecute(LConnection);
@@ -3155,7 +3164,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CEPollServer::DoWrite(CPollEventHandler* AHandler) {
+        void CEPollServer::DoWrite(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
             try {
                 LConnection->CheckForDisconnect(true);
@@ -3345,7 +3354,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CEPollClient::DoRead(CPollEventHandler* AHandler) {
+        void CEPollClient::DoRead(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
             try {
                 DoExecute(LConnection);
@@ -3356,7 +3365,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CEPollClient::DoWrite(CPollEventHandler* AHandler) {
+        void CEPollClient::DoWrite(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
             try {
                 LConnection->CheckForDisconnect(true);
@@ -3499,9 +3508,14 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CAsyncClient::CAsyncClient(LPCTSTR AHost, unsigned short APort): CEPollClient() {
+        CAsyncClient::CAsyncClient(): CEPollClient() {
             m_IOHandler = nullptr;
             m_Active = false;
+            m_CommandHandlers = new CCommandHandlers(this);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CAsyncClient::CAsyncClient(LPCTSTR AHost, unsigned short APort): CAsyncClient() {
             m_Host = AHost;
             m_Port = APort;
         }
@@ -3509,6 +3523,7 @@ namespace Delphi {
 
         CAsyncClient::~CAsyncClient() {
             SetActive(false);
+            FreeAndNil(m_CommandHandlers);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -3519,6 +3534,9 @@ namespace Delphi {
             if (m_Active != AValue ) {
 
                 if (AValue) {
+
+                    if (CommandHandlers()->Count() == 0)
+                        InitializeCommandHandlers();
 
                     if (m_IOHandler == nullptr)
                         m_IOHandler = new CClientIOHandler();
@@ -3539,6 +3557,46 @@ namespace Delphi {
 
                 m_Active = AValue;
             }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CAsyncClient::DoCommand(CTCPConnection *AConnection) {
+            int i;
+            CMemoryStream *LStream = nullptr;
+
+            bool Result = m_CommandHandlers->Count() > 0;
+
+            if (Result) {
+                if (AConnection->Connected()) {
+                    LStream = new CMemoryStream();
+                    LStream->SetSize(MaxLineLengthDefault);
+                    LStream->SetSize(AConnection->ReadLn((char *) LStream->Memory()));
+
+                    if (LStream->Size() > 0 && LStream->Size() < MaxLineLengthDefault) {
+                        DoBeforeCommandHandler(AConnection, (char *) LStream->Memory());
+                        try {
+                            for (i = 0; i < m_CommandHandlers->Count(); ++i) {
+                                if (m_CommandHandlers->Commands(i)->Enabled()) {
+                                    if (m_CommandHandlers->Commands(i)->Check((char *) LStream->Memory(),
+                                                                              LStream->Size(), AConnection))
+                                        break;
+                                }
+                            }
+
+                            if (i == m_CommandHandlers->Count())
+                                DoNoCommandHandler((char *) LStream->Memory(), AConnection);
+                        }
+                        catch (...) {
+                        }
+
+                        DoAfterCommandHandler(AConnection);
+                    }
+                }
+
+                delete LStream;
+            };
+
+            return Result;
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -3599,8 +3657,14 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CTCPAsyncClient::CTCPAsyncClient(LPCTSTR AHost, unsigned short APort) : CAsyncClient(AHost, APort) {
+        CTCPAsyncClient::CTCPAsyncClient(): CAsyncClient() {
             m_Connection = nullptr;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CTCPAsyncClient::CTCPAsyncClient(LPCTSTR AHost, unsigned short APort): CTCPAsyncClient() {
+            m_Host = AHost;
+            m_Port = APort;
         }
         //--------------------------------------------------------------------------------------------------------------
 

@@ -26,7 +26,7 @@
 */
 
 #include "delphi.hpp"
-#include "base64.hpp"
+#include "Base64.hpp"
 
 
 static const CString base64_chars =

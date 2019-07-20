@@ -22,7 +22,6 @@ Author:
 --*/
 
 #include <curl/curl.h>
-#include "base64.hpp"
 
 #ifndef APOSTOL_EXCHANGE_HPP
 #define APOSTOL_EXCHANGE_HPP

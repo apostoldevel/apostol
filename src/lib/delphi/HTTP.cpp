@@ -22,13 +22,15 @@ Author:
 --*/
 
 #include "delphi.hpp"
-#include "Server.hpp"
+#include "HTTP.hpp"
 
 extern "C++" {
 
 namespace Delphi {
 
     namespace Server {
+
+        #define StringArrayToStream(Stream, Buf) (Stream)->Write((Buf), sizeof((Buf)) - sizeof(TCHAR))
 
         namespace Mapping {
 
@@ -240,6 +242,199 @@ namespace Delphi {
                 Add(Headers[I]);
             }
         }
+        //--------------------------------------------------------------------------------------------------------------
+
+        namespace MiscStrings {
+            const TCHAR http[] = _T("HTTP/1.1");
+            const TCHAR question[] = _T("?");
+            const TCHAR ampersand[] = _T("&");
+            //const TCHAR dot[] = _T(".");
+            const TCHAR space[] = _T(" ");
+            const TCHAR separator[] = _T(": ");
+            const TCHAR crlf[] = _T("\r\n");
+        } // namespace MiscStrings
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CRequest --------------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        void http_request::ToBuffers(CMemoryStream *AStream) {
+
+            Method.SaveToStream(AStream);
+            StringArrayToStream(AStream, MiscStrings::space);
+
+            Uri.SaveToStream(AStream);
+            for (int i = 0; i < Params.Count(); ++i) {
+                if (i == 0) {
+                    StringArrayToStream(AStream, MiscStrings::question);
+                } else {
+                    StringArrayToStream(AStream, MiscStrings::ampersand);
+                }
+                Params[i].SaveToStream(AStream);
+            }
+            StringArrayToStream(AStream, MiscStrings::space);
+
+            StringArrayToStream(AStream, MiscStrings::http);
+            StringArrayToStream(AStream, MiscStrings::crlf);
+
+            for (int i = 0; i < Headers.Count(); ++i) {
+                CHeader &H = Headers[i];
+                H.Name.SaveToStream(AStream);
+                StringArrayToStream(AStream, MiscStrings::separator);
+                H.Value.SaveToStream(AStream);
+                StringArrayToStream(AStream, MiscStrings::crlf);
+            }
+
+            StringArrayToStream(AStream, MiscStrings::crlf);
+            Content.SaveToStream(AStream);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void http_request::Clear() {
+            Method = "GET";
+            Uri = "/";
+            VMajor = 1;
+            VMinor = 1;
+            Params.Clear();
+            Headers.Clear();
+            Content.Clear();
+            ContentLength = 0;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void http_request::AddHeader(LPCTSTR lpszName, LPCTSTR lpszValue) {
+            Headers.Add(CHeader());
+            Headers.Last().Name = lpszName;
+            Headers.Last().Value = lpszValue;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void http_request::ToText() {
+            CString Temp;
+            TCHAR ch;
+            if (!Content.IsEmpty()) {
+                Temp = Content;
+                Content.Clear();
+                for (size_t i = 0; i < Temp.Size(); ++i) {
+                    ch = Temp[i];
+                    if (!IsCtl(ch) || (ch == '\t') || (ch == '\r') || (ch == '\n'))
+                        Content.Append(ch);
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void http_request::ToJSON() {
+            CString Temp;
+            if (!Content.IsEmpty()) {
+                Temp = Content;
+                Content.Clear();
+                for (size_t i = 0; i < Temp.Size(); ++i) {
+                    switch (Temp[i]) {
+                        case 8:
+                            Content.Append(92);
+                            Content.Append('b');
+                            break;
+                        case '\n':
+                            Content.Append(92);
+                            Content.Append('n');
+                            break;
+                        case 12:
+                            Content.Append(92);
+                            Content.Append('f');
+                            break;
+                        case '\r':
+                            Content.Append(92);
+                            Content.Append('r');
+                            break;
+                        case '\t':
+                            Content.Append(92);
+                            Content.Append('t');
+                            break;
+                        default:
+                            Content.Append(Temp[i]);
+                            break;
+                    }
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        http_request *http_request::Prepare(http_request *ARequest, LPCTSTR AMethod, LPCTSTR AUri, LPCTSTR AContentType) {
+
+            TCHAR szSize[_INT_T_LEN + 1] = {0};
+            TCHAR szHost[NI_MAXHOST + 1] = {0};
+
+            ARequest->Method = AMethod;
+            ARequest->Uri = AUri;
+
+            chVERIFY(SUCCEEDED(StringCchPrintf(szHost, sizeof(szHost), _T("%s:%u"), ARequest->Host, ARequest->Port)));
+
+            ARequest->AddHeader(_T("Host"), szHost);
+
+            ARequest->AddHeader(_T("User-Agent"), ARequest->UserAgent);
+
+            if (!ARequest->Content.IsEmpty()) {
+                ARequest->AddHeader(_T("Accept-Ranges"), _T("bytes"));
+
+                if (AContentType == nullptr) {
+                    switch (ARequest->ContentType) {
+                        case content_type::html:
+                            AContentType = _T("text/html");
+                            break;
+                        case content_type::json:
+                            AContentType = _T("application/json");
+                            ARequest->ToJSON();
+                            break;
+                        case content_type::xml:
+                            AContentType = _T("application/xml");
+                            ARequest->ToText();
+                            break;
+                        case content_type::text:
+                            AContentType = _T("text/plain");
+                            ARequest->ToText();
+                            break;
+                        case content_type::sbin:
+                            AContentType = _T("application/octet-stream");
+                            break;
+                        default:
+                            AContentType = _T("text/plain");
+                            break;
+                    }
+                }
+
+                ARequest->AddHeader(_T("Content-Type"), AContentType);
+                ARequest->AddHeader(_T("Content-Length"), IntToStr((int) ARequest->Content.Size(), szSize, sizeof(szSize)));
+            }
+
+            if (ARequest->CloseConnection)
+                ARequest->AddHeader(_T("Connection"), _T("close"));
+            else
+                ARequest->AddHeader(_T("Connection"), _T("keep-alive"));
+
+            return ARequest;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        http_request *http_request::Authorization(http_request *ARequest, LPCTSTR AMethod, LPCTSTR ALogin,
+                LPCTSTR APassword) {
+
+            CString LPassphrase, LAuthorization;
+
+            LPassphrase = ALogin;
+            LPassphrase << ":";
+            LPassphrase << APassword;
+
+            LAuthorization = AMethod;
+            LAuthorization << " ";
+            LAuthorization << base64_encode(LPassphrase);
+
+            ARequest->AddHeader("Authorization", LAuthorization.c_str());
+
+            return ARequest;
+        }
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -249,29 +444,29 @@ namespace Delphi {
 
         CRequestParser::CRequestParser() : CObject() {
             m_Result = -1;
-            m_State = method_start;
+            m_State = Request::method_start;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CRequestParser::Reset() {
             m_Result = -1;
-            m_State = method_start;
+            m_State = Request::method_start;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         int CRequestParser::Consume(CRequest *ARequest, char AInput) {
             switch (m_State) {
-                case method_start:
+                case Request::method_start:
                     if (!IsChar(AInput) || IsCtl(AInput) || IsTSpecial(AInput)) {
                         return false;
                     } else {
-                        m_State = method;
+                        m_State = Request::method;
                         ARequest->Method.Append(AInput);
                         return -1;
                     }
-                case method:
+                case Request::method:
                     if (AInput == ' ') {
-                        m_State = uri;
+                        m_State = Request::uri;
                         return -1;
                     } else if (!IsChar(AInput) || IsCtl(AInput) || IsTSpecial(AInput)) {
                         return false;
@@ -279,20 +474,20 @@ namespace Delphi {
                         ARequest->Method.Append(AInput);
                         return -1;
                     }
-                case uri_start:
+                case Request::uri_start:
                     if (IsCtl(AInput)) {
                         return false;
                     } else {
-                        m_State = uri;
+                        m_State = Request::uri;
                         ARequest->Uri.Append(AInput);
                         return -1;
                     }
-                case uri:
+                case Request::uri:
                     if (AInput == ' ') {
-                        m_State = http_version_h;
+                        m_State = Request::http_version_h;
                         return -1;
                     } else if (AInput == '?') {
-                        m_State = uri_param_start;
+                        m_State = Request::uri_param_start;
                         return -1;
                     } else if (IsCtl(AInput)) {
                         return false;
@@ -300,23 +495,23 @@ namespace Delphi {
                         ARequest->Uri.Append(AInput);
                         return -1;
                     }
-                case uri_param_start:
+                case Request::uri_param_start:
                     if (AInput == ' ') {
-                        m_State = http_version_h;
+                        m_State = Request::http_version_h;
                         return -1;
                     } else if (IsCtl(AInput)) {
                         return false;
                     } else {
-                        m_State = uri_param;
+                        m_State = Request::uri_param;
                         ARequest->Params.Add(AInput);
                         return -1;
                     }
-                case uri_param:
+                case Request::uri_param:
                     if (AInput == ' ') {
-                        m_State = http_version_h;
+                        m_State = Request::http_version_h;
                         return -1;
                     } else if (AInput == '&') {
-                        m_State = uri_param_start;
+                        m_State = Request::uri_param_start;
                         return -1;
                     } else if (IsCtl(AInput)) {
                         return false;
@@ -324,54 +519,54 @@ namespace Delphi {
                         ARequest->Params.back().Append(AInput);
                         return -1;
                     }
-                case http_version_h:
+                case Request::http_version_h:
                     if (AInput == 'H') {
-                        m_State = http_version_t_1;
+                        m_State = Request::http_version_t_1;
                         return -1;
                     } else {
                         return false;
                     }
-                case http_version_t_1:
+                case Request::http_version_t_1:
                     if (AInput == 'T') {
-                        m_State = http_version_t_2;
+                        m_State = Request::http_version_t_2;
                         return -1;
                     } else {
                         return false;
                     }
-                case http_version_t_2:
+                case Request::http_version_t_2:
                     if (AInput == 'T') {
-                        m_State = http_version_p;
+                        m_State = Request::http_version_p;
                         return -1;
                     } else {
                         return false;
                     }
-                case http_version_p:
+                case Request::http_version_p:
                     if (AInput == 'P') {
-                        m_State = http_version_slash;
+                        m_State = Request::http_version_slash;
                         return -1;
                     } else {
                         return false;
                     }
-                case http_version_slash:
+                case Request::http_version_slash:
                     if (AInput == '/') {
                         ARequest->VMajor = 0;
                         ARequest->VMinor = 0;
-                        m_State = http_version_major_start;
+                        m_State = Request::http_version_major_start;
                         return -1;
                     } else {
                         return false;
                     }
-                case http_version_major_start:
+                case Request::http_version_major_start:
                     if (IsDigit(AInput)) {
                         ARequest->VMajor = ARequest->VMajor * 10 + AInput - '0';
-                        m_State = http_version_major;
+                        m_State = Request::http_version_major;
                         return -1;
                     } else {
                         return false;
                     }
-                case http_version_major:
+                case Request::http_version_major:
                     if (AInput == '.') {
-                        m_State = http_version_minor_start;
+                        m_State = Request::http_version_minor_start;
                         return -1;
                     } else if (IsDigit(AInput)) {
                         ARequest->VMajor = ARequest->VMajor * 10 + AInput - '0';
@@ -379,17 +574,17 @@ namespace Delphi {
                     } else {
                         return false;
                     }
-                case http_version_minor_start:
+                case Request::http_version_minor_start:
                     if (IsDigit(AInput)) {
                         ARequest->VMinor = ARequest->VMinor * 10 + AInput - '0';
-                        m_State = http_version_minor;
+                        m_State = Request::http_version_minor;
                         return -1;
                     } else {
                         return false;
                     }
-                case http_version_minor:
+                case Request::http_version_minor:
                     if (AInput == '\r') {
-                        m_State = expecting_newline_1;
+                        m_State = Request::expecting_newline_1;
                         return -1;
                     } else if (IsDigit(AInput)) {
                         ARequest->VMinor = ARequest->VMinor * 10 + AInput - '0';
@@ -397,19 +592,19 @@ namespace Delphi {
                     } else {
                         return false;
                     }
-                case expecting_newline_1:
+                case Request::expecting_newline_1:
                     if (AInput == '\n') {
-                        m_State = header_line_start;
+                        m_State = Request::header_line_start;
                         return -1;
                     } else {
                         return false;
                     }
-                case header_line_start:
+                case Request::header_line_start:
                     if (AInput == '\r') {
-                        m_State = expecting_newline_3;
+                        m_State = Request::expecting_newline_3;
                         return -1;
                     } else if ((ARequest->Headers.Count() > 0) && (AInput == ' ' || AInput == '\t')) {
-                        m_State = header_lws;
+                        m_State = Request::header_lws;
                         return -1;
                     } else if (!IsChar(AInput) || IsCtl(AInput) || IsTSpecial(AInput)) {
                         return false;
@@ -417,25 +612,25 @@ namespace Delphi {
                         ARequest->Headers.Add(CHeader());
                         ARequest->Headers.Last().Name.Append(AInput);
 
-                        m_State = header_name;
+                        m_State = Request::header_name;
                         return -1;
                     }
-                case header_lws:
+                case Request::header_lws:
                     if (AInput == '\r') {
-                        m_State = expecting_newline_2;
+                        m_State = Request::expecting_newline_2;
                         return -1;
                     } else if (AInput == ' ' || AInput == '\t') {
                         return -1;
                     } else if (IsCtl(AInput)) {
                         return false;
                     } else {
-                        m_State = header_value;
+                        m_State = Request::header_value;
                         ARequest->Headers.Last().Value.Append(AInput);
                         return -1;
                     }
-                case header_name:
+                case Request::header_name:
                     if (AInput == ':') {
-                        m_State = space_before_header_value;
+                        m_State = Request::space_before_header_value;
                         return -1;
                     } else if (!IsChar(AInput) || IsCtl(AInput) || IsTSpecial(AInput)) {
                         return false;
@@ -443,19 +638,19 @@ namespace Delphi {
                         ARequest->Headers.Last().Name.Append(AInput);
                         return -1;
                     }
-                case space_before_header_value:
+                case Request::space_before_header_value:
                     if (AInput == ' ') {
-                        m_State = header_value;
+                        m_State = Request::header_value;
                         return -1;
                     } else {
                         return false;
                     }
-                case header_value:
+                case Request::header_value:
                     if (AInput == '\r') {
-                        m_State = expecting_newline_2;
+                        m_State = Request::expecting_newline_2;
                         return -1;
                     } else if (AInput == ';') {
-                        m_State = header_value_options_start;
+                        m_State = Request::header_value_options_start;
                         ARequest->Headers.Last().Value.Append(AInput);
                         return -1;
                     } else if (IsCtl(AInput)) {
@@ -464,25 +659,25 @@ namespace Delphi {
                         ARequest->Headers.Last().Value.Append(AInput);
                         return -1;
                     }
-                case header_value_options_start:
+                case Request::header_value_options_start:
                     if ((AInput == ' ' || AInput == '\t')) {
-                        m_State = header_value_options_start;
+                        m_State = Request::header_value_options_start;
                         ARequest->Headers.Last().Value.Append(AInput);
                         return -1;
                     } else if (IsCtl(AInput)) {
                         return false;
                     } else {
-                        m_State = header_value_options;
+                        m_State = Request::header_value_options;
                         ARequest->Headers.Last().Value.Append(AInput);
                         ARequest->Headers.Last().Options.Add(AInput);
                         return -1;
                     }
-                case header_value_options:
+                case Request::header_value_options:
                     if (AInput == '\r') {
-                        m_State = expecting_newline_2;
+                        m_State = Request::expecting_newline_2;
                         return -1;
                     } else if (AInput == ';') {
-                        m_State = header_value_options_start;
+                        m_State = Request::header_value_options_start;
                         ARequest->Headers.Last().Value.Append(AInput);
                         return -1;
                     } else if (IsCtl(AInput)) {
@@ -492,21 +687,21 @@ namespace Delphi {
                         ARequest->Headers.Last().Options.back().Append(AInput);
                         return -1;
                     }
-                case expecting_newline_2:
+                case Request::expecting_newline_2:
                     if (AInput == '\n') {
-                        m_State = header_line_start;
+                        m_State = Request::header_line_start;
                         return -1;
                     } else {
                         return false;
                     }
-                case expecting_newline_3:
+                case Request::expecting_newline_3:
                     if (AInput == '\n') {
                         if (ARequest->Headers.Count() > 0) {
                             const CString &Value = ARequest->Headers.Values(_T("content-length"));
                             if (!Value.IsEmpty()) {
                                 ARequest->ContentLength = strtoul(Value.c_str(), nullptr, 0);
                                 if (ARequest->ContentLength > 0) {
-                                    m_State = content;
+                                    m_State = Request::content;
                                     return -1;
                                 }
                             }
@@ -515,7 +710,7 @@ namespace Delphi {
                     } else {
                         return false;
                     }
-                case content:
+                case Request::content:
                     ARequest->Content.Append(AInput);
                     if (ARequest->Content.Size() < ARequest->ContentLength) {
                         return -1;
@@ -584,7 +779,28 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        #define StringArrayToStream(Stream, Buf) (Stream)->Write((Buf), sizeof((Buf)) - sizeof(TCHAR))
+        static const CReply::status_type StatusArray[] = {
+                CReply::ok,
+                CReply::created,
+                CReply::accepted,
+                CReply::non_authoritative,
+                CReply::no_content,
+                CReply::multiple_choices,
+                CReply::moved_permanently,
+                CReply::moved_temporarily,
+                CReply::not_modified,
+                CReply::bad_request,
+                CReply::unauthorized,
+                CReply::forbidden,
+                CReply::not_found,
+                CReply::not_allowed,
+                CReply::internal_server_error,
+                CReply::not_implemented,
+                CReply::bad_gateway,
+                CReply::service_unavailable,
+                CReply::gateway_timeout
+        };
+        //--------------------------------------------------------------------------------------------------------------
 
         namespace StatusStrings {
 
@@ -653,12 +869,6 @@ namespace Delphi {
                 }
             }
         } // namespace StatusStrings
-        //--------------------------------------------------------------------------------------------------------------
-
-        namespace MiscStrings {
-            const TCHAR separator[] = _T(": ");
-            const TCHAR crlf[] = _T("\r\n");
-        } // namespace MiscStrings
         //--------------------------------------------------------------------------------------------------------------
 
         void CReply::ToBuffers(CMemoryStream *AStream) {
@@ -780,6 +990,8 @@ namespace Delphi {
 
         void http_reply::Clear() {
             Status = status_type::internal_server_error;
+            StatusString.Clear();
+            StatusText.Clear();
             ContentType = content_type::html;
             CloseConnection = true;
             Headers.Clear();
@@ -845,6 +1057,17 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void http_reply::StringToStatus() {
+            int I = StrToInt(StatusString.c_str());
+            for (const auto S : StatusArray) {
+                if (I == S) {
+                    Status = S;
+                    break;
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         http_reply *CReply::GetReply(http_reply *AReply, status_type AStatus, LPCTSTR AContentType) {
 
             TCHAR szTime[MAX_BUFFER_SIZE + 1] = {0};
@@ -888,6 +1111,10 @@ namespace Delphi {
                             AContentType = _T("application/json");
                             AReply->ToJSON();
                             break;
+                        case content_type::xml:
+                            AContentType = _T("application/xml");
+                            AReply->ToText();
+                            break;
                         case content_type::text:
                             AContentType = _T("text/plain");
                             AReply->ToText();
@@ -918,6 +1145,319 @@ namespace Delphi {
             AReply->Content = StockReplies::ToString(AStatus, AReply->ContentType);
             AReply = GetReply(AReply, AStatus);
             return AReply;
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CReplyParser ----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CReplyParser::CReplyParser() : CObject() {
+            m_Result = -1;
+            m_State = Reply::http_version_h;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CReplyParser::Reset() {
+            m_Result = -1;
+            m_State = Reply::http_version_h;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CReplyParser::Consume(CReply *AReply, char AInput) {
+            switch (m_State) {
+                case Reply::http_version_h:
+                    if (AInput == 'H') {
+                        m_State = Reply::http_version_t_1;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_version_t_1:
+                    if (AInput == 'T') {
+                        m_State = Reply::http_version_t_2;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_version_t_2:
+                    if (AInput == 'T') {
+                        m_State = Reply::http_version_p;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_version_p:
+                    if (AInput == 'P') {
+                        m_State = Reply::http_version_slash;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_version_slash:
+                    if (AInput == '/') {
+                        AReply->VMajor = 0;
+                        AReply->VMinor = 0;
+                        m_State = Reply::http_version_major_start;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_version_major_start:
+                    if (IsDigit(AInput)) {
+                        AReply->VMajor = AReply->VMajor * 10 + AInput - '0';
+                        m_State = Reply::http_version_major;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_version_major:
+                    if (AInput == '.') {
+                        m_State = Reply::http_version_minor_start;
+                        return -1;
+                    } else if (IsDigit(AInput)) {
+                        AReply->VMajor = AReply->VMajor * 10 + AInput - '0';
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_version_minor_start:
+                    if (IsDigit(AInput)) {
+                        AReply->VMinor = AReply->VMinor * 10 + AInput - '0';
+                        m_State = Reply::http_version_minor;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_version_minor:
+                    if (AInput == ' ') {
+                        m_State = Reply::http_status_start;
+                        return -1;
+                    } else if (IsDigit(AInput)) {
+                        AReply->VMinor = AReply->VMinor * 10 + AInput - '0';
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_status_start:
+                    if (IsDigit(AInput)) {
+                        AReply->StatusString.Append(AInput);
+                        m_State = Reply::http_status;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_status:
+                    if (AInput == ' ') {
+                        AReply->StringToStatus();
+                        m_State = Reply::http_status_text_start;
+                        return -1;
+                    } else if (IsDigit(AInput)) {
+                        AReply->StatusString.Append(AInput);
+                        m_State = Reply::http_status;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_status_text_start:
+                    if (IsChar(AInput)) {
+                        AReply->StatusText.Append(AInput);
+                        m_State = Reply::http_status_text;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::http_status_text:
+                    if (AInput == '\r') {
+                        m_State = Reply::expecting_newline_1;
+                        return -1;
+                    } else if (IsChar(AInput)) {
+                        AReply->StatusText.Append(AInput);
+                        m_State = Reply::http_status_text;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::expecting_newline_1:
+                    if (AInput == '\n') {
+                        m_State = Reply::header_line_start;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::header_line_start:
+                    if (AInput == '\r') {
+                        m_State = Reply::expecting_newline_3;
+                        return -1;
+                    } else if ((AReply->Headers.Count() > 0) && (AInput == ' ' || AInput == '\t')) {
+                        m_State = Reply::header_lws;
+                        return -1;
+                    } else if (!IsChar(AInput) || IsCtl(AInput) || IsTSpecial(AInput)) {
+                        return false;
+                    } else {
+                        AReply->Headers.Add(CHeader());
+                        AReply->Headers.Last().Name.Append(AInput);
+
+                        m_State = Reply::header_name;
+                        return -1;
+                    }
+                case Reply::header_lws:
+                    if (AInput == '\r') {
+                        m_State = Reply::expecting_newline_2;
+                        return -1;
+                    } else if (AInput == ' ' || AInput == '\t') {
+                        return -1;
+                    } else if (IsCtl(AInput)) {
+                        return false;
+                    } else {
+                        m_State = Reply::header_value;
+                        AReply->Headers.Last().Value.Append(AInput);
+                        return -1;
+                    }
+                case Reply::header_name:
+                    if (AInput == ':') {
+                        m_State = Reply::space_before_header_value;
+                        return -1;
+                    } else if (!IsChar(AInput) || IsCtl(AInput) || IsTSpecial(AInput)) {
+                        return false;
+                    } else {
+                        AReply->Headers.Last().Name.Append(AInput);
+                        return -1;
+                    }
+                case Reply::space_before_header_value:
+                    if (AInput == ' ') {
+                        m_State = Reply::header_value;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::header_value:
+                    if (AInput == '\r') {
+                        m_State = Reply::expecting_newline_2;
+                        return -1;
+                    } else if (AInput == ';') {
+                        m_State = Reply::header_value_options_start;
+                        AReply->Headers.Last().Value.Append(AInput);
+                        return -1;
+                    } else if (IsCtl(AInput)) {
+                        return false;
+                    } else {
+                        AReply->Headers.Last().Value.Append(AInput);
+                        return -1;
+                    }
+                case Reply::header_value_options_start:
+                    if ((AInput == ' ' || AInput == '\t')) {
+                        m_State = Reply::header_value_options_start;
+                        AReply->Headers.Last().Value.Append(AInput);
+                        return -1;
+                    } else if (IsCtl(AInput)) {
+                        return false;
+                    } else {
+                        m_State = Reply::header_value_options;
+                        AReply->Headers.Last().Value.Append(AInput);
+                        AReply->Headers.Last().Options.Add(AInput);
+                        return -1;
+                    }
+                case Reply::header_value_options:
+                    if (AInput == '\r') {
+                        m_State = Reply::expecting_newline_2;
+                        return -1;
+                    } else if (AInput == ';') {
+                        m_State = Reply::header_value_options_start;
+                        AReply->Headers.Last().Value.Append(AInput);
+                        return -1;
+                    } else if (IsCtl(AInput)) {
+                        return false;
+                    } else {
+                        AReply->Headers.Last().Value.Append(AInput);
+                        AReply->Headers.Last().Options.back().Append(AInput);
+                        return -1;
+                    }
+                case Reply::expecting_newline_2:
+                    if (AInput == '\n') {
+                        m_State = Reply::header_line_start;
+                        return -1;
+                    } else {
+                        return false;
+                    }
+                case Reply::expecting_newline_3:
+                    if (AInput == '\n') {
+                        if (AReply->Headers.Count() > 0) {
+                            const CString &Value = AReply->Headers.Values(_T("content-length"));
+                            if (!Value.IsEmpty()) {
+                                AReply->ContentLength = strtoul(Value.c_str(), nullptr, 0);
+                                if (AReply->ContentLength > 0) {
+                                    m_State = Reply::content;
+                                    return -1;
+                                }
+                            }
+                        }
+                        return true;
+                    } else {
+                        return false;
+                    }
+                case Reply::content:
+                    AReply->Content.Append(AInput);
+                    if (AReply->Content.Size() < AReply->ContentLength) {
+                        return -1;
+                    }
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        int CReplyParser::Parse(CReply *AReply, LPTSTR ABegin, LPCTSTR AEnd) {
+            while ((m_Result == -1) && (ABegin != AEnd)) {
+                m_Result = Consume(AReply, *ABegin++);
+            }
+            return m_Result;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CReplyParser::IsChar(int c) {
+            return c >= 0 && c <= 127;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CReplyParser::IsCtl(int c) {
+            return (c >= 0 && c <= 31) || (c == 127);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CReplyParser::IsTSpecial(int c) {
+            switch (c) {
+                case '(':
+                case ')':
+                case '<':
+                case '>':
+                case '@':
+                case ',':
+                case ';':
+                case ':':
+                case '\\':
+                case '"':
+                case '/':
+                case '[':
+                case ']':
+                case '?':
+                case '=':
+                case '{':
+                case '}':
+                case ' ':
+                case '\t':
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CReplyParser::IsDigit(int c) {
+            return c >= '0' && c <= '9';
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -983,12 +1523,12 @@ namespace Delphi {
 
                         switch (LResult) {
                             case 0:
-                                //Tag(clock());
+                                Tag(clock());
                                 m_ConnectionStatus = csRequestError;
                                 break;
 
                             case 1:
-                                //Tag(clock());
+                                Tag(clock());
                                 DoRequest();
                                 m_ConnectionStatus = csRequestOk;
                                 break;
@@ -1074,8 +1614,12 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CHTTPClientConnection::CHTTPClientConnection(CPollSocketClient *AClient): CTCPClientConnection(AClient) {
+            m_CloseConnection = true;
+            m_ConnectionStatus = csConnected;
             m_Request = nullptr;
-            m_OnRequest = nullptr;
+            m_Reply = nullptr;
+            m_ReplyParser = new CReplyParser();
+            m_OnReply = nullptr;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1084,21 +1628,96 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CHTTPClientConnection::Clear() {
+            m_ReplyParser->Reset();
+            FreeAndNil(m_Request);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClientConnection::ParseInput() {
+            int LResult;
+            CMemoryStream *LStream = nullptr;
+
+            if (Connected()) {
+                LStream = new CMemoryStream();
+                LStream->SetSize((size_t) ReadAsync());
+                try {
+                    if (LStream->Size() > 0) {
+
+                        InputBuffer()->Extract(LStream->Memory(), LStream->Size());
+                        LResult = m_ReplyParser->Parse(GetReply(), (LPTSTR) LStream->Memory(),
+                                                         (LPCTSTR) LStream->Memory() + LStream->Size());
+
+                        switch (LResult) {
+                            case 0:
+                                Tag(clock());
+                                m_ConnectionStatus = csReplyError;
+                                break;
+
+                            case 1:
+                                Tag(clock());
+                                DoReply();
+                                m_ConnectionStatus = csReplyOk;
+                                break;
+
+                            default:
+                                m_ConnectionStatus = csWaitReply;
+                                break;
+                        }
+                    }
+                } catch (...) {
+                    delete LStream;
+                    throw;
+                }
+                delete LStream;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         CRequest *CHTTPClientConnection::GetRequest() {
-            if (m_Request == nullptr)
+            if (m_Request == nullptr) {
                 m_Request = new CRequest();
+                m_Request->Host = Client()->Host().c_str();
+                m_Request->Port = Client()->Port();
+                m_Request->UserAgent = Client()->ClientName().c_str();
+            }
             return m_Request;
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPClientConnection::Clear() {
-            FreeAndNil(m_Request);
+        CReply *CHTTPClientConnection::GetReply() {
+            if (m_Reply == nullptr) {
+                m_Reply = new CReply;
+            }
+            return m_Reply;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClientConnection::SendRequest(bool ASendNow) {
+
+            GetRequest()->ToBuffers(OutputBuffer());
+
+            m_ConnectionStatus = csRequestReady;
+
+            DoRequest();
+
+            if (ASendNow) {
+                WriteAsync();
+                m_ConnectionStatus = csRequestSent;
+            }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CHTTPClientConnection::DoRequest() {
             if (m_OnRequest != nullptr) {
                 m_OnRequest(this);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CHTTPClientConnection::DoReply() {
+            if (m_OnReply != nullptr) {
+                m_OnReply(this);
             }
         }
 
@@ -1158,7 +1777,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPServer::DoAccept(CPollEventHandler* AHandler) {
+        void CHTTPServer::DoAccept(CPollEventHandler *AHandler) {
             CIOHandlerSocket *LIOHandler = nullptr;
             CPollEventHandler *LEventHandler = nullptr;
             CHTTPServerConnection *LConnection = nullptr;
@@ -1191,7 +1810,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPServer::DoRead(CPollEventHandler* AHandler) {
+        void CHTTPServer::DoRead(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CHTTPServerConnection *> (AHandler->Binding());
             try {
                 LConnection->ParseInput();
@@ -1214,7 +1833,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPServer::DoWrite(CPollEventHandler* AHandler) {
+        void CHTTPServer::DoWrite(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CHTTPServerConnection *> (AHandler->Binding());
             try {
                 if (LConnection->WriteAsync()) {
@@ -1283,8 +1902,14 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CHTTPClient::CHTTPClient(LPCTSTR AHost, unsigned short APort): CAsyncClient(AHost, APort) {
+        CHTTPClient::CHTTPClient(): CAsyncClient() {
             m_Connection = nullptr;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CHTTPClient::CHTTPClient(LPCTSTR AHost, unsigned short APort): CHTTPClient() {
+            m_Host = AHost;
+            m_Port = APort;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1316,8 +1941,23 @@ namespace Delphi {
         void CHTTPClient::DoRead(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CHTTPClientConnection *> (AHandler->Binding());
             try {
-                if (LConnection->ReadAsync()) {
+                LConnection->ParseInput();
+                switch (LConnection->ConnectionStatus()) {
+                    case csReplyError:
+                        // TODO: Reply Error
+                        break;
 
+                    case csReplyOk:
+                        DoExecute(LConnection);
+
+                        if (LConnection->CloseConnection()) {
+                            LConnection->Disconnect();
+                        }
+
+                        break;
+
+                    default:
+                        break;
                 }
             } catch (Delphi::Exception::Exception &E) {
                 DoException(LConnection, &E);
@@ -1330,7 +1970,10 @@ namespace Delphi {
             auto LConnection = dynamic_cast<CHTTPClientConnection *> (AHandler->Binding());
             try {
                 if (LConnection->WriteAsync()) {
-
+                    if (LConnection->ConnectionStatus() == csRequestReady) {
+                        LConnection->ConnectionStatus(csRequestSent);
+                        LConnection->Clear();
+                    }
                 }
             } catch (Delphi::Exception::Exception &E) {
                 DoException(LConnection, &E);
@@ -1348,7 +1991,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         bool CHTTPClient::DoCommand(CTCPConnection *AConnection) {
-            return false;
+            return CAsyncClient::DoCommand(AConnection);
         }
         //--------------------------------------------------------------------------------------------------------------
 
