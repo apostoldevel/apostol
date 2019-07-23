@@ -80,7 +80,7 @@ typedef enum ProcessType {
 //----------------------------------------------------------------------------------------------------------------------
 
 static LPCTSTR PROCESS_TYPE_NAME[] = {
-        _T("main"), _T("single"), _T("master"), _T("signaller"), _T("new binary"), _T("worker"), _T("helper")
+        _T("main"), _T("single"), _T("master"), _T("signaller"), _T("new binary"), _T("worker"), _T("bitmessage")
 };
 //----------------------------------------------------------------------------------------------------------------------
 

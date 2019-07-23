@@ -515,7 +515,7 @@ namespace Delphi {
 
             void Clear();
 
-            void ParseInput();
+            bool ParseInput();
 
             CHTTPServer *HTTPServer() { return (CHTTPServer *) Server(); }
 
@@ -586,7 +586,7 @@ namespace Delphi {
 
             void Clear();
 
-            void ParseInput();
+            bool ParseInput();
 
             CRequest *Request() { return GetRequest(); }
 
@@ -657,23 +657,19 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         class CHTTPClient: public CAsyncClient {
-        private:
-
-            CHTTPClientConnection *m_Connection;
-
         protected:
 
-            void DoTimeOut(CPollEventHandler *AHandler) override;
+            void DoConnectStart(CIOHandlerSocket *AIOHandler, CPollEventHandler *AHandler) override;
 
             void DoConnect(CPollEventHandler *AHandler) override;
+
+            void DoTimeOut(CPollEventHandler *AHandler) override;
 
             void DoRead(CPollEventHandler *AHandler) override;
 
             void DoWrite(CPollEventHandler *AHandler) override;
 
             bool DoExecute(CTCPConnection *AConnection) override;
-
-            bool DoCommand(CTCPConnection *AConnection) override;
 
         public:
 
@@ -682,8 +678,6 @@ namespace Delphi {
             explicit CHTTPClient(LPCTSTR AHost, unsigned short APort);
 
             ~CHTTPClient() override = default;
-
-            CHTTPClientConnection *Connection() { return m_Connection; };
 
         };
     }

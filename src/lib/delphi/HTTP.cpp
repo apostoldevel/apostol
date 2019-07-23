@@ -1507,21 +1507,23 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPServerConnection::ParseInput() {
-            int LResult;
+        bool CHTTPServerConnection::ParseInput() {
+            bool Result = false;
+            int PerseResult;
             CMemoryStream *LStream = nullptr;
 
             if (Connected()) {
                 LStream = new CMemoryStream();
                 LStream->SetSize((size_t) ReadAsync());
                 try {
-                    if (LStream->Size() > 0) {
+                    Result = LStream->Size() > 0;
+                    if (Result) {
 
                         InputBuffer()->Extract(LStream->Memory(), LStream->Size());
-                        LResult = m_RequestParser->Parse(GetRequest(), (LPTSTR) LStream->Memory(),
+                        PerseResult = m_RequestParser->Parse(GetRequest(), (LPTSTR) LStream->Memory(),
                                                (LPCTSTR) LStream->Memory() + LStream->Size());
 
-                        switch (LResult) {
+                        switch (PerseResult) {
                             case 0:
                                 Tag(clock());
                                 m_ConnectionStatus = csRequestError;
@@ -1544,6 +1546,8 @@ namespace Delphi {
                 }
                 delete LStream;
             }
+
+            return Result;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1614,7 +1618,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CHTTPClientConnection::CHTTPClientConnection(CPollSocketClient *AClient): CTCPClientConnection(AClient) {
-            m_CloseConnection = true;
+            m_CloseConnection = false;
             m_ConnectionStatus = csConnected;
             m_Request = nullptr;
             m_Reply = nullptr;
@@ -1631,24 +1635,27 @@ namespace Delphi {
         void CHTTPClientConnection::Clear() {
             m_ReplyParser->Reset();
             FreeAndNil(m_Request);
+            FreeAndNil(m_Reply);
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPClientConnection::ParseInput() {
-            int LResult;
+        bool CHTTPClientConnection::ParseInput() {
+            bool Result = false;
+            int ParseResult;
             CMemoryStream *LStream = nullptr;
 
             if (Connected()) {
                 LStream = new CMemoryStream();
                 LStream->SetSize((size_t) ReadAsync());
                 try {
-                    if (LStream->Size() > 0) {
+                    Result = LStream->Size() > 0;
+                    if (Result) {
 
                         InputBuffer()->Extract(LStream->Memory(), LStream->Size());
-                        LResult = m_ReplyParser->Parse(GetReply(), (LPTSTR) LStream->Memory(),
+                        ParseResult = m_ReplyParser->Parse(GetReply(), (LPTSTR) LStream->Memory(),
                                                          (LPCTSTR) LStream->Memory() + LStream->Size());
 
-                        switch (LResult) {
+                        switch (ParseResult) {
                             case 0:
                                 Tag(clock());
                                 m_ConnectionStatus = csReplyError;
@@ -1671,6 +1678,8 @@ namespace Delphi {
                 }
                 delete LStream;
             }
+
+            return Result;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1797,7 +1806,7 @@ namespace Delphi {
 
                     LEventHandler = EventHandlers()->Add(LIOHandler->Binding()->Handle());
                     LEventHandler->Binding(LConnection);
-                    LEventHandler->Start(etWork);
+                    LEventHandler->Start(etIO);
 
                     DoConnected(LConnection);
                 } else {
@@ -1813,18 +1822,19 @@ namespace Delphi {
         void CHTTPServer::DoRead(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CHTTPServerConnection *> (AHandler->Binding());
             try {
-                LConnection->ParseInput();
-                switch (LConnection->ConnectionStatus()) {
-                    case csRequestError:
-                        LConnection->SendStockReply(CReply::bad_request);
-                        break;
+                if (LConnection->ParseInput()) {
+                    switch (LConnection->ConnectionStatus()) {
+                        case csRequestError:
+                            LConnection->SendStockReply(CReply::bad_request);
+                            break;
 
-                    case csRequestOk:
-                        DoExecute(LConnection);
-                        break;
+                        case csRequestOk:
+                            DoExecute(LConnection);
+                            break;
 
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
                 }
             } catch (Delphi::Exception::Exception &E) {
                 DoException(LConnection, &E);
@@ -1903,7 +1913,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CHTTPClient::CHTTPClient(): CAsyncClient() {
-            m_Connection = nullptr;
+
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1918,21 +1928,28 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPClient::DoConnect(CPollEventHandler *AHandler) {
+        void CHTTPClient::DoConnectStart(CIOHandlerSocket *AIOHandler, CPollEventHandler *AHandler) {
+            auto LConnection = new CHTTPClientConnection(this);
             try {
-                if (IOHandler()->Binding()->CheckConnection()) {
-                    m_Connection = new CHTTPClientConnection(this);
+                LConnection->IOHandler(AIOHandler);
+                AHandler->Binding(LConnection);
+            } catch (Exception::Exception &E) {
+                DoException(LConnection, &E);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
 
-                    m_Connection->OnDisconnected(std::bind(&CHTTPClient::DoDisconnected, this, _1));
-                    m_Connection->IOHandler(IOHandler());
+        void CHTTPClient::DoConnect(CPollEventHandler *AHandler) {
+            auto LConnection = (CHTTPClientConnection *) AHandler->Binding();
+            try {
+                auto LIOHandler = (CIOHandlerSocket *) LConnection->IOHandler();
 
-                    AHandler->Binding(m_Connection);
-                    AHandler->Start(etWork);
-
-                    DoConnected(m_Connection);
+                if (LIOHandler->Binding()->CheckConnection()) {
+                    LConnection->OnDisconnected(std::bind(&CHTTPClient::DoDisconnected, this, _1));
+                    AHandler->Start(etIO);
+                    DoConnected(AHandler->Binding());
                 }
             } catch (Exception::Exception &E) {
-                DoListenException(&E);
                 throw ESocketError(E.ErrorCode(), "Connection failed ");
             }
         }
@@ -1941,23 +1958,25 @@ namespace Delphi {
         void CHTTPClient::DoRead(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CHTTPClientConnection *> (AHandler->Binding());
             try {
-                LConnection->ParseInput();
-                switch (LConnection->ConnectionStatus()) {
-                    case csReplyError:
-                        // TODO: Reply Error
-                        break;
+                if (LConnection->ParseInput()) {
+                    switch (LConnection->ConnectionStatus()) {
+                        case csReplyError:
+                            LConnection->Clear();
+                            break;
 
-                    case csReplyOk:
-                        DoExecute(LConnection);
+                        case csReplyOk:
+                            DoExecute(LConnection);
+                            LConnection->Clear();
 
-                        if (LConnection->CloseConnection()) {
-                            LConnection->Disconnect();
-                        }
+                            if (LConnection->CloseConnection()) {
+                                LConnection->Disconnect();
+                            }
 
-                        break;
+                            break;
 
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
                 }
             } catch (Delphi::Exception::Exception &E) {
                 DoException(LConnection, &E);
@@ -1972,7 +1991,6 @@ namespace Delphi {
                 if (LConnection->WriteAsync()) {
                     if (LConnection->ConnectionStatus() == csRequestReady) {
                         LConnection->ConnectionStatus(csRequestSent);
-                        LConnection->Clear();
                     }
                 }
             } catch (Delphi::Exception::Exception &E) {
@@ -1987,11 +2005,6 @@ namespace Delphi {
                 return m_OnExecute(AConnection);
             }
             return DoCommand(AConnection);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        bool CHTTPClient::DoCommand(CTCPConnection *AConnection) {
-            return CAsyncClient::DoCommand(AConnection);
         }
         //--------------------------------------------------------------------------------------------------------------
 

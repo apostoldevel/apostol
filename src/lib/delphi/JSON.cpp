@@ -1629,8 +1629,8 @@ namespace Delphi {
                         UpdateData(AInput);
                         m_State = value_string_end;
                         return -1;
-                    } else if ((AInput == '}') || (AInput == ']')) {
-                        return false;
+                    //} else if ((AInput == '}') || (AInput == ']')) {
+                    //    return false;
                     } if (IsCharacter(AInput)) {
                         UpdateData(AInput);
                         CurrentValue().Data().Append(AInput);
@@ -1694,7 +1694,7 @@ namespace Delphi {
                         return -1;
                     } else if (AInput == _value_true[m_CharIndex]) {
                         m_CharIndex++;
-                        if (m_CharIndex == 3) {
+                        if (m_CharIndex == 4) {
                             m_CharIndex = 0;
                         }
                         CurrentValue().Data().Append(AInput);
@@ -1719,7 +1719,7 @@ namespace Delphi {
                         return -1;
                     } else if (AInput == _value_false[m_CharIndex]) {
                         m_CharIndex++;
-                        if (m_CharIndex == 4) {
+                        if (m_CharIndex == 5) {
                             m_CharIndex = 0;
                         }
                         CurrentValue().Data().Append(AInput);

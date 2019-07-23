@@ -1035,7 +1035,7 @@ namespace Delphi {
                 LEventHandler->OnWriteEvent(std::bind(&CPQConnectPoll::DoWriteEvent, this, _1));
 
                 LEventHandler->Binding(AConnection);
-                LEventHandler->Start(etWork);
+                LEventHandler->Start(etIO);
 
             } catch (Exception::Exception &E) {
                 DoServerException(&E);

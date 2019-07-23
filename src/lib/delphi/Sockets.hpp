@@ -575,9 +575,9 @@ namespace Delphi {
         class LIB_DELPHI CPollConnection: public CSocketComponent, public CCollectionItem {
         private:
 
-            CPollEventHandler *m_EventHandler;
+            CPollConnection *m_Owner;
 
-            CPollConnection *m_PollConnection;
+            CPollEventHandler *m_EventHandler;
 
         protected:
 
@@ -587,9 +587,9 @@ namespace Delphi {
 
         public:
 
-            explicit CPollConnection(CPollConnection *APollConnection, CPollManager *AManager);
+            explicit CPollConnection(CPollConnection *AOwner, CPollManager *AManager = nullptr);
 
-            CPollConnection *PollConnection() { return m_PollConnection; };
+            CPollConnection *Owner() { return m_Owner; };
 
             CPollEventHandler *EventHandler() { return m_EventHandler; }
 
@@ -638,9 +638,12 @@ namespace Delphi {
             CMaxLineAction m_MaxLineAction;
             CNotifyEvent m_OnDisconnected;
 
+            void FreeIOHandler();
+
         protected:
 
-            void SetIOHandler(CIOHandler *AValue);
+            bool m_FreeIOHandler;
+            void SetIOHandler(CIOHandler *AValue, bool AFree);
 
             void DoDisconnected();
 
@@ -655,7 +658,7 @@ namespace Delphi {
             CIOHandlerSocket *Socket() { return m_Socket; }
 
             CIOHandler *IOHandler() { return m_IOHandler; }
-            void IOHandler(CIOHandler *Value) { SetIOHandler(Value); }
+            void IOHandler(CIOHandler *Value, bool AFree = true) { SetIOHandler(Value, AFree); }
 
             bool ClosedGracefully() { return m_ClosedGracefully; }
 
@@ -763,7 +766,7 @@ namespace Delphi {
 
         typedef std::function<void (CSocketEvent *Sender, CTCPConnection *AConnection)> COnSocketAfterCommandHandlerEvent;
 
-        typedef std::function<void (CCommand *ACommand)> COnSocketServerCommandEvent;
+        typedef std::function<void (CCommand *ACommand)> COnSocketCommandEvent;
         //--------------------------------------------------------------------------------------------------------------
 
         class LIB_DELPHI CSocketEvent: public CSocketComponent {
@@ -1052,7 +1055,7 @@ namespace Delphi {
 
             CClientIOHandler();
 
-            ~CClientIOHandler();
+            ~CClientIOHandler() override;
 
             bool Connect(LPCSTR AHost, unsigned short APort);
 
@@ -1370,7 +1373,10 @@ namespace Delphi {
 
             int m_ReplyExceptionCode;
 
-            COnSocketServerCommandEvent m_OnCommand;
+            COnSocketCommandEvent m_OnCommand;
+            COnSocketExceptionEvent m_OnException;
+
+            virtual void DoException(CTCPConnection *AConnection, Exception::Exception *AException);
 
         public:
 
@@ -1404,8 +1410,11 @@ namespace Delphi {
             int ReplyExceptionCode() { return m_ReplyExceptionCode; }
             void ReplyExceptionCode(int Value) { m_ReplyExceptionCode = Value; }
 
-            const COnSocketServerCommandEvent &OnCommand() { return m_OnCommand; }
-            void OnCommand(COnSocketServerCommandEvent && Value) { m_OnCommand = Value; }
+            const COnSocketCommandEvent &OnCommand() { return m_OnCommand; }
+            void OnCommand(COnSocketCommandEvent && Value) { m_OnCommand = Value; }
+
+            const COnSocketExceptionEvent &OnException() { return m_OnException; }
+            void OnException(COnSocketExceptionEvent && Value) { m_OnException = Value; }
 
         };
 
@@ -1630,7 +1639,7 @@ namespace Delphi {
         typedef std::function<void (CPollEventHandler *AHandler)> COnPollEventHandlerEvent;
         //--------------------------------------------------------------------------------------------------------------
 
-        enum CPollEvenType { etClose, etAccept, etConnect, etWork };
+        enum CPollEvenType { etNone, etAccept, etConnect, etIO, etTimer };
         //--------------------------------------------------------------------------------------------------------------
 
         class LIB_DELPHI CEPollServer;
@@ -1640,6 +1649,7 @@ namespace Delphi {
 
         class LIB_DELPHI CPollEventHandler: public CCollectionItem {
             typedef CCollectionItem inherited;
+
             friend CEPollServer;
             friend CEPollClient;
 
@@ -1652,10 +1662,14 @@ namespace Delphi {
             CPollEvenType m_EventType;
 
             CPollConnection *m_Binding;
+            bool m_FreeBinding;
 
             CPollEventHandlers *m_EventHandlers;
 
+            COnPollEventHandlerEvent m_OnTimerEvent;
             COnPollEventHandlerEvent m_OnTimeOutEvent;
+
+            COnPollEventHandlerEvent m_OnConnectEvent;
             COnPollEventHandlerEvent m_OnReadEvent;
             COnPollEventHandlerEvent m_OnWriteEvent;
 
@@ -1663,9 +1677,12 @@ namespace Delphi {
 
             void SetEventType(CPollEvenType Value);
 
-            void SetBinding(CPollConnection *Value);
+            void SetBinding(CPollConnection *Value, bool AFree);
 
+            void DoTimerEvent();
             void DoTimeOutEvent();
+
+            void DoConnectEvent();
             void DoReadEvent();
             void DoWriteEvent();
 
@@ -1682,17 +1699,23 @@ namespace Delphi {
             uint32_t Events() { return m_Events; }
 
             CPollConnection *Binding() { return m_Binding; }
-            void Binding(CPollConnection *Value) { SetBinding(Value); }
+            void Binding(CPollConnection *Value, bool AFree = false) { SetBinding(Value, AFree); }
 
-            void Start(CPollEvenType AEventType = etWork);
+            void Start(CPollEvenType AEventType = etIO);
             void Stop();
 
-            bool Stoped() { return m_EventType == etClose; };
+            bool Stoped() { return m_EventType == etNone; };
 
             CPollEvenType EventType() { return m_EventType; }
 
+            const COnPollEventHandlerEvent &OnTimerEvent() { return m_OnTimerEvent; }
+            void OnTimerEvent(COnPollEventHandlerEvent && Value) { m_OnTimerEvent = Value; }
+
             const COnPollEventHandlerEvent &OnTimeOutEvent() { return m_OnTimeOutEvent; }
             void OnTimeOutEvent(COnPollEventHandlerEvent && Value) { m_OnTimeOutEvent = Value; }
+
+            const COnPollEventHandlerEvent &OnConnectEvent() { return m_OnConnectEvent; }
+            void OnConnectEvent(COnPollEventHandlerEvent && Value) { m_OnConnectEvent = Value; }
 
             const COnPollEventHandlerEvent &OnReadEvent() { return m_OnReadEvent; }
             void OnReadEvent(COnPollEventHandlerEvent && Value) { m_OnReadEvent = Value; }
@@ -1755,6 +1778,45 @@ namespace Delphi {
             void OnException(COnPollEventHandlerExceptionEvent && Value) { m_OnException = Value; }
 
         }; // CCommandHandlers
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CEPollTimer -----------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        class LIB_DELPHI CEPollTimer : public CHandleStream, public CPollConnection {
+            typedef CHandleStream inherited;
+
+        private:
+
+            int m_ClockId;
+            int m_Flags;
+
+        protected:
+
+            void Disconnect() override {
+                Close();
+            };
+
+        public:
+
+            CEPollTimer(int AClockId, int AFlags);
+
+            ~CEPollTimer() override;
+
+            inline static class CEPollTimer *CreateAs(int AClockId, int AFlags) {
+                return new CEPollTimer(AClockId, AFlags);
+            };
+
+            int Handle() { return m_Handle; };
+
+            void Open();
+            void Close();
+
+            void SetTime(int AFlags, const struct itimerspec *AIn, struct itimerspec *AOut = nullptr);
+
+        }; // CFileStream
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1854,11 +1916,15 @@ namespace Delphi {
 
             virtual void DoTimeOut(CPollEventHandler *AHandler);
 
-            virtual void DoConnect(CPollEventHandler *AHandler);
+            virtual void DoConnectStart(CIOHandlerSocket *AIOHandler, CPollEventHandler *AHandler) abstract;
+
+            virtual void DoConnect(CPollEventHandler *AHandler) abstract;
 
             virtual void DoRead(CPollEventHandler *AHandler);
 
             virtual void DoWrite(CPollEventHandler *AHandler);
+
+            virtual void DoTimer(CPollEventHandler *AHandler) {};
 
             bool DoExecute(CTCPConnection *AConnection) override;
 
@@ -1877,6 +1943,8 @@ namespace Delphi {
             void TimeOut(int Value) { SetTimeOut(Value); };
 
             bool Wait();
+
+            void Timer(int AMsec, int Flags = 0);
 
             CPollEventHandlers *EventHandlers() { return m_EventHandlers; }
             void EventHandlers(CPollEventHandlers *Value) { m_EventHandlers = Value; }
@@ -1942,9 +2010,9 @@ namespace Delphi {
 
         private:
 
-            CClientIOHandler *m_IOHandler;
-
             CCommandHandlers *m_CommandHandlers;
+
+            bool m_AutoConnect;
 
             bool m_Active;
 
@@ -1964,10 +2032,15 @@ namespace Delphi {
 
             ~CAsyncClient() override;
 
+            bool AutoConnect() { return m_AutoConnect; }
+            void AutoConnect(bool Value) { m_AutoConnect = Value; }
+
             bool Active() { return m_Active; }
             void Active(bool Value) { SetActive(Value); }
 
-            CClientIOHandler *IOHandler() { return m_IOHandler; }
+            void ConnectStart();
+
+            void Disconnect() { SetActive(false); };
 
             CCommandHandlers *CommandHandlers() { return m_CommandHandlers; }
             void CommandHandlers(CCommandHandlers *Value) { m_CommandHandlers = Value; }
@@ -2007,11 +2080,9 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         class CTCPAsyncClient: public CAsyncClient {
-        private:
-
-            CTCPClientConnection *m_Connection;
-
         protected:
+
+            void DoConnectStart(CIOHandlerSocket *AIOHandler, CPollEventHandler *AHandler) override;
 
             void DoConnect(CPollEventHandler *AHandler) override;
 
@@ -2022,8 +2093,6 @@ namespace Delphi {
             explicit CTCPAsyncClient(LPCTSTR AHost, unsigned short APort);
 
             ~CTCPAsyncClient() override = default;
-
-            CTCPClientConnection *Connection() { return m_Connection; };
 
         };
 

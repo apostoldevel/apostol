@@ -96,8 +96,10 @@ git clone https://github.com/ufocomp/apostol.git
 ###### Сборка:
 ~~~
 cd apostol
-cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles" . -B cmake-build-release
-cmake --build cmake-build-release --target apostol -- -j 4
+mkdir build
+cd build
+cmake ..
+make
 ~~~
 
 УСТАНОВКА
@@ -105,7 +107,7 @@ cmake --build cmake-build-release --target apostol -- -j 4
 
 Для установки **Апостол** нужно выполнить:
 ~~~
-sudo cmake --build cmake-build-release --target install -- -j 4
+sudo make install
 ~~~
 
 По умолчанию **Апостол** будет установлен в:

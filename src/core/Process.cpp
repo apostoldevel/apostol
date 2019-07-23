@@ -379,7 +379,7 @@ namespace Apostol {
 
             action = _T("");
 
-            log_debug3(LOG_DEBUG_CORE, Log(), 0, "signal handler %d (%s), process name: %s", signo, sigcode, ProcessName());
+            log_debug3(LOG_DEBUG_CORE, Log(), 0, "signal handler %d (%s), process name: %s", signo, sigcode, GetProcessName());
 
             switch (Type()) {
                 case ptMaster:
@@ -435,6 +435,7 @@ namespace Apostol {
 
                         case SIGALRM:
                             sig_sigalrm = 1;
+                            action = _T(", alarm");
                             break;
 
                         case SIGIO:
@@ -482,6 +483,12 @@ namespace Apostol {
                         case SIGIO:
                             action = _T(", ignoring");
                             break;
+
+                        case SIGALRM:
+                            sig_sigalrm = 1;
+                            action = _T(", alarm");
+                            break;
+
                         default:
                             break;
                     }

@@ -351,18 +351,21 @@ namespace Delphi {
 
         LIB_DELPHI bool TryEncodeDate(int Year, int Month, int Day, CDateTime &Date) {
             int I;
-            PDayTable DayTable;
+            bool LY = IsLeapYear(Year);
 
-            DayTable = &MonthDays[IsLeapYear(Year)];
+            //PDayTable DayTable;
+            //DayTable = &MonthDays[IsLeapYear(Year)];
 
             if ((Year >= 1) && (Year <= 9999) && (Month >= 1) && (Month <= 12) && (Day >= 1) &&
-                (Day <= (*DayTable)[Month - 1])) {
+                (Day <= MonthDays[LY][Month - 1])) {
+//                (Day <= (*DayTable)[Month - 1])) {
                 for (I = 0; I < Month - 1; ++I)
-                    Day += (*DayTable)[I];
+                    Day += MonthDays[LY][I];
+//                    Day += (*DayTable)[I];
 
                 I = Year - 1;
 
-                Date = I * 365 + I / 4 - I / 100 + I / 400 + Day - DateDelta;
+                Date = I * 365 + div(I, 4).quot - div(I, 100).quot + div(I, 400).quot + Day - DateDelta;
 
                 return true;
             }
@@ -373,7 +376,7 @@ namespace Delphi {
 
         LIB_DELPHI bool TryEncodeTime(int Hour, int Min, int Sec, int MSec, CDateTime &Time) {
             if ((Hour < HoursPerDay) && (Min < MinsPerHour) && (Sec < SecsPerMin) && (MSec < MSecsPerSec)) {
-                Time = (double) ((Hour * MinsPerHour * SecsPerMin * MSecsPerSec) +
+                Time = (CDateTime) ((Hour * MinsPerHour * SecsPerMin * MSecsPerSec) +
                                  (Min * SecsPerMin * MSecsPerSec) +
                                  (Sec * MSecsPerSec) + MSec) / MSecsPerDay;
                 return true;
@@ -435,6 +438,13 @@ namespace Delphi {
 
             return SystemTimeToDateTime(&UT, (int) (TV.tv_usec / 1000));
         };
+        //--------------------------------------------------------------------------------------------------------------
+
+        LIB_DELPHI unsigned long MsEpoch() {
+            struct timeval tv{0};
+            gettimeofday(&tv, nullptr);
+            return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+        }
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI time_t FileAge(LPCTSTR lpszFileName) {
@@ -786,13 +796,6 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPSTR IntToStrA(int Value, LPSTR Str, size_t Size, int Base) {
-            char szStr[_INT_T_LEN + 1] = {0};
-
-            if (Str == nullptr) {
-                Str = szStr;
-                Size = _INT_T_LEN;
-            }
-
             switch (Base) {
                 case 8:
                     snprintf(Str, Size, "%o", Value);
@@ -811,13 +814,6 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPWSTR IntToStrW(int Value, LPWSTR Str, size_t Size, int Base) {
-            wchar_t szStr[_INT_T_LEN + 1] = {0};
-
-            if (Str == nullptr) {
-                Str = szStr;
-                Size = _INT_T_LEN;
-            }
-
             switch (Base) {
                 case 8:
                     swprintf(Str, Size, L"%o", Value);
@@ -837,26 +833,12 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPSTR FloatToStrA(double Value, LPSTR Str, size_t Size, LPCSTR Format) {
-            char szStr[_INT_T_LEN + 1] = {0};
-
-            if (Str == nullptr) {
-                Str = szStr;
-                Size = _INT_T_LEN;
-            }
-
             snprintf(Str, Size, Format, Value);
             return Str;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         LIB_DELPHI LPWSTR FloatToStrW(double Value, LPWSTR Str, size_t Size, LPCWSTR Format) {
-            wchar_t szStr[_INT_T_LEN + 1] = {0};
-
-            if (Str == nullptr) {
-                Str = szStr;
-                Size = _INT_T_LEN;
-            }
-
             swprintf(Str, Size, Format, Value);
             return Str;
         }
