@@ -663,8 +663,6 @@ namespace Delphi {
 
             void DoConnect(CPollEventHandler *AHandler) override;
 
-            void DoTimeOut(CPollEventHandler *AHandler) override;
-
             void DoRead(CPollEventHandler *AHandler) override;
 
             void DoWrite(CPollEventHandler *AHandler) override;

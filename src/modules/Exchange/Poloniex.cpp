@@ -64,11 +64,11 @@ namespace Apostol {
                     Result.Clear();
                     Result << str_result;
                 } catch (Delphi::Exception::Exception &e) {
-                    Log()->Error(LOG_EMERG, 0, "[%s] GetTicker: Error: %s", Name().c_str(), e.what());
+                    Log()->Error(APP_LOG_EMERG, 0, "[%s] GetTicker: Error: %s", Name().c_str(), e.what());
                 }
                 Log()->Debug(0, "[%s] GetTicker: Done!", Name().c_str());
             } else {
-                Log()->Error(LOG_EMERG, 0, "[%s] GetTicker: Failed to get anything.", Name().c_str());
+                Log()->Error(APP_LOG_EMERG, 0, "[%s] GetTicker: Failed to get anything.", Name().c_str());
             }
         }
         //--------------------------------------------------------------------------------------------------------------

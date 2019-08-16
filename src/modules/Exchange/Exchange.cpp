@@ -218,7 +218,7 @@ namespace Apostol {
 
                 /* Check for errors */
                 if ( res != CURLE_OK ) {
-                    Log()->Error(LOG_EMERG, 0, "[curl_api] curl_easy_perform() failed: %s" , curl_easy_strerror(res) );
+                    Log()->Error(APP_LOG_EMERG, 0, "[curl_api] curl_easy_perform() failed: %s" , curl_easy_strerror(res) );
                 }
 
             }
@@ -574,13 +574,13 @@ namespace Apostol {
                 }
             }
 
-            Split.GetJSON(Result);
+            Split.ToString(Result);
             DebugMessage("[D] [O] %s\n", Result.c_str());
             Result.Clear();
 
             Split.Array().Sort(OrderBookValueCompare);
 
-            Split.GetJSON(Result);
+            Split.ToString(Result);
             DebugMessage("[D] [S] %s\n", Result.c_str());
             Result.Clear();
 
@@ -636,7 +636,7 @@ namespace Apostol {
 
             Root.Object().AddPair("single_market_matches", singleMatches);
 
-            Root.GetJSON(Result);
+            Root.ToString(Result);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -718,7 +718,7 @@ namespace Apostol {
                 ExceptionToJson(&E, LReply->Content);
 
                 AConnection->SendReply(LStatus);
-                Log()->Error(LOG_EMERG, 0, E.what());
+                Log()->Error(APP_LOG_EMERG, 0, E.what());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -792,7 +792,7 @@ namespace Apostol {
                 ExceptionToJson(&E, LReply->Content);
 
                 AConnection->SendReply(LStatus);
-                Log()->Error(LOG_EMERG, 0, E.what());
+                Log()->Error(APP_LOG_EMERG, 0, E.what());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -803,7 +803,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CExchange::DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) {
-            Log()->Error(LOG_EMERG, 0, AException->what());
+            Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 

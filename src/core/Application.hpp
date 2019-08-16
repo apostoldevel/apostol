@@ -122,9 +122,25 @@ namespace Apostol {
 
             CApplication *m_pApplication;
 
+            typedef struct pwd_t {
+                const char *username;
+                const char *groupname;
+                uid_t uid;
+                gid_t gid;
+            } CPasswd;
+
+            CPasswd m_pwd;
+
+            void SetPwd();
+
         protected:
 
-            pid_t SwapProcess(CProcessType Type, int Respawn, Pointer Data = nullptr);
+            void CreateHTTPServer();
+            void CreatePQServer();
+
+            void DoExitSigAlarm(uint_t AMsec);
+
+            pid_t SwapProcess(CProcessType Type, int Flag, Pointer Data = nullptr);
 
             pid_t ExecProcess(CExecuteContext *AContext);
 
@@ -149,6 +165,8 @@ namespace Apostol {
 
             void CreatePidFile();
             void DeletePidFile();
+
+            void SetUser(const char *AUserName, const char *AGroupName);
 
             void ServerStart();
             void ServerStop();
@@ -205,8 +223,10 @@ namespace Apostol {
 
             CProcessType m_ProcessType;
 
-            void CreateHTTPServer(CPollStack * APollStack);
-            void CreatePQServer(CPollStack * APollStack);
+            void CreateLogFile();
+            void Daemonize();
+
+            void StartProcess();
 
         protected:
 
@@ -220,11 +240,6 @@ namespace Apostol {
 
             virtual void ParseCmdLine() abstract;
             virtual void ShowVersioInfo() abstract;
-
-            void CreateLogFile();
-            void Daemonize();
-
-            virtual void StartProcess();
 
         public:
 
@@ -288,9 +303,11 @@ namespace Apostol {
 
             bool ReapChildren();
 
-            void StartWorkerProcesses(int Type);
+            void StartProcess(CProcessType Type, int Flag);
+            void StartProcesses(int Flag);
 
-            void SignalToProcesses(CProcessType Type, int Signo);
+            void SignalToProcess(CProcessType Type, int Signo);
+            void SignalToProcesses(int Signo);
 
         public:
 
@@ -364,10 +381,17 @@ namespace Apostol {
         class CProcessHelper: public CApplicationProcess {
             typedef CApplicationProcess inherited;
 
+        private:
+
+            void BeforeRun() override;
+            void AfterRun() override;
+
+            void DoExit();
+
         public:
 
             explicit CProcessHelper(CCustomProcess* AParent, CApplication *AApplication):
-                inherited(AParent, AApplication, ptHelper) {
+                    inherited(AParent, AApplication, ptHelper) {
             };
 
             ~CProcessHelper() override = default;

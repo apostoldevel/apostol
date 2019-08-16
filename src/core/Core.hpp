@@ -32,10 +32,12 @@ Author:
 #include <functional>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/time.h>
-#include <signal.h>
+//#include <sys/time.h>
+//#include <signal.h>
 #include <execinfo.h>
 #include <wait.h>
+#include <pwd.h>
+#include <grp.h>
 //----------------------------------------------------------------------------------------------------------------------
 
 //using namespace std;
@@ -50,10 +52,6 @@ typedef uintptr_t       uint_t;
 
 #ifndef LF
 #define LF '\n'
-#endif
-
-#ifndef CR
-#define CR '\r'
 #endif
 
 #define CRLF   "\r\n"

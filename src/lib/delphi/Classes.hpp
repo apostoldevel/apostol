@@ -857,6 +857,7 @@ namespace Delphi {
             const value_type GetBack() const { return GetChar(Length() - 1); };
 
             int Compare(const CString& S) const;
+            int Compare(const std::string& S) const;
             int Compare(LPCTSTR Str) const;
 
             CString Trim(TCHAR TrimChar = ' ') const;
@@ -1141,11 +1142,11 @@ namespace Delphi {
 
             TCHAR GetDelimiter();
             void SetDelimiter(TCHAR Value);
-            LPCTSTR GetLineBreak();
+            LPCTSTR GetLineBreak() const;
             void SetLineBreak(LPCTSTR Value);
             TCHAR GetQuoteChar();
             void SetQuoteChar(TCHAR Value);
-            const TCHAR GetNameValueSeparator() const;
+            TCHAR GetNameValueSeparator() const;
             void SetNameValueSeparator(TCHAR Value);
             bool GetStrictDelimiter();
             void SetStrictDelimiter(bool Value);
@@ -1163,7 +1164,6 @@ namespace Delphi {
             virtual int GetCount() const noexcept abstract;
             virtual CObject* GetObject(int Index);
             virtual CObject* GetObject(int Index) const;
-            virtual const CString &GetText(CString &S);
             virtual void Put(int Index, const CString &S);
             virtual void Put(int Index, reference Str);
             virtual void PutObject(int Index, CObject* AObject);
@@ -1201,7 +1201,7 @@ namespace Delphi {
             bool Equals(CStrings* Strings);
             virtual void Exchange(int Index1, int Index2);
             virtual bool GetTextStr(LPTSTR Buffer, size_t &SizeBuf);
-            virtual const CString &GetText();
+            virtual const CString &GetText(CString& Value) const;
             virtual int IndexOf(const CString &S);
             virtual int IndexOf(const CString &S) const;
             virtual int IndexOf(reference Str);
@@ -1232,7 +1232,7 @@ namespace Delphi {
             TCHAR Delimiter() { return m_Delimiter; };
             void Delimiter(TCHAR Value) { m_Delimiter = Value; };
 
-            LPCTSTR LineBreak() { return GetLineBreak(); };
+            LPCTSTR LineBreak() const { return GetLineBreak(); };
             void LineBreak(LPCTSTR Value) { SetLineBreak(Value); };
 
             const CString &Names(int Index) const { return GetName(Index); };
@@ -1253,7 +1253,7 @@ namespace Delphi {
             void ValueFromIndex(int Index, const CString &Value) { SetValueFromIndex(Index, Value); };
             void ValueFromIndex(int Index, reference Value) { SetValueFromIndex(Index, Value); };
 
-            const TCHAR NameValueSeparator() const { return GetNameValueSeparator(); };
+            TCHAR NameValueSeparator() const { return GetNameValueSeparator(); };
             void NameValueSeparator(TCHAR Value) { SetNameValueSeparator(Value); };
 
             bool StrictDelimiter() { return GetStrictDelimiter(); };
@@ -1264,7 +1264,9 @@ namespace Delphi {
 
             void Strings(int Index, const CString &Value) { return Put(Index, Value); };
 
-            const CString &Text() { return GetText(); };
+            const CString& ToText(CString& Value) const { return GetText(Value); };
+
+            const CString& Text() { return GetText(m_Text); };
             void Text(const CString &Value) { SetText(Value); };
 
             CString &First() { return Get(0); };
@@ -1282,6 +1284,21 @@ namespace Delphi {
             CStrings &operator=(const CStrings &Strings) {
                 if (&Strings != this) {
                     Assign(Strings);
+                }
+                return *this;
+            }
+
+            virtual CStrings &operator=(const CString &String) {
+                if (!String.IsEmpty()) {
+                    SetText(String);
+                }
+                return *this;
+            }
+
+            virtual CStrings &operator=(reference Str) {
+                if (Str != nullptr) {
+                    size_t Size = strlen(Str);
+                    SetTextStr(Str, Size);
                 }
                 return *this;
             }
@@ -1447,6 +1464,21 @@ namespace Delphi {
             CStringList &operator=(const CStringList &Strings) {
                 if (&Strings != this) {
                     Assign(Strings);
+                }
+                return *this;
+            }
+
+            CStringList &operator=(const CString &String) override {
+                if (!String.IsEmpty()) {
+                    SetText(String);
+                }
+                return *this;
+            }
+
+            CStringList &operator=(reference Str) override {
+                if (Str != nullptr) {
+                    size_t Size = strlen(Str);
+                    SetTextStr(Str, Size);
                 }
                 return *this;
             }

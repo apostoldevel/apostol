@@ -345,10 +345,9 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         int CStack::GetSocketError(CSocket ASocket) {
-            int Result;
-            socklen_t len = sizeof(Result);
-            CheckForSocketError(GetSockOpt(ASocket, SOL_SOCKET, SO_ERROR, (void *) &Result, &len), egSocket);
-            return Result;
+            socklen_t len = sizeof(m_LastError);
+            CheckForSocketError(GetSockOpt(ASocket, SOL_SOCKET, SO_ERROR, (void *) &m_LastError, &len), egSocket);
+            return m_LastError;
         };
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1379,9 +1378,9 @@ namespace Delphi {
 
             chVERIFY(SUCCEEDED(StringCchLengthA((char *) m_WriteBuffer->Memory(), m_WriteBuffer->Size(), &Len)));
 
-            if ((((char *) m_WriteBuffer->Memory())[Len - 2] != CR) && (((char *) m_WriteBuffer->Memory())[Len - 1] != LF)) {
+            if ((((char *) m_WriteBuffer->Memory())[Len - 2] != INT_CR) && (((char *) m_WriteBuffer->Memory())[Len - 1] != INT_LF)) {
                 chVERIFY(SUCCEEDED(StringCchCatA((char *) m_WriteBuffer->Memory(), m_WriteBuffer->Size(), EOLA)));
-            } else  if ((((char *) m_WriteBuffer->Memory())[Len - 1] != LF)) {
+            } else  if ((((char *) m_WriteBuffer->Memory())[Len - 1] != INT_LF)) {
                 chVERIFY(SUCCEEDED(StringCchCatA((char *) m_WriteBuffer->Memory(), m_WriteBuffer->Size(), "\n\0")));
             }
 
@@ -1510,7 +1509,7 @@ namespace Delphi {
 
             // User may pass '' if they need to pass arguments beyond the first.
             if (ATerminator == 0)
-                ATerminator = LF;
+                ATerminator = INT_LF;
 
             m_ReadLnSplit = false;
             m_ReadLnTimedOut = false;
@@ -1550,13 +1549,12 @@ namespace Delphi {
                     // Can only return 0 if error or timeout
                     m_ReadLnTimedOut = (ReadFromStack(true, ATimeout == TimeoutDefault) == 0);
                     if (ReadLnTimedOut())
-                        return 0;
-                }
+                        return 0;                }
             } while (LTermPos == 0);
 
             // Extract actual data
             LTermPos = InputBuffer()->Extract(AStr, LTermPos) - 1;
-            if ((ATerminator == LF) && (LTermPos > 0) && (AStr[LTermPos - 1] == CR))
+            if ((ATerminator == INT_LF) && (LTermPos > 0) && (AStr[LTermPos - 1] == INT_CR))
                 LTermPos--;
 
             AStr[LTermPos] = 0;
@@ -3232,11 +3230,6 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CEPollServer::DoAccept(CPollEventHandler *AHandler) {
-
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         void CEPollServer::DoRead(CPollEventHandler *AHandler) {
             auto LConnection = dynamic_cast<CTCPConnection *> (AHandler->Binding());
             try {
@@ -3418,7 +3411,7 @@ namespace Delphi {
 
                 }
 
-                //CheckHandler(LHandler);
+                CheckHandler(LHandler);
             }
 
             return true;
@@ -3440,7 +3433,7 @@ namespace Delphi {
 
             Timer->SetTime(0, &ts);
 
-            Handler = EventHandlers()->Add(Timer->Handle());
+            Handler = m_EventHandlers->Add(Timer->Handle());
             Handler->Binding(Timer, true);
             Handler->Start(etTimer);
 
@@ -3462,7 +3455,6 @@ namespace Delphi {
                 LConnection->Disconnect();
             } catch (Delphi::Exception::Exception &E) {
                 DoException(LConnection, &E);
-                LConnection->Disconnect();
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -3550,7 +3542,7 @@ namespace Delphi {
                         }
 
                         if (AValue == alActive) {
-                            LEventHandler = EventHandlers()->Add(m_Bindings->Handles(i)->Handle());
+                            LEventHandler = m_EventHandlers->Add(m_Bindings->Handles(i)->Handle());
                             LEventHandler->Start(etAccept);
                         }
                     }
@@ -3558,7 +3550,7 @@ namespace Delphi {
                 } else {
 
                     if (AValue <= alBinding) {
-                        EventHandlers()->Clear();
+                        m_EventHandlers->Clear();
                         CloseAllConnection();
                     }
 
@@ -3640,7 +3632,6 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CAsyncClient::SetActive(bool AValue) {
-
             if (m_Active != AValue ) {
 
                 if (AValue) {
@@ -3651,7 +3642,7 @@ namespace Delphi {
                         ConnectStart();
 
                 } else {
-                    EventHandlers()->Clear();
+                    m_EventHandlers->Clear();
                     CloseAllConnection();
                 }
 
@@ -3661,7 +3652,6 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CAsyncClient::ConnectStart() {
-
             auto LIOHandler = new CIOHandlerSocket();
 
             LIOHandler->Open();
@@ -3669,7 +3659,7 @@ namespace Delphi {
             LIOHandler->Binding()->AllocateSocket(SOCK_STREAM, IPPROTO_IP, O_NONBLOCK);
             LIOHandler->Binding()->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, (void *) &SO_True, sizeof(SO_True));
 
-            auto LEventHandler = EventHandlers()->Add(LIOHandler->Binding()->Handle());
+            auto LEventHandler = m_EventHandlers->Add(LIOHandler->Binding()->Handle());
             LEventHandler->Start(etConnect);
 
             int ErrorCode = LIOHandler->Binding()->Connect(AF_INET, m_Host.c_str(), m_Port);
@@ -3758,7 +3748,7 @@ namespace Delphi {
 
                     LIOHandler->AfterAccept();
 
-                    LEventHandler = EventHandlers()->Add(LIOHandler->Binding()->Handle());
+                    LEventHandler = m_EventHandlers->Add(LIOHandler->Binding()->Handle());
                     LEventHandler->Binding(LConnection);
                     LEventHandler->Start(etIO);
 
@@ -3791,26 +3781,23 @@ namespace Delphi {
 
         void CTCPAsyncClient::DoConnectStart(CIOHandlerSocket *AIOHandler, CPollEventHandler *AHandler) {
             auto LConnection = new CTCPClientConnection(this);
-            try {
-                LConnection->IOHandler(AIOHandler);
-                AHandler->Binding(LConnection);
-            } catch (Exception::Exception &E) {
-                DoException(LConnection, &E);
-            }
+            LConnection->IOHandler(AIOHandler);
+            AHandler->Binding(LConnection, true);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CTCPAsyncClient::DoConnect(CPollEventHandler *AHandler) {
-            auto LConnection = (CTCPClientConnection *) AHandler->Binding();
+            auto LConnection = dynamic_cast<CTCPClientConnection *> (AHandler->Binding());
             try {
                 auto LIOHandler = (CIOHandlerSocket *) LConnection->IOHandler();
 
                 if (LIOHandler->Binding()->CheckConnection()) {
                     LConnection->OnDisconnected(std::bind(&CTCPAsyncClient::DoDisconnected, this, _1));
                     AHandler->Start(etIO);
-                    DoConnected(AHandler->Binding());
+                    DoConnected(LConnection);
                 }
             } catch (Exception::Exception &E) {
+                delete AHandler;
                 throw ESocketError(E.ErrorCode(), "Connection failed ");
             }
         }

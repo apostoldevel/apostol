@@ -37,7 +37,7 @@ signal_error(int signo, siginfo_t *siginfo, void *ucontext)
     int         size;
     char      **msg;
 
-    GLog->Error(LOG_CRIT, 0, "signal: %d (%s), addr: 0x%xL", signo, sys_siglist[signo], siginfo->si_addr);
+    GLog->Error(APP_LOG_CRIT, 0, "signal: %d (%s), addr: 0x%xL", signo, sys_siglist[signo], siginfo->si_addr);
 
 #ifdef __x86_64__
 
@@ -49,21 +49,21 @@ signal_error(int signo, siginfo_t *siginfo, void *ucontext)
 
     size = backtrace(trace, BT_BUF_SIZE);
 
-    GLog->Error(LOG_CRIT, 0, "backtrace() returned %d addresses", size);
+    GLog->Error(APP_LOG_CRIT, 0, "backtrace() returned %d addresses", size);
 
     //trace[0] = addr;
 
     msg = backtrace_symbols(trace, size);
     if (msg)
     {
-        GLog->Error(LOG_DEBUG, 0, "-= backtrace log =-");
+        GLog->Error(APP_LOG_DEBUG, 0, "-= backtrace log =-");
 
         for (i = 0; i < size; ++i)
         {
-            GLog->Error(LOG_DEBUG, 0, "%s", msg[i]);
+            GLog->Error(APP_LOG_DEBUG, 0, "%s", msg[i]);
         }
 
-        GLog->Error(LOG_DEBUG, 0, "-= backtrace log =-");
+        GLog->Error(APP_LOG_DEBUG, 0, "-= backtrace log =-");
         free(msg);
     }
 #endif
@@ -379,7 +379,7 @@ namespace Apostol {
 
             action = _T("");
 
-            log_debug3(LOG_DEBUG_CORE, Log(), 0, "signal handler %d (%s), process name: %s", signo, sigcode, GetProcessName());
+            log_debug3(APP_LOG_DEBUG_CORE, Log(), 0, "signal handler %d (%s), process name: %s", signo, sigcode, GetProcessName());
 
             switch (Type()) {
                 case ptMaster:
@@ -479,6 +479,13 @@ namespace Apostol {
                             break;
 
                         case signal_value(SIG_RECONFIGURE_SIGNAL):
+#ifdef _DEBUG
+                            sig_terminate = 1;
+                            action = _T(", exiting");
+#else
+                            action = _T(", ignoring");
+#endif
+                            break;
                         case signal_value(SIG_CHANGEBIN_SIGNAL):
                         case SIGIO:
                             action = _T(", ignoring");
@@ -500,25 +507,25 @@ namespace Apostol {
             }
 
             if (siginfo && siginfo->si_pid) {
-                Log()->Error(LOG_NOTICE, 0,
+                Log()->Error(APP_LOG_NOTICE, 0,
                              _T("signal %d (%s) received from %P%s"),
                              signo, sigcode, siginfo->si_pid, action);
 
             } else {
-                Log()->Error(LOG_NOTICE, 0,
+                Log()->Error(APP_LOG_NOTICE, 0,
                              _T("signal %d (%s) received%s"),
                              signo, sigcode, action);
             }
 
             if (ignore) {
-                Log()->Error(LOG_NOTICE, 0,
+                Log()->Error(APP_LOG_NOTICE, 0,
                              _T("the changing binary signal is ignored: ")
                              _T("you should shutdown or terminate ")
                              _T("before either old or new binary's process"));
             }
 
             if (signo == SIGCHLD) {
-                log_debug0(LOG_DEBUG_CORE, Log(), 0, "child process get status");
+                log_debug0(APP_LOG_DEBUG_CORE, Log(), 0, "child process get status");
                 ChildProcessGetStatus();
             }
 
@@ -556,13 +563,13 @@ namespace Apostol {
 
         void CServerProcess::SetPQServer(CPQServer *Value) {
             if (m_pPQServer != Value) {
-
+/*
                 if (Value != nullptr && m_pServer == nullptr)
                     throw Delphi::Exception::Exception("Set, please, PQ Server after HTTP Server");
 
                 if (Value == nullptr && m_pServer != nullptr)
                     throw Delphi::Exception::Exception("Unset, please, PQ Server after HTTP Server");
-
+*/
                 if (Value == nullptr) {
                     delete m_pPQServer;
                 }
@@ -619,12 +626,29 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        CPQPollQuery *CServerProcess::GetQuery(CPollConnection *AConnection) {
+            CPQPollQuery *LQuery = nullptr;
+
+            if (PQServer()->Active()) {
+                LQuery = PQServer()->GetQuery();
+
+                LQuery->OnSendQuery(std::bind(&CServerProcess::DoPQSendQuery, this, _1));
+                LQuery->OnResultStatus(std::bind(&CServerProcess::DoPQResultStatus, this, _1));
+                LQuery->OnResult(std::bind(&CServerProcess::DoPQResult, this, _1, _2));
+
+                LQuery->PollConnection(AConnection);
+            }
+
+            return LQuery;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CServerProcess::DoPQReceiver(CPQConnection *AConnection, const PGresult *AResult) {
             CPQConnInfo &Info = AConnection->ConnInfo();
             if (Info.ConnInfo().IsEmpty()) {
-                Log()->Postgres(LOG_EMERG, _T("Receiver message: %s"), PQresultErrorMessage(AResult));
+                Log()->Postgres(APP_LOG_INFO, _T("Receiver message: %s"), PQresultErrorMessage(AResult));
             } else {
-                Log()->Postgres(LOG_EMERG, "Receiver message(%d): postgresql://%s@%s:%s/%s - %s", AConnection->Socket(), Info["user"].c_str(),
+                Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Receiver message: %s", AConnection->Socket(), Info["user"].c_str(),
                                 Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), PQresultErrorMessage(AResult));
             }
         }
@@ -633,43 +657,43 @@ namespace Apostol {
         void CServerProcess::DoPQProcessor(CPQConnection *AConnection, LPCSTR AMessage) {
             CPQConnInfo &Info = AConnection->ConnInfo();
             if (Info.ConnInfo().IsEmpty()) {
-                Log()->Postgres(LOG_EMERG, _T("Processor message: %s"), AMessage);
+                Log()->Postgres(APP_LOG_INFO, _T("Processor message: %s"), AMessage);
             } else {
-                Log()->Postgres(LOG_EMERG, "Processor message(%d): postgresql://%s@%s:%s/%s - %s", AConnection->Socket(), Info["user"].c_str(),
+                Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Processor message: %s", AConnection->Socket(), Info["user"].c_str(),
                                 Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), AMessage);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPQConnectException(CPQConnection *AConnection, Delphi::Exception::Exception *AException) {
-            Log()->Postgres(LOG_EMERG, AException->what());
+            Log()->Postgres(APP_LOG_EMERG, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException) {
-            Log()->Postgres(LOG_EMERG, AException->what());
+            Log()->Postgres(APP_LOG_EMERG, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPQStatus(CPQConnection *AConnection) {
-            Log()->Postgres(LOG_DEBUG, AConnection->StatusString());
+            Log()->Postgres(APP_LOG_DEBUG, AConnection->StatusString());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPQPollingStatus(CPQConnection *AConnection) {
-            Log()->Postgres(LOG_DEBUG, AConnection->StatusString());
+            Log()->Postgres(APP_LOG_DEBUG, AConnection->StatusString());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPQSendQuery(CPQQuery *AQuery) {
             for (int I = 0; I < AQuery->SQL().Count(); ++I) {
-                Log()->Postgres(LOG_INFO, AQuery->SQL()[I].c_str());
+                Log()->Postgres(APP_LOG_INFO, AQuery->SQL()[I].c_str());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPQResultStatus(CPQResult *AResult) {
-            Log()->Postgres(LOG_DEBUG, AResult->StatusString());
+            Log()->Postgres(APP_LOG_DEBUG, AResult->StatusString());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -686,7 +710,7 @@ namespace Apostol {
                 }
                 Print += ")";
 
-                Log()->Postgres(LOG_INFO, "%s", Print.c_str());
+                Log()->Postgres(APP_LOG_INFO, "%s", Print.c_str());
 
                 Print = "(";
                 for (int Row = 0; Row < AResult->nTuples(); ++Row) {
@@ -717,56 +741,64 @@ namespace Apostol {
 
                 Print += ")";
 
-                Log()->Postgres(LOG_INFO, "%s", Print.c_str());
+                Log()->Postgres(APP_LOG_INFO, "%s", Print.c_str());
             } else {
-                Log()->Postgres(LOG_EMERG, AResult->GetErrorMessage());
+                Log()->Postgres(APP_LOG_EMERG, AResult->GetErrorMessage());
             }
 */
             if (!(AExecStatus == PGRES_TUPLES_OK || AExecStatus == PGRES_SINGLE_TUPLE)) {
-                Log()->Postgres(LOG_EMERG, AResult->GetErrorMessage());
+                Log()->Postgres(APP_LOG_EMERG, AResult->GetErrorMessage());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CServerProcess::DoPQConnect(CPQConnection *AConnection) {
-            CPQConnInfo &Info = AConnection->ConnInfo();
-            if (!Info.ConnInfo().IsEmpty()) {
-                Log()->Postgres(LOG_NOTICE, "Connect [%d]: postgresql://%s@%s:%s/%s", AConnection->PID(), Info["user"].c_str(),
-                               Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
+        void CServerProcess::DoPQConnect(CObject *Sender) {
+            auto LConnection = dynamic_cast<CPQConnection *>(Sender);
+            if (LConnection != nullptr) {
+                CPQConnInfo &Info = LConnection->ConnInfo();
+                if (!Info.ConnInfo().IsEmpty()) {
+                    Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Connected.", LConnection->PID(),
+                                    Info["user"].c_str(),
+                                    Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
+                }
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CServerProcess::DoPQDisconnect(CPQConnection *AConnection) {
-            CPQConnInfo &Info = AConnection->ConnInfo();
-            if (!Info.ConnInfo().IsEmpty()) {
-                Log()->Postgres(LOG_NOTICE, "Disconnect [%d]: postgresql://%s@%s:%s/%s", AConnection->PID(), Info["user"].c_str(),
-                               Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
+        void CServerProcess::DoPQDisconnect(CObject *Sender) {
+            auto LConnection = dynamic_cast<CPQConnection *>(Sender);
+            if (LConnection != nullptr) {
+                CPQConnInfo &Info = LConnection->ConnInfo();
+                if (!Info.ConnInfo().IsEmpty()) {
+                    Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Disconnected.", LConnection->PID(),
+                                    Info["user"].c_str(),
+                                    Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
+                }
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerListenException(CSocketEvent *Sender, Delphi::Exception::Exception *AException) {
-            Log()->Error(LOG_EMERG, 0, AException->what());
+            Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerException(CTCPConnection *AConnection,
                                              Delphi::Exception::Exception *AException) {
-            Log()->Error(LOG_EMERG, 0, AException->what());
+            Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerEventHandlerException(CPollEventHandler *AHandler,
                 Delphi::Exception::Exception *AException) {
-            Log()->Error(LOG_EMERG, 0, AException->what());
+            Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerConnected(CObject *Sender) {
             auto LConnection = dynamic_cast<CHTTPServerConnection *>(Sender);
             if (LConnection != nullptr) {
-                Log()->Message(_T("client \"%s:%d\" open connection"), LConnection->Socket()->Binding()->PeerIP(),
+                Log()->Message(_T("[%s:%d] Client opened connection."), LConnection->Socket()->Binding()->PeerIP(),
                                LConnection->Socket()->Binding()->PeerPort());
             }
         }
@@ -776,12 +808,12 @@ namespace Apostol {
             auto LConnection = dynamic_cast<CHTTPServerConnection *>(Sender);
 
             if (LConnection != nullptr) {
-                auto LPollQuery = PQServer()->FindQuryByConnection(LConnection);
+                auto LPollQuery = PQServer()->FindQueryByConnection(LConnection);
                 if (LPollQuery != nullptr) {
                     LPollQuery->PollConnection(nullptr);
                 }
 
-                Log()->Message(_T("client \"%s:%d\" closed connection"), LConnection->Socket()->Binding()->PeerIP(),
+                Log()->Message(_T("[%s:%d] Client closed connection."), LConnection->Socket()->Binding()->PeerIP(),
                                LConnection->Socket()->Binding()->PeerPort());
             }
         }

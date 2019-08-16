@@ -79,11 +79,13 @@ namespace Delphi {
 
             virtual int GetCount() const noexcept;
 
-            void SetJSON(const CString &Value);
+            void StringToJson(const CString &Value);
 
-            void SetJSONStr(LPCTSTR ABuffer, size_t ASize);
+            virtual const CString& JsonToString(CString &String) const;
 
-            bool GetJSONStr(LPTSTR ABuffer, size_t &ASize);
+            void StrToJson(LPCTSTR ABuffer, size_t ASize);
+
+            bool JsonToStr(LPTSTR ABuffer, size_t &ASize);
 
         public:
 
@@ -167,13 +169,10 @@ namespace Delphi {
 
             void SaveToStream(CStream *Stream);
 
-            virtual void GetJSON(CString &String);
+            const CString& ToString(CString& Value) const { return JsonToString(Value); };
 
-            void JSON(const CString &Value) { SetJSON(Value); };
-
-            CString& JSON() { return m_JSON; };
-
-            const CString& JSON() const { return m_JSON; };
+            const CString& ToString() { return JsonToString(m_JSON); };
+            void ToJson(const CString &Value) { StringToJson(Value); };
 
             CJSON &operator=(const CJSON &Json) {
                 if (this != &Json)
@@ -188,35 +187,35 @@ namespace Delphi {
             };
 
             virtual CJSON &operator=(const CString &String) {
-                JSON(String);
+                StringToJson(String);
                 return *this;
             };
 
             virtual CJSON &operator<<(const CString &String) {
-                JSON(String);
+                StringToJson(String);
                 return *this;
             };
 
             virtual CJSON &operator<<(reference Str) {
                 CString J(Str);
-                JSON(J);
+                StringToJson(J);
                 return *this;
             };
 
             friend CJSON &operator>>(const CString &LS, CJSON &RM) {
-                RM.JSON(LS);
+                RM.StringToJson(LS);
                 return RM;
             };
 
             friend CJSON &operator>>(reference LS, CJSON &RM) {
                 CString J(LS);
-                RM.JSON(J);
+                RM.StringToJson(J);
                 return RM;
             };
 
             friend tostream &operator<<(tostream &Out, CJSON &RM) {
                 CString S;
-                RM.GetJSON(S);
+                RM.JsonToString(S);
                 Out << S.c_str();
                 return Out;
             };
@@ -226,7 +225,7 @@ namespace Delphi {
                 CString S;
                 while (In.get(C) && C != '\n')
                     S.Append(C);
-                RM.JSON(S);
+                RM.StringToJson(S);
                 return In;
             };
 
@@ -286,6 +285,8 @@ namespace Delphi {
             void SetCurrentIndex(int Index);
 
         protected:
+
+            const CString& JsonToString(CString &String) const override;
 
             void Error(const CString &Msg, int Data);
 
@@ -361,8 +362,6 @@ namespace Delphi {
 
             virtual void Values(int Index, const CJSONValue &Value) { return Put(Index, Value); };
 
-            void GetJSON(CString &String) override;
-
             CJSONElements &operator=(const CJSONElements &Value) {
                 if (&Value != this) {
                     Assign(Value);
@@ -382,28 +381,28 @@ namespace Delphi {
             };
 
             CJSONElements &operator<<(const CString &String) override {
-                SetJSON(String);
+                StringToJson(String);
                 return *this;
             };
 
             CJSONElements &operator<<(reference Str) override {
-                SetJSONStr(Str, strlen(Str));
+                StrToJson(Str, strlen(Str));
                 return *this;
             };
 
             friend CJSONElements &operator>>(const CString &LS, CJSONElements &RM) {
-                RM.SetJSON(LS);
+                RM.StringToJson(LS);
                 return RM;
             };
 
             friend CJSONElements &operator>>(reference LS, CJSONElements &RM) {
-                RM.SetJSONStr(LS, strlen(LS));
+                RM.StrToJson(LS, strlen(LS));
                 return RM;
             };
 
             friend tostream &operator<<(tostream &Out, CJSONElements &RM) {
                 CString J;
-                RM.GetJSON(J);
+                RM.JsonToString(J);
                 return Out << J.c_str();
             };
 
@@ -412,7 +411,7 @@ namespace Delphi {
                 CString S;
                 while (In.get(C) && C != '\n')
                     S.Append(C);
-                RM.SetJSON(S);
+                RM.StringToJson(S);
                 return In;
             };
 
@@ -468,7 +467,9 @@ namespace Delphi {
 
         protected:
 
-            void Error(const CString &Msg, int Data);
+            const CString& JsonToString(CString &String) const override;
+
+            static void Error(const CString &Msg, int Data);
 
             virtual CJSONMember &Get(int Index) abstract;
 
@@ -542,8 +543,6 @@ namespace Delphi {
 
             virtual void InsertPair(int Index, reference String, double Value) abstract;
 
-            void GetJSON(CString &String) override;
-
             virtual void Move(int CurIndex, int NewIndex);
 
             int CurrentIndex() const { return m_CurrentIndex; };
@@ -615,28 +614,28 @@ namespace Delphi {
             };
 
             CJSONMembers &operator<<(const CString &String) override {
-                SetJSON(String);
+                StringToJson(String);
                 return *this;
             };
 
             CJSONMembers &operator<<(reference Str) override {
-                SetJSONStr(Str, strlen(Str));
+                StrToJson(Str, strlen(Str));
                 return *this;
             };
 
             friend CJSONMembers &operator>>(const CString &LS, CJSONMembers &RM) {
-                RM.SetJSON(LS);
+                RM.StringToJson(LS);
                 return RM;
             };
 
             friend CJSONMembers &operator>>(reference LS, CJSONMembers &RM) {
-                RM.SetJSONStr(LS, strlen(LS));
+                RM.StrToJson(LS, strlen(LS));
                 return RM;
             };
 
             friend tostream &operator<<(tostream &Out, CJSONMembers &RM) {
                 CString J;
-                RM.GetJSON(J);
+                RM.JsonToString(J);
                 return Out << J.c_str();
             };
 
@@ -645,7 +644,7 @@ namespace Delphi {
                 CString S;
                 while (In.get(C) && C != '\n')
                     S.Append(C);
-                RM.SetJSON(S);
+                RM.StringToJson(S);
                 return In;
             };
 
@@ -726,6 +725,8 @@ namespace Delphi {
             CString m_Data;
 
         protected:
+
+            const CString& JsonToString(CString &String) const override;
 
             CJSONValue &GetValue(const CString &String);
 
@@ -818,8 +819,6 @@ namespace Delphi {
             CJSONObject &AsObject() { return *(CJSONObject *) m_Value; }
 
             const CJSONObject &AsObject() const { return *(CJSONObject *) m_Value; }
-
-            void GetJSON(CString &String) override;
 
             virtual bool operator!=(const CJSONValue &AValue) const {
                 if (this != &AValue) {
@@ -1095,28 +1094,28 @@ namespace Delphi {
             };
 
             CJSONArray &operator<<(const CString &String) override {
-                SetJSON(String);
+                StringToJson(String);
                 return *this;
             };
 
             CJSONArray &operator<<(reference Str) override {
-                SetJSONStr(Str, strlen(Str));
+                StrToJson(Str, strlen(Str));
                 return *this;
             };
 
             friend CJSONArray &operator>>(const CString &LS, CJSONArray &RM) {
-                RM.SetJSON(LS);
+                RM.StringToJson(LS);
                 return RM;
             };
 
             friend CJSONArray &operator>>(reference LS, CJSONArray &RM) {
-                RM.SetJSONStr(LS, strlen(LS));
+                RM.StrToJson(LS, strlen(LS));
                 return RM;
             };
 
             friend tostream &operator<<(tostream &Out, CJSONArray &RM) {
                 CString J;
-                RM.GetJSON(J);
+                RM.JsonToString(J);
                 return Out << J.c_str();
             };
 
@@ -1125,7 +1124,7 @@ namespace Delphi {
                 CString S;
                 while (In.get(C) && C != '\n')
                     S.Append(C);
-                RM.SetJSON(S);
+                RM.StringToJson(S);
                 return In;
             };
 
@@ -1252,30 +1251,30 @@ namespace Delphi {
             };
 
             CJSONObject &operator<<(const CString &String) override {
-                SetJSON(String);
+                StringToJson(String);
                 return *this;
             };
 
             CJSONObject &operator<<(reference Str) override {
                 CString J(Str);
-                SetJSON(J);
+                StringToJson(J);
                 return *this;
             };
 
             friend CJSONObject &operator>>(const CString &LS, CJSONObject &RM) {
-                RM.SetJSON(LS);
+                RM.StringToJson(LS);
                 return RM;
             };
 
             friend CJSONObject &operator>>(reference LS, CJSONObject &RM) {
                 CString J(LS);
-                RM.SetJSON(J);
+                RM.StringToJson(J);
                 return RM;
             };
 
             friend tostream &operator<<(tostream &Out, CJSONObject &RM) {
                 CString J;
-                RM.GetJSON(J);
+                RM.JsonToString(J);
                 return Out << J.c_str();
             };
 
@@ -1284,7 +1283,7 @@ namespace Delphi {
                 CString S;
                 while (In.get(C) && C != '\n')
                     S.Append(C);
-                RM.SetJSON(S);
+                RM.StringToJson(S);
                 return In;
             };
 
@@ -1371,8 +1370,6 @@ namespace Delphi {
             CJSONValue &CurrentValue();
 
             void CreateValue(CJSONValueType ValueType);
-
-            void UpdateData(TCHAR C);
 
             void DeleteLastJson();
 

@@ -72,41 +72,46 @@ Apostol Web Service
 
 1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
-1. Библиотека [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development).
-1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development)
+1. Библиотека [libbitcoin-system](https://github.com/libbitcoin/libbitcoin-system/) (Bitcoin Cross-Platform C++ Development Toolkit);
+1. Библиотека [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development);
+1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development).
+1. Библиотека [sqllite3](https://www.sqlite.org/download/) (SQLite 3);
 
 Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
 ~~~
 sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
 ~~~
 
+Для того чтобы установить SQLite3 выполните:
+~~~
+sudo apt-get install sqlite3 libsqlite3-dev
+~~~
+
+Для того чтобы установить PostgreSQL воспользуйтесь инструкцией по [этой](https://www.postgresql.org/download/) ссылке.
+
 ###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство. 
 
-Для сборки Апостол, необходимо:
+Для сборки **Апостол**, необходимо:
 
-1. Скачать Апостол по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
+1. Скачать **Апостол** по [ссылке](https://github.com/ufocomp/apostol-bitcoin/archive/master.zip);
 1. Распаковать;
 1. Скомпилировать (см. ниже).
 
-Для сборки Апостол, с помощью Git выполните:
+Для сборки **Апостол**, с помощью Git выполните:
 ~~~
-git clone https://github.com/ufocomp/apostol.git
+git clone https://github.com/ufocomp/apostol-bitcoin.git
 ~~~
 
 ###### Сборка:
 ~~~
-cd apostol
-mkdir build
-cd build
-cmake ..
+cd apostol-bitcoin
+cmake -DCMAKE_BUILD_TYPE=Release . -B cmake-build-release
+~~~
+
+###### Компиляция и установка:
+~~~
+cd cmake-build-release
 make
-~~~
-
-УСТАНОВКА
--
-
-Для установки **Апостол** нужно выполнить:
-~~~
 sudo make install
 ~~~
 
@@ -117,7 +122,7 @@ sudo make install
 
 Файл конфигурации и необходимые для работы файлы будут расположены в: 
 ~~~
-/etc/apostol
+/etc/abc
 ~~~
 
 ЗАПУСК
@@ -128,15 +133,15 @@ sudo make install
 
 Для запуска Апостол выполните:
 ~~~
-sudo systemctl start apostol
+sudo service abc start
 ~~~
 
 Для проверки статуса выполните:
 ~~~
-sudo systemctl status apostol
+sudo service abc status
 ~~~
 
-Результат должен быть примерно таким:
+Результат должен быть **примерно** таким:
 ~~~
 sudo systemctl status apostol
 ● apostol.service - LSB: starts the apostol web service

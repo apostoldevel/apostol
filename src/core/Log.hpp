@@ -46,28 +46,26 @@ Author:
 #define FILE_OWNER_ACCESS    0600
 //----------------------------------------------------------------------------------------------------------------------
 
-#define LOG_STDERR            0
-#define LOG_EMERG             1
-#define LOG_ALERT             2
-#define LOG_CRIT              3
-#define LOG_ERR               4
-#define LOG_WARN              5
-#define LOG_NOTICE            6
-#define LOG_INFO              7
-#define LOG_DEBUG             8
+#define APP_LOG_STDERR            0
+#define APP_LOG_EMERG             1
+#define APP_LOG_ALERT             2
+#define APP_LOG_CRIT              3
+#define APP_LOG_ERR               4
+#define APP_LOG_WARN              5
+#define APP_LOG_NOTICE            6
+#define APP_LOG_INFO              7
+#define APP_LOG_DEBUG             8
 //----------------------------------------------------------------------------------------------------------------------
 
-#define LOG_DEBUG_CORE        0x010
-#define LOG_DEBUG_ALLOC       0x020
-#define LOG_DEBUG_MUTEX       0x040
-#define LOG_DEBUG_EVENT       0x080
-#define LOG_DEBUG_HTTP        0x100
-#define LOG_DEBUG_MAIL        0x200
-#define LOG_DEBUG_STREAM      0x400
+#define APP_LOG_DEBUG_CORE        0x010u
+#define APP_LOG_DEBUG_ALLOC       0x020u
+#define APP_LOG_DEBUG_MUTEX       0x040u
+#define APP_LOG_DEBUG_EVENT       0x080u
+#define APP_LOG_DEBUG_HTTP        0x100u
 //----------------------------------------------------------------------------------------------------------------------
 
-#define LOG_DEBUG_CONNECTION  0x80000000
-#define LOG_DEBUG_ALL         0x7ffffff0
+#define APP_LOG_DEBUG_CONNECTION  0x80000000u
+#define APP_LOG_DEBUG_ALL         0x7ffffff0u
 //----------------------------------------------------------------------------------------------------------------------
 
 #ifndef log_pid
@@ -93,7 +91,7 @@ static string_t err_levels[] = {
 //----------------------------------------------------------------------------------------------------------------------
 
 static u_int GetLogLevelByName(LPCTSTR lpszName) {
-    for (u_int I = 1; I < chARRAY(err_levels); ++I) {
+    for (size_t I = 1; I < chARRAY(err_levels); ++I) {
         if (SameText(lpszName, err_levels[I].str))
             return I;
     }
@@ -205,10 +203,7 @@ namespace Apostol {
 
         public:
 
-            explicit CLogFile(CCollection *ACollection, LPCSTR AFileName):
-                    CFile(AFileName, FILE_APPEND | FILE_CREATE_OR_OPEN),
-                    CCollectionItem(ACollection), m_uLevel(LOG_STDERR), m_LogType(ltError) {
-            };
+            explicit CLogFile(CLog *ALog, LPCSTR AFileName);
 
             ~CLogFile() override = default;
 
@@ -264,9 +259,9 @@ namespace Apostol {
 
             explicit CLog(LPCSTR  AFileName, u_int ALevel);
 
-            inline class CLog *CreateLog() { return GLog = new CLog(); };
+            inline static class CLog *CreateLog() { return GLog = new CLog(); };
 
-            inline void DestroyLog() { delete GLog; };
+            inline static void DestroyLog() { delete GLog; };
 
             ~CLog() override = default;
 

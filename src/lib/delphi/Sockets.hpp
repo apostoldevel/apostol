@@ -35,12 +35,12 @@ Author:
 #pragma once
 //----------------------------------------------------------------------------------------------------------------------
 
-#ifndef LF
-#define LF 10
+#ifndef INT_LF
+#define INT_LF 10
 #endif
 
-#ifndef CR
-#define CR 13
+#ifndef INT_CR
+#define INT_CR 13
 #endif
 
 #define EOLW L"\r\n\0"
@@ -711,7 +711,7 @@ namespace Delphi {
 
             int ReadInteger(bool AConvert = true);
 
-            size_t ReadLn(char *AStr, char ATerminator = LF, int ATimeout = TimeoutDefault, int AMaxLineLength = -1);
+            size_t ReadLn(char *AStr, char ATerminator = INT_LF, int ATimeout = TimeoutDefault, int AMaxLineLength = -1);
 
             size_t ReadLnWait(char *AStr, size_t ABytes, int AFailCount = MaxInt);
 
@@ -829,7 +829,7 @@ namespace Delphi {
             const COnSocketExceptionEvent &OnException() { return m_OnException; }
             void OnException(COnSocketExceptionEvent && Value) { m_OnException = Value; }
 
-            const COnSocketListenExceptionEvent OnListenException() { return m_OnListenException; }
+            const COnSocketListenExceptionEvent &OnListenException() { return m_OnListenException; }
             void OnListenException(COnSocketListenExceptionEvent && Value) { m_OnListenException = Value; }
 
             COnSocketBeforeCommandHandlerEvent &OnBeforeCommandHandler() { return m_OnBeforeCommandHandler; }
@@ -1777,7 +1777,7 @@ namespace Delphi {
             const COnPollEventHandlerExceptionEvent& OnException() { return m_OnException; }
             void OnException(COnPollEventHandlerExceptionEvent && Value) { m_OnException = Value; }
 
-        }; // CCommandHandlers
+        }; // CPollEventHandlers
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1831,8 +1831,6 @@ namespace Delphi {
 
             CPollStack *m_PollStack;
 
-            CPollEventHandlers *m_EventHandlers;
-
             COnPollEventHandlerExceptionEvent m_OnEventHandlerException;
 
             bool m_FreePollStack;
@@ -1845,13 +1843,15 @@ namespace Delphi {
 
         protected:
 
+            CPollEventHandlers *m_EventHandlers;
+
             int GetTimeOut();
 
             void SetTimeOut(int Value);
 
             virtual void DoTimeOut(CPollEventHandler *AHandler);
 
-            virtual void DoAccept(CPollEventHandler *AHandler);
+            virtual void DoAccept(CPollEventHandler *AHandler) abstract;
 
             virtual void DoRead(CPollEventHandler *AHandler);
 
@@ -1896,8 +1896,6 @@ namespace Delphi {
 
             CPollStack *m_PollStack;
 
-            CPollEventHandlers *m_EventHandlers;
-
             COnPollEventHandlerExceptionEvent m_OnEventHandlerException;
 
             bool m_FreePollStack;
@@ -1910,13 +1908,13 @@ namespace Delphi {
 
         protected:
 
+            CPollEventHandlers *m_EventHandlers;
+
             int GetTimeOut();
 
             void SetTimeOut(int Value);
 
             virtual void DoTimeOut(CPollEventHandler *AHandler);
-
-            virtual void DoConnectStart(CIOHandlerSocket *AIOHandler, CPollEventHandler *AHandler) abstract;
 
             virtual void DoConnect(CPollEventHandler *AHandler) abstract;
 
@@ -1938,6 +1936,8 @@ namespace Delphi {
 
             CPollStack *PollStack() { return m_PollStack; };
             void PollStack(CPollStack *Value) { SetPollStack(Value); };
+
+            bool ExternalPollStack() { return !m_FreePollStack; };
 
             int TimeOut() { return GetTimeOut(); };
             void TimeOut(int Value) { SetTimeOut(Value); };
@@ -2012,15 +2012,16 @@ namespace Delphi {
 
             CCommandHandlers *m_CommandHandlers;
 
-            bool m_AutoConnect;
-
-            bool m_Active;
-
         protected:
+
+            bool m_AutoConnect;
+            bool m_Active;
 
             virtual void SetActive(bool AValue);
 
             virtual void InitializeCommandHandlers() {};
+
+            virtual void DoConnectStart(CIOHandlerSocket *AIOHandler, CPollEventHandler *AHandler) abstract;
 
             bool DoCommand(CTCPConnection *AConnection) override;
 

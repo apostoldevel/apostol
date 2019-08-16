@@ -353,18 +353,12 @@ namespace Delphi {
             int I;
             bool LY = IsLeapYear(Year);
 
-            //PDayTable DayTable;
-            //DayTable = &MonthDays[IsLeapYear(Year)];
-
             if ((Year >= 1) && (Year <= 9999) && (Month >= 1) && (Month <= 12) && (Day >= 1) &&
                 (Day <= MonthDays[LY][Month - 1])) {
-//                (Day <= (*DayTable)[Month - 1])) {
                 for (I = 0; I < Month - 1; ++I)
                     Day += MonthDays[LY][I];
-//                    Day += (*DayTable)[I];
 
                 I = Year - 1;
-
                 Date = I * 365 + div(I, 4).quot - div(I, 100).quot + div(I, 400).quot + Day - DateDelta;
 
                 return true;
@@ -969,9 +963,11 @@ namespace Delphi {
         LIB_DELPHI CDateTime StrToDateTimeA(LPCSTR S, LPCSTR Format) {
             struct tm TM = {0};
             struct timespec TS = {0};
-            TM.tm_isdst = -1;
-            if (sscanf(S, Format, TM.tm_year, TM.tm_mon, TM.tm_mday, TM.tm_hour, TM.tm_min, TM.tm_sec) == EOF)
+            if (sscanf(S, Format, &TM.tm_year, &TM.tm_mon, &TM.tm_mday, &TM.tm_hour, &TM.tm_min, &TM.tm_sec) == EOF)
                 throw ExceptionFrm(SInvalidDateTime, S, Format);
+            TM.tm_isdst = -1;
+            TM.tm_year -= 1900;
+            TM.tm_mon -= 1;
             return SystemTimeToDateTime(&TM, &TS);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -980,8 +976,11 @@ namespace Delphi {
             struct tm TM = {0};
             struct timespec TS = {0};
             TM.tm_isdst = -1;
-            if (swscanf(S, Format, TM.tm_year, TM.tm_mon, TM.tm_mday, TM.tm_hour, TM.tm_min, TM.tm_sec) == EOF)
+            if (swscanf(S, Format, &TM.tm_year, &TM.tm_mon, &TM.tm_mday, &TM.tm_hour, &TM.tm_min, &TM.tm_sec) == EOF)
                 throw ExceptionFrm(SInvalidDateTime, S, Format);
+            TM.tm_isdst = -1;
+            TM.tm_year -= 1900;
+            TM.tm_mon -= 1;
             return SystemTimeToDateTime(&TM, &TS);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -990,8 +989,11 @@ namespace Delphi {
             struct tm TM = {0};
             struct timespec TS = {0};
             TM.tm_isdst = -1;
-            if (sscanf(S, Format, TM.tm_year, TM.tm_mon, TM.tm_mday, TM.tm_hour, TM.tm_min, TM.tm_sec) == EOF)
+            if (sscanf(S, Format, &TM.tm_year, &TM.tm_mon, &TM.tm_mday, &TM.tm_hour, &TM.tm_min, &TM.tm_sec) == EOF)
                 return Default;
+            TM.tm_isdst = -1;
+            TM.tm_year -= 1900;
+            TM.tm_mon -= 1;
             return SystemTimeToDateTime(&TM, &TS);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -1000,8 +1002,11 @@ namespace Delphi {
             struct tm TM = {0};
             struct timespec TS = {0};
             TM.tm_isdst = -1;
-            if (swscanf(S, Format, TM.tm_year, TM.tm_mon, TM.tm_mday, TM.tm_hour, TM.tm_min, TM.tm_sec) == EOF)
+            if (swscanf(S, Format, &TM.tm_year, &TM.tm_mon, &TM.tm_mday, &TM.tm_hour, &TM.tm_min, &TM.tm_sec) == EOF)
                 return Default;
+            TM.tm_isdst = -1;
+            TM.tm_year -= 1900;
+            TM.tm_mon -= 1;
             return SystemTimeToDateTime(&TM, &TS);
         }
     }

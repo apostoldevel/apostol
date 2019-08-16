@@ -255,7 +255,7 @@ namespace Apostol {
 
                         const CString &VError = Result[Index][0].Values("error");
                         if (!VError.IsEmpty()) {
-                            Log()->Postgres(LOG_EMERG, VError.c_str());
+                            Log()->Postgres(APP_LOG_EMERG, VError.c_str());
                         }
 
                         RowToJson(Result[Index][0], Json);
@@ -265,7 +265,7 @@ namespace Apostol {
 
                     const CString &VError = Result[Index][0].Values("error");
                     if (!VError.IsEmpty()) {
-                        Log()->Postgres(LOG_EMERG, VError.c_str());
+                        Log()->Postgres(APP_LOG_EMERG, VError.c_str());
                     }
 
                     RowToJson(Result[Index][0], Json);
@@ -365,14 +365,14 @@ namespace Apostol {
                                 Json += "}";
 
                             } else {
-                                Log()->Error(LOG_EMERG, 0, Login->GetValue(0, 2));
+                                Log()->Error(APP_LOG_EMERG, 0, Login->GetValue(0, 2));
                                 PQResultToJson(Login, Json);
                             }
                         } else {
                             throw Delphi::Exception::EDBError(Run->GetErrorMessage());
                         }
                     } else {
-                        Log()->Error(LOG_EMERG, 0, Login->GetValue(0, 2));
+                        Log()->Error(APP_LOG_EMERG, 0, Login->GetValue(0, 2));
                         PQResultToJson(Login, Json);
                     }
                 } else {
@@ -382,7 +382,7 @@ namespace Apostol {
                 throw Delphi::Exception::EDBError(_T("Invalid record count!"));
             }
 
-            log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Query parse runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
+            log_debug1(APP_LOG_DEBUG_CORE, Log(), 0, _T("Query parse runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -429,14 +429,14 @@ namespace Apostol {
                     if (!LReply->CacheFile.IsEmpty()) {
                         clock_t start = clock();
                         LReply->Content.SaveToFile(LReply->CacheFile.c_str());
-                        log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
+                        log_debug1(APP_LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
                     }
 
                     LStatus = CReply::ok;
 
                 } catch (Delphi::Exception::Exception &E) {
                     ExceptionToJson(&E, LReply->Content);
-                    Log()->Error(LOG_EMERG, 0, E.what());
+                    Log()->Error(APP_LOG_EMERG, 0, E.what());
                 }
 
                 LConnection->SendReply(LStatus, nullptr, true);
@@ -452,12 +452,12 @@ namespace Apostol {
                         if (!LJob->CacheFile().IsEmpty()) {
                             clock_t start = clock();
                             LJob->Result().SaveToFile(LJob->CacheFile().c_str());
-                            log_debug1(LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
+                            log_debug1(APP_LOG_DEBUG_CORE, Log(), 0, _T("Save cache runtime: %.2f ms."), (double) ((clock() - start) / (double) CLOCKS_PER_SEC * 1000));
                         }
 
                     } catch (Delphi::Exception::Exception &E) {
                         ExceptionToJson(&E, LJob->Result());
-                        Log()->Error(LOG_EMERG, 0, E.what());
+                        Log()->Error(APP_LOG_EMERG, 0, E.what());
                     }
                 }
             }
@@ -477,7 +477,7 @@ namespace Apostol {
                 LConnection->SendReply(LStatus);
             }
 
-            Log()->Error(LOG_EMERG, 0, AException->what());
+            Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 

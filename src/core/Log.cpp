@@ -194,6 +194,17 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        //-- CLogFile --------------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        CLogFile::CLogFile(CLog *ALog, LPCSTR AFileName) :
+                CFile(AFileName, FILE_APPEND | FILE_CREATE_OR_OPEN),
+                CCollectionItem(ALog), m_uLevel(APP_LOG_STDERR), m_LogType(ltError) {
+        }
+
+        //--------------------------------------------------------------------------------------------------------------
+
         //-- CLogComponent ---------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
@@ -214,7 +225,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CLog::CLog(): CSysErrorComponent(), CCollection(this) {
-            m_uLevel = LOG_NOTICE;
+            m_uLevel = APP_LOG_NOTICE;
             m_CurrentIndex = -1;
             m_fUseStdErr = true;
             m_DiskFullTime = time(nullptr);
@@ -298,16 +309,14 @@ namespace Apostol {
             linefeed(p);
 
             wrote_stderr = 0;
-            debug_connection = (Level() & LOG_DEBUG_CONNECTION) != 0;
+            debug_connection = (Level() & APP_LOG_DEBUG_CONNECTION) != 0;
 
             CLogFile *logfile = First();
 
             while (logfile) {
 
-                if (logfile->Handle() != STDERR_FILENO) {
-                    if (logfile->Level() < ALevel || logfile->LogType() != ALogType) {
-                        goto next;
-                    }
+                if (!(logfile->LogType() == ALogType && logfile->Level() >= ALevel)) {
+                    goto next;
                 }
 
                 if (Level() < ALevel && !debug_connection) {
@@ -340,7 +349,7 @@ namespace Apostol {
                 logfile = Next();
             }
 
-            if (!UseStdErr() || ALevel > LOG_WARN || wrote_stderr)
+            if (!UseStdErr() || ALevel > APP_LOG_WARN || wrote_stderr)
             {
                 DebugMessage(errstr);
                 return;
@@ -357,19 +366,19 @@ namespace Apostol {
         void CLog::Message(LPCSTR AFormat, ...) {
             va_list args;
             va_start(args, AFormat);
-            ErrorCore(LOG_NOTICE, 0, AFormat, ltError, args);
+            Error(APP_LOG_NOTICE, 0, AFormat, args);
             va_end(args);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::Message(LPCSTR AFormat, va_list args) {
-            ErrorCore(LOG_NOTICE, 0, AFormat, ltError, args);
+            Error(APP_LOG_NOTICE, 0, AFormat,  args);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::Error(u_int ALevel, int AErrNo, LPCSTR AFormat, ...) {
             va_list args;
-            if (m_uLevel >= ALevel) {
+            if (ALevel <= m_uLevel) {
                 va_start(args, AFormat);
                 ErrorCore(ALevel, AErrNo, AFormat, ltError, args);
                 va_end(args);
@@ -378,7 +387,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::Error(u_int ALevel, int AErrNo, LPCSTR AFormat, va_list args) {
-            if (m_uLevel >= ALevel) {
+            if (ALevel <= m_uLevel) {
                 ErrorCore(ALevel, AErrNo, AFormat, ltError, args);
             }
         }
@@ -387,13 +396,13 @@ namespace Apostol {
         void CLog::Debug(int AErrNo, LPCSTR AFormat, ...) {
             va_list args;
             va_start(args, AFormat);
-            ErrorCore(LOG_DEBUG, AErrNo, AFormat, ltError, args);
+            ErrorCore(APP_LOG_DEBUG, AErrNo, AFormat, ltError, args);
             va_end(args);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::Debug(int AErrNo, LPCSTR AFormat, va_list args) {
-            ErrorCore(LOG_DEBUG, AErrNo, AFormat, ltError, args);
+            ErrorCore(APP_LOG_DEBUG, AErrNo, AFormat, ltError, args);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -433,13 +442,13 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CLogFile *CLog::AddLogFile(LPCSTR AFileName, u_int ALevel) {
-            CLogFile *LogFile = nullptr;
 
-            m_CurrentIndex = 0;
-            while (m_CurrentIndex < Count() && (LogFile == nullptr)) {
-                if (SameText(Current()->FileName(), AFileName))
-                    LogFile = Current();
-                m_CurrentIndex++;
+            if (m_uLevel < ALevel)
+                m_uLevel = ALevel;
+
+            CLogFile *LogFile = First();
+            while (LogFile && !SameText(LogFile->FileName(), AFileName)) {
+                LogFile = Next();
             }
 
             if (LogFile == nullptr) {
@@ -447,9 +456,6 @@ namespace Apostol {
                 LogFile->Level(ALevel);
                 LogFile->Open();
             }
-
-            if (LogFile->Level() < ALevel)
-                LogFile->Level(ALevel);
 
             return LogFile;
         }
@@ -509,15 +515,11 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::SetLevel(u_int AValue) {
-            if (AValue == LOG_DEBUG)
-                m_uLevel = LOG_DEBUG_ALL;
-            else
-                m_uLevel = AValue;
+            m_uLevel = AValue;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CLog::RedirectStdErr() {
-#ifdef _DEBUG
             CLogFile *log = First();
             while (log && log->Handle() == STDERR_FILENO) {
                 log = Next();
@@ -528,8 +530,8 @@ namespace Apostol {
                     throw EOSError(errno, "dup2(STDERR) failed");
                 }
             }
-#endif
         }
+
     }
 }
 }

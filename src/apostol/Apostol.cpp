@@ -26,7 +26,7 @@ Author:
 
 #define exit_failure(msg) {                                 \
   if (GLog != nullptr)                                      \
-    GLog->Error(LOG_EMERG, 0, msg);                         \
+    GLog->Error(APP_LOG_EMERG, 0, msg);                         \
   else                                                      \
     std::cerr << APP_NAME << ": " << (msg) << std::endl;    \
   exitcode = EXIT_FAILURE;                                  \
@@ -187,9 +187,9 @@ namespace Apostol {
 
         void CApostol::Run() {
 #ifdef _DEBUG
-            Log()->Error(LOG_NOTICE, 0, "%s version: %s (%s build)", APP_DESCRIPTION, APP_VERSION, "debug");
+            Log()->Error(APP_LOG_NOTICE, 0, "%s version: %s (%s build)", APP_DESCRIPTION, APP_VERSION, "debug");
 #else
-            Log()->Error(LOG_NOTICE, 0, "%s version: %s (%s build)", APP_DESCRIPTION, APP_VERSION, "release");
+            Log()->Error(APP_LOG_NOTICE, 0, "%s version: %s (%s build)", APP_DESCRIPTION, APP_VERSION, "release");
 #endif
             CApplication::Run();
         }

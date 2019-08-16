@@ -260,6 +260,7 @@ namespace Apostol {
 
             bool m_fMaster;
             bool m_fDaemon;
+            bool m_fBitmessage;
 
             bool m_fPostgresConnect;
             bool m_fPostgresNotice;
@@ -267,6 +268,8 @@ namespace Apostol {
             int m_nPostgresPollMin;
             int m_nPostgresPollMax;
 
+            CString m_sUser;
+            CString m_sGroup;
             CString m_sPrefix;
             CString m_sConfPrefix;
             CString m_sCachePrefix;
@@ -293,8 +296,9 @@ namespace Apostol {
             void DefaultCommands();
 
             void LoadLogFilesDefault();
-            void LoadPostgresDefault();
 
+            void SetUser(LPCTSTR AValue);
+            void SetGroup(LPCTSTR AValue);
             void SetPrefix(LPCTSTR AValue);
             void SetConfPrefix(LPCTSTR AValue);
             void SetConfFile(LPCTSTR AValue);
@@ -353,6 +357,14 @@ namespace Apostol {
             size_t PostgresPollMin() { return (size_t) m_nPostgresPollMin; };
 
             size_t PostgresPollMax() { return (size_t) m_nPostgresPollMax; };
+
+            const CString& User() const { return m_sUser; };
+            void User(const CString& AValue) { SetUser(AValue.c_str()); };
+            void User(LPCTSTR AValue) { SetUser(AValue); };
+
+            const CString& Group() const { return m_sGroup; };
+            void Group(const CString& AValue) { SetGroup(AValue.c_str()); };
+            void Group(LPCTSTR AValue) { SetGroup(AValue); };
 
             const CString& Prefix() const { return m_sPrefix; };
             void Prefix(const CString& AValue) { SetPrefix(AValue.c_str()); };

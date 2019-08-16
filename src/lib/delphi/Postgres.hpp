@@ -555,9 +555,9 @@ namespace Delphi {
 
             int QueryCount() { return CCollection::Count(); };
 
-            CPQPollQuery *Querys(int Index) { return (CPQPollQuery *) CCollection::Items(Index); };
+            CPQPollQuery *Queries(int Index) { return (CPQPollQuery *) CCollection::Items(Index); };
 
-            CPQPollQuery *operator[] (int Index) override { return Querys(Index); };
+            CPQPollQuery *operator[] (int Index) override { return Queries(Index); };
 
         };
 
@@ -582,8 +582,6 @@ namespace Delphi {
 
             COnPQConnectionEvent m_OnStatus;
             COnPQConnectionEvent m_OnPollingStatus;
-            COnPQConnectionEvent m_OnConnected;
-            COnPQConnectionEvent m_OnDisconnected;
 
             COnPQConnectionExceptionEvent m_OnConnectException;
             COnPQServerExceptionEvent m_OnServerException;
@@ -593,8 +591,6 @@ namespace Delphi {
 
             virtual void DoStatus(CPQConnection *AConnection);
             virtual void DoPollingStatus(CPQConnection *AConnection);
-            virtual void DoConnected(CPQConnection *AConnection);
-            virtual void DoDisconnected(CPQConnection *AConnection);
 
             virtual void DoConnectException(CPQConnection *AConnection, Exception::Exception *AException);
             virtual void DoServerException(Exception::Exception *AException) abstract;
@@ -615,16 +611,10 @@ namespace Delphi {
             const COnPQConnectionEvent &OnPollingStatus() { return m_OnPollingStatus; }
             void OnPollingStatus(COnPQConnectionEvent && Value) { m_OnPollingStatus = Value; }
 
-            const COnPQConnectionEvent &OnConnected() { return m_OnConnected; }
-            void OnConnected(COnPQConnectionEvent && Value) { m_OnConnected = Value; }
+            const COnPQConnectionExceptionEvent &OnConnectException() { return m_OnConnectException; }
+            void OnConnectException(COnPQConnectionExceptionEvent && Value) { m_OnConnectException = Value; }
 
-            const COnPQConnectionEvent &OnDisconnected() { return m_OnDisconnected; }
-            void OnDisconnected(COnPQConnectionEvent && Value) { m_OnDisconnected = Value; }
-
-            const COnPQConnectionExceptionEvent &OnException() { return m_OnConnectException; }
-            void OnException(COnPQConnectionExceptionEvent && Value) { m_OnConnectException = Value; }
-
-            const COnPQServerExceptionEvent OnServerException() { return m_OnServerException; }
+            const COnPQServerExceptionEvent &OnServerException() { return m_OnServerException; }
             void OnServerException(COnPQServerExceptionEvent && Value) { m_OnServerException = Value; }
 
         };
@@ -635,16 +625,12 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CPQConnectPoll: public CPQConnectPollEvent {
+        class CPQConnectPoll: public CPQConnectPollEvent, public CEPollClient {
             friend CPQPollQuery;
 
         private:
 
             CPQConnInfo m_ConnInfo;
-
-            CPollStack *m_PollStack;
-
-            CPollEventHandlers *m_EventHandlers;
 
             CPQPollQueryManager *m_PollQueryManager;
 
@@ -657,15 +643,11 @@ namespace Delphi {
 
             bool m_Active;
 
-            bool m_FreePollStack;
-
             COnPollEventHandlerExceptionEvent m_OnEventHandlerException;
 
             void CheckQueue();
 
             CPollEventHandler *NewEventHandler(CPQConnection *AConnection);
-
-            void SetPollStack(CPollStack *Value);
 
             CPQPollConnection *GetConnection(CPollEventHandler *AHandler);
 
@@ -683,13 +665,10 @@ namespace Delphi {
 
             bool NewConnection();
 
-            void DoTimeOutEvent(CPollEventHandler *AHandler);
-            void DoReadEvent(CPollEventHandler *AHandler);
-            void DoWriteEvent(CPollEventHandler *AHandler);
-
-            void DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException);
-
-            void CreatePollEventHandlers();
+            void DoTimeOut(CPollEventHandler *AHandler) override;
+            void DoConnect(CPollEventHandler *AHandler) override;
+            void DoRead(CPollEventHandler *AHandler) override;
+            void DoWrite(CPollEventHandler *AHandler) override;
 
             void SetActive(bool Value);
 
@@ -706,9 +685,6 @@ namespace Delphi {
             CPQConnInfo &ConnInfo() { return m_ConnInfo; };
             const CPQConnInfo &ConnInfo() const { return m_ConnInfo; };
 
-            CPollStack *PollStack() { return m_PollStack; };
-            void PollStack(CPollStack *Value) { SetPollStack(Value); };
-
             bool Active() { return m_Active; };
             void Active(bool Value) { SetActive(Value); };
 
@@ -717,11 +693,11 @@ namespace Delphi {
             CPQPollQueryManager *PollQueryManager() { return m_PollQueryManager; };
 
             size_t SizeMin() { return m_SizeMin; }
+            void SizeMin(size_t Value) { m_SizeMin = Value; }
 
             size_t SizeMax() { return m_SizeMax; }
+            void SizeMax(size_t Value) { m_SizeMax = Value; }
 
-            const COnPollEventHandlerExceptionEvent &OnEventHandlerException() { return m_OnEventHandlerException; }
-            void OnEventHandlerException(COnPollEventHandlerExceptionEvent && Value) { m_OnEventHandlerException = Value; }
         };
 
         //--------------------------------------------------------------------------------------------------------------
@@ -733,6 +709,9 @@ namespace Delphi {
         class CPQServer: public CPQConnectPoll {
         protected:
 
+            bool DoCommand(CTCPConnection *AConnection) override;
+            bool DoExecute(CTCPConnection *AConnection) override;
+
             void DoServerException(Exception::Exception *AException) override;
 
         public:
@@ -743,7 +722,7 @@ namespace Delphi {
 
             CPQPollQuery *GetQuery();
 
-            CPQPollQuery *FindQuryByConnection(CPollConnection *APollConnection);
+            CPQPollQuery *FindQueryByConnection(CPollConnection *APollConnection);
 
         };
     }

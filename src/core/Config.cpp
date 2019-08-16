@@ -158,6 +158,26 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CConfig::SetUser(LPCTSTR AValue) {
+
+            if (m_sUser != AValue) {
+                if (AValue != nullptr) {
+                    m_sUser = AValue;
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CConfig::SetGroup(LPCTSTR AValue) {
+
+            if (m_sGroup != AValue) {
+                if (AValue != nullptr) {
+                    m_sGroup = AValue;
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CConfig::SetPrefix(LPCTSTR AValue) {
 
             if (m_sPrefix != AValue) {
@@ -229,13 +249,6 @@ namespace Apostol {
                 m_sConfFile = AValue;
                 if (!path_separator(m_sConfFile.front())) {
                     m_sConfFile = m_sPrefix + m_sConfFile;
-/*
-                    if (m_sConfFile.find('/') == CString::npos) {
-                        m_sConfFile = m_sConfPrefix + m_sConfFile;
-                    } else {
-                        m_sConfFile = m_sPrefix + m_sConfFile;
-                    }
-*/
                 }
             }
         }
@@ -344,12 +357,16 @@ namespace Apostol {
 
             m_fMaster = true;
             m_fDaemon = true;
+            m_fBitmessage = false;
 
             m_fPostgresConnect = false;
             m_fPostgresNotice = false;
 
             m_nPostgresPollMin = 5;
             m_nPostgresPollMax = 10;
+
+            SetUser(m_sUser.empty() ? APP_DEFAULT_USER : m_sUser.c_str());
+            SetGroup(m_sGroup.empty() ? APP_DEFAULT_GROUP : m_sGroup.c_str());
 
             SetLocale(m_sLocale.empty() ? APP_DEFAULT_LOCALE : m_sLocale.c_str());
 
@@ -371,6 +388,9 @@ namespace Apostol {
         void CConfig::DefaultCommands() {
 
             Clear();
+
+            Add(new CConfigCommand(_T("main"), _T("user"), m_sUser.c_str(), std::bind(&CConfig::SetUser, this, _1)));
+            Add(new CConfigCommand(_T("main"), _T("group"), m_sGroup.c_str(), std::bind(&CConfig::SetGroup, this, _1)));
 
             Add(new CConfigCommand(_T("main"), _T("workers"), &m_nWorkers));
             Add(new CConfigCommand(_T("main"), _T("master"), &m_fMaster));
@@ -396,17 +416,13 @@ namespace Apostol {
             Add(new CConfigCommand(_T("postgres/poll"), _T("min"), &m_nPostgresPollMin));
             Add(new CConfigCommand(_T("postgres/poll"), _T("max"), &m_nPostgresPollMax));
 
+            Add(new CConfigCommand(_T("bitmessage"), _T("bitmessage"), &m_fBitmessage));
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::LoadLogFilesDefault() {
             m_LogFiles.AddPair(_T("error"), m_sErrorLog.c_str());
         };
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CConfig::LoadPostgresDefault() {
-
-        }
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::Parse() {
@@ -482,7 +498,7 @@ namespace Apostol {
 
                 Level = GetLogLevelByName(Key.c_str());
                 if (Level == 0) {
-                    Log()->Error(LOG_EMERG, 0, ConfMsgInvalidKey _T(" - ignored and set by default"), _T("log"),
+                    Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidKey _T(" - ignored and set by default"), _T("log"),
                                  Key.c_str(), m_sConfFile.c_str());
                     return false;
                 }
@@ -503,16 +519,16 @@ namespace Apostol {
             m_uErrorCount++;
             if ((lpszValue == nullptr) || (lpszValue[0] == '\0')) {
                 if (Flags().test_config || (lpszDefault == nullptr) || (lpszDefault[0] == '\0'))
-                    Log()->Error(LOG_EMERG, 0, ConfMsgEmpty, lpszSectionName, lpszKeyName, m_sConfFile.c_str(), Line);
+                    Log()->Error(APP_LOG_EMERG, 0, ConfMsgEmpty, lpszSectionName, lpszKeyName, m_sConfFile.c_str(), Line);
                 else
-                    Log()->Error(LOG_EMERG, 0, ConfMsgEmpty _T(" - ignored and set by default: \"%s\""), lpszSectionName,
+                    Log()->Error(APP_LOG_EMERG, 0, ConfMsgEmpty _T(" - ignored and set by default: \"%s\""), lpszSectionName,
                                 lpszKeyName, m_sConfFile.c_str(), Line, lpszDefault);
             } else {
                 if (Flags().test_config || (lpszDefault == nullptr) || (lpszDefault[0] == '\0'))
-                    Log()->Error(LOG_EMERG, 0, ConfMsgInvalidValue, lpszSectionName, lpszKeyName, lpszValue,
+                    Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue, lpszSectionName, lpszKeyName, lpszValue,
                                 m_sConfFile.c_str(), Line);
                 else
-                    Log()->Error(LOG_EMERG, 0, ConfMsgInvalidValue _T(" - ignored and set by default: \"%s\""), lpszSectionName, lpszKeyName, lpszValue,
+                    Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue _T(" - ignored and set by default: \"%s\""), lpszSectionName, lpszKeyName, lpszValue,
                                 m_sConfFile.c_str(), Line, lpszDefault);
             }
         }

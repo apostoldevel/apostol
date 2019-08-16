@@ -52,7 +52,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CJSON::CJSON(const CString &AString): CJSON() {
-            JSON(AString);
+            StringToJson(AString);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -155,10 +155,10 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CJSON::GetJSON(CString& String) {
+        const CString& CJSON::JsonToString(CString& String) const {
 
             if (ValueType() == jvtObject) {
-                String += "{";
+                String = "{";
 
                 for (int i = 0; i < Count(); i++) {
 
@@ -170,7 +170,7 @@ namespace Delphi {
                     String += Members(i).String();
                     String += "\": ";
 
-                    Object()[i].GetJSON(String);
+                    Object()[i].ToString(String);
                 }
 
                 String += "}";
@@ -178,7 +178,7 @@ namespace Delphi {
 
             if (ValueType() == jvtArray) {
 
-                String += "[";
+                String = "[";
 
                 for (int i = 0; i < Count(); i++) {
 
@@ -186,23 +186,25 @@ namespace Delphi {
                         String += ", ";
                     }
 
-                    Array()[i].GetJSON(String);
+                    Array()[i].ToString(String);
                 }
 
                 String += "]";
             }
+
+            return String;
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CJSON::SetJSON(const CString &Value) {
+        void CJSON::StringToJson(const CString &Value) {
             if (!Value.IsEmpty())
-              SetJSONStr(Value.c_str(), Value.Size());
+              StrToJson(Value.c_str(), Value.Size());
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CJSON::GetJSONStr(LPTSTR ABuffer, size_t &ASize) {
+        bool CJSON::JsonToStr(LPTSTR ABuffer, size_t &ASize) {
             CString S;
-            GetJSON(S);
+            JsonToString(S);
             size_t Size = ASize;
             ASize = S.Size();
             if (Size >= ASize) {
@@ -213,7 +215,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CJSON::SetJSONStr(LPCTSTR ABuffer, size_t ASize) {
+        void CJSON::StrToJson(LPCTSTR ABuffer, size_t ASize) {
             CJSONParser LParser(this);
             CJSONParserResult R;
 
@@ -263,7 +265,7 @@ namespace Delphi {
             BeginUpdate();
             try {
                 Stream->Read(Buffer, BufSize);
-                SetJSONStr(Buffer, BufSize);
+                StrToJson(Buffer, BufSize);
             } catch (...) {
                 GHeap->Free(0, Buffer, BufSize);
                 EndUpdate();
@@ -286,7 +288,7 @@ namespace Delphi {
 
         void CJSON::SaveToStream(CStream *Stream) {
             CString S;
-            GetJSON(S);
+            JsonToString(S);
             Stream->WriteBuffer(S.Data(), S.Size());
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -529,15 +531,19 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CJSONElements::GetJSON(CString &String) {
+        const CString& CJSONElements::JsonToString(CString &String) const {
             String += "[";
+
             for (int i = 0; i < Count(); i++) {
                 if (i > 0) {
                     String += ", ";
                 }
-                Values(i).GetJSON(String);
+                Values(i).ToString(String);
             }
+
             String += "]";
+
+            return String;
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -623,7 +629,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CJSONMembers::GetJSON(CString &String) {
+        const CString& CJSONMembers::JsonToString(CString &String) const {
             String += "{";
 
             for (int i = 0; i < Count(); i++) {
@@ -636,10 +642,12 @@ namespace Delphi {
                 String += Members(i).String();
                 String += "\": ";
 
-                Members(i).Value().GetJSON(String);
+                Members(i).Value().ToString(String);
             }
 
             String += "}";
+
+            return String;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -990,14 +998,14 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CJSONValue::GetJSON(CString &String) {
+        const CString& CJSONValue::JsonToString(CString &String) const {
             switch (ValueType()) {
                 case jvtObject:
-                    AsObject().GetJSON(String);
+                    AsObject().ToString(String);
                     break;
 
                 case jvtArray:
-                    AsArray().GetJSON(String);
+                    AsArray().ToString(String);
                     break;
 
                 case jvtString:
@@ -1022,6 +1030,8 @@ namespace Delphi {
                     String += "null";
                     break;
             }
+
+            return String;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1467,12 +1477,6 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CJSONParser::UpdateData(TCHAR C) {
-            m_Json->JSON().Append(C);
-            CurrentJson().JSON().Append(C);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         CJSONParserResult CJSONParser::Parse(LPTSTR ABegin, LPCTSTR AEnd) {
             LPCTSTR Start = ABegin;
 
@@ -1492,12 +1496,10 @@ namespace Delphi {
                 case json_start:
                     if (AInput == '{') {
                         m_pJsonList->Add(m_Json->CreateObject());
-                        UpdateData(AInput);
                         m_State = string_start;
                         return -1;
                     } else if (AInput == '[') {
                         m_pJsonList->Add(m_Json->CreateArray());
-                        UpdateData(AInput);
                         m_State = value_start;
                         return -1;
                     } else if (IsWS(AInput)) {
@@ -1507,11 +1509,9 @@ namespace Delphi {
                 case string_start:
                     if (AInput == '"') {
                         CurrentObject().Add(CJSONMember());
-                        UpdateData(AInput);
                         m_State = string;
                         return -1;
                     } else if (AInput == '}') {
-                        UpdateData(AInput);
                         DeleteLastJson();
                         m_State = value_end;
                         return -1;
@@ -1522,18 +1522,15 @@ namespace Delphi {
                 case string:
                     if (IsLetter(AInput) || (AInput == '0') || IsDigit(AInput)) {
                         CurrentMember().String().Append(AInput);
-                        UpdateData(AInput);
                         m_State = string;
                         return -1;
                     } else if (AInput == '"') {
-                        UpdateData(AInput);
                         m_State = string_end;
                         return -1;
                     }
                     return false;
                 case string_end:
                     if (AInput == ':') {
-                        UpdateData(AInput);
                         m_State = value_start;
                         return -1;
                     } else if (IsWS(AInput)) {
@@ -1543,48 +1540,40 @@ namespace Delphi {
                 case value_start:
                     if (AInput == '{') {
                         CreateValue(jvtObject);
-                        UpdateData(AInput);
                         m_State = string_start;
                         return -1;
                     } else if (AInput == '[') {
                         CreateValue(jvtArray);
-                        UpdateData(AInput);
                         m_State = value_start;
                         return -1;
                     } else if (AInput == '"') {
                         CreateValue(jvtString);
-                        UpdateData(AInput);
                         m_State = value_string_start;
                         return -1;
                     } else if ((AInput == '-') || (AInput == '0') || IsDigit(AInput)) {
                         CreateValue(jvtNumber);
                         CurrentValue().Data().Append(AInput);
-                        UpdateData(AInput);
                         m_State = value_digit;
                         return -1;
                     } else if (AInput == 't') {
                         CreateValue(jvtBoolean);
                         CurrentValue().Data().Append(AInput);
-                        UpdateData(AInput);
                         m_CharIndex++;
                         m_State = value_true;
                         return -1;
                     } else if (AInput == 'f') {
                         CreateValue(jvtBoolean);
                         CurrentValue().Data().Append(AInput);
-                        UpdateData(AInput);
                         m_CharIndex++;
                         m_State = value_false;
                         return -1;
                     } else if (AInput == 'n') {
                         CreateValue(jvtNull);
                         CurrentValue().Data().Append(AInput);
-                        UpdateData(AInput);
                         m_CharIndex++;
                         m_State = value_null;
                         return -1;
                     } else if ((AInput == '}') || (AInput == ']')) {
-                        UpdateData(AInput);
                         DeleteLastJson();
                         m_State = value_end;
                         return -1;
@@ -1594,13 +1583,11 @@ namespace Delphi {
                     return false;
                 case value_end:
                     if ((AInput == '}') || (AInput == ']')) {
-                        UpdateData(AInput);
                         DeleteLastJson();
                         if (m_pJsonList->Count() == 0)
                             return true;
                         return -1;
                     } else if (AInput == ',') {
-                        UpdateData(AInput);
                         if (CurrentJson().ValueType() == jvtObject)
                             m_State = string_start;
                         else
@@ -1612,11 +1599,9 @@ namespace Delphi {
                     return false;
                 case value_string_start:
                     if (AInput == '"') {
-                        UpdateData(AInput);
                         m_State = value_string_end;
                         return -1;
                     } if (IsCharacter(AInput)) {
-                        UpdateData(AInput);
                         CurrentValue().Data().Append(AInput);
                         m_State = value_string;
                         return -1;
@@ -1626,13 +1611,9 @@ namespace Delphi {
                     return false;
                 case value_string:
                     if (AInput == '"') {
-                        UpdateData(AInput);
                         m_State = value_string_end;
                         return -1;
-                    //} else if ((AInput == '}') || (AInput == ']')) {
-                    //    return false;
                     } if (IsCharacter(AInput)) {
-                        UpdateData(AInput);
                         CurrentValue().Data().Append(AInput);
                         return -1;
                     } else if (IsWS(AInput)) {
@@ -1641,23 +1622,19 @@ namespace Delphi {
                     return false;
                 case value_string_end:
                     if ((AInput == '}') || (AInput == ']')) {
-                        UpdateData(AInput);
                         DeleteLastJson();
                         m_State = value_end;
                         return -1;
                     } else if (AInput == ',') {
-                        UpdateData(AInput);
                         if (CurrentJson().ValueType() == jvtObject)
                             m_State = string_start;
                         else
                             m_State = value_start;
                         return -1;
                     } else if (AInput == '"') {
-                        UpdateData(AInput);
                         m_State = value_string;
                         return -1;
                     } if (IsCharacter(AInput)) {
-                        UpdateData(AInput);
                         CurrentValue().Data().Append(AInput);
                         m_State = value_string_end;
                         return -1;
@@ -1667,12 +1644,10 @@ namespace Delphi {
                     return false;
                 case value_digit:
                     if ((AInput == '}') || (AInput == ']')) {
-                        UpdateData(AInput);
                         DeleteLastJson();
                         m_State = value_end;
                         return -1;
                     } else if (AInput == ',') {
-                        UpdateData(AInput);
                         if (CurrentJson().ValueType() == jvtObject)
                             m_State = string_start;
                         else
@@ -1680,7 +1655,6 @@ namespace Delphi {
                         return -1;
                     } else if ((AInput == '.') || (AInput == '0') || IsDigit(AInput) || (AInput == 'e') || (AInput == 'E') || (AInput == '+') || (AInput == '-')) {
                         CurrentValue().Data().Append(AInput);
-                        UpdateData(AInput);
                         return -1;
                     } else if (IsWS(AInput)) {
                         return -1;
@@ -1688,7 +1662,6 @@ namespace Delphi {
                     return false;
                 case value_true:
                     if ((AInput == '}') || (AInput == ']')) {
-                        UpdateData(AInput);
                         DeleteLastJson();
                         m_State = value_end;
                         return -1;
@@ -1698,10 +1671,8 @@ namespace Delphi {
                             m_CharIndex = 0;
                         }
                         CurrentValue().Data().Append(AInput);
-                        UpdateData(AInput);
                         return -1;
                     } else if (AInput == ',') {
-                        UpdateData(AInput);
                         if (CurrentJson().ValueType() == jvtObject)
                             m_State = string_start;
                         else
@@ -1713,7 +1684,6 @@ namespace Delphi {
                     return false;
                 case value_false:
                     if ((AInput == '}') || (AInput == ']')) {
-                        UpdateData(AInput);
                         DeleteLastJson();
                         m_State = value_end;
                         return -1;
@@ -1723,10 +1693,8 @@ namespace Delphi {
                             m_CharIndex = 0;
                         }
                         CurrentValue().Data().Append(AInput);
-                        UpdateData(AInput);
                         return -1;
                     } else if (AInput == ',') {
-                        UpdateData(AInput);
                         if (CurrentJson().ValueType() == jvtObject)
                             m_State = string_start;
                         else
@@ -1738,7 +1706,6 @@ namespace Delphi {
                     return false;
                 case value_null:
                     if ((AInput == '}') || (AInput == ']')) {
-                        UpdateData(AInput);
                         DeleteLastJson();
                         m_State = value_end;
                         return -1;
@@ -1748,10 +1715,8 @@ namespace Delphi {
                             m_CharIndex = 0;
                         }
                         CurrentValue().Data().Append(AInput);
-                        UpdateData(AInput);
                         return -1;
                     } else if (AInput == ',') {
-                        UpdateData(AInput);
                         if (CurrentJson().ValueType() == jvtObject)
                             m_State = string_start;
                         else

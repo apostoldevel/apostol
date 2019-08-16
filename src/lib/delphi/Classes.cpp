@@ -1626,6 +1626,15 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        int CString::Compare(const std::string& S) const {
+            if (IsEmpty())
+                return -1;
+            if (S.empty())
+                return 1;
+            return CompareString(c_str(), S.c_str());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         int CString::Compare(LPCTSTR Str) const {
             if (IsEmpty())
                 return -1;
@@ -1636,26 +1645,30 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         size_t CString::Find(const CString& S, size_t Pos) const {
-            LPCTSTR P = strstr(Data() + Pos, S.Data());
-            return (P == nullptr) ? npos : (P - Data());
+            if (m_Size == 0) return npos;
+            LPCTSTR P = strstr(Str() + Pos, S.Str());
+            return (P == nullptr) ? npos : (P - Str());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         size_t CString::Find(LPCTSTR Str, size_t Pos) const {
-            LPCTSTR P = strstr(Data() + Pos, Str);
-            return (P == nullptr) ? npos : (P - Data());
+            if (m_Size == 0) return npos;
+            LPCTSTR P = strstr(this->Str() + Pos, Str);
+            return (P == nullptr) ? npos : (P - this->Str());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         size_t CString::Find(LPCTSTR Str, size_t Pos, size_t Length) const {
+            if (m_Size == 0) return npos;
             CString L(Str, Length);
             return Find(L, Pos);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         size_t CString::Find(TCHAR C, size_t Pos) const {
-            LPCTSTR P = strchr(Data() + Pos, C);
-            return (P == nullptr) ? npos : (P - Data());
+            if (m_Size == 0) return npos;
+            LPCTSTR P = strchr(Str() + Pos, C);
+            return (P == nullptr) ? npos : (P - Str());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1814,7 +1827,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        LPCTSTR CStrings::GetLineBreak() {
+        LPCTSTR CStrings::GetLineBreak() const {
             return m_LineBreak;
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -1836,7 +1849,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        const TCHAR CStrings::GetNameValueSeparator() const {
+        TCHAR CStrings::GetNameValueSeparator() const {
             return m_NameValueSeparator;
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -1917,34 +1930,34 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        const CString &CStrings::GetText(CString &Text) {
+        const CString& CStrings::GetText(CString& Value) const {
             int I;
             size_t L, LineBreakLen;
             LPCTSTR LB = LineBreak();
 
-            Text.Clear();
+            Value.Clear();
 
             L = 0;
             LineBreakLen = strlen(LB);
 
             for (I = 0; I < GetCount(); ++I) {
-                CString &S = Get(I);
+                const CString &S = Get(I);
                 if (!S.IsEmpty())
-                    L += S.Length() + LineBreakLen;
+                    L += S.Size();
+                L += LineBreakLen;
             }
 
-            Text.SetLength(L);
-            Text.Position(0);
+            Value.SetLength(L);
+            Value.Position(0);
 
             for (I = 0; I < GetCount(); ++I) {
-                CString &S = Get(I);
-                if (!S.IsEmpty()) {
-                    Text.WriteBuffer(S.Data(), S.Size());
-                    Text.WriteBuffer(LB, LineBreakLen);
-                }
+                const CString &S = Get(I);
+                if (!S.IsEmpty())
+                    Value.WriteBuffer(S.Data(), S.Size());
+                Value.WriteBuffer(LB, LineBreakLen);
             }
 
-            return Text;
+            return Value;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -2349,7 +2362,8 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CStrings::SaveToStream(CStream *Stream) {
-            const CString &S = GetText();
+            CString S;
+            GetText(S);
             Stream->WriteBuffer(S.Data(), S.Size());
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -2407,11 +2421,6 @@ namespace Delphi {
                 throw;
             }
             EndUpdate();
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        const CString &CStrings::GetText() {
-            return GetText(m_Text);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -2529,12 +2538,12 @@ namespace Delphi {
             if ((Index < 0) || (Index >= m_nCount))
                 throw ExceptionFrm(SListIndexError, Index);
 
-            size_t L;
+            size_t L = CString::npos;
             CStringItem *R = m_pList[Index];
 
             R->Name.Clear();
-
-            L = R->String.Find(NameValueSeparator());
+            if (!R->String.IsEmpty())
+                L = R->String.Find(NameValueSeparator());
 
             if (L != CString::npos) {
                 R->Name.SetLength(L);

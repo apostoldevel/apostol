@@ -40,11 +40,18 @@ namespace Delphi {
 
         public:
 
-            Exception() : inherited(), m_SysError(0) {
+            Exception(): inherited(), m_SysError(0) {
                 Clear();
             };
 
-            explicit Exception(LPCTSTR lpMsg) : inherited(), m_SysError(0) {
+            Exception(const Exception& Value) noexcept : Exception() {
+                if (this != &Value) {
+                    m_SysError = Value.m_SysError;
+                    m_Message = Value.m_Message;
+                };
+            };
+
+            explicit Exception(LPCTSTR lpMsg): inherited(), m_SysError(0) {
                 Clear();
 
                 if (lpMsg != nullptr) {
@@ -52,12 +59,12 @@ namespace Delphi {
                 }
             };
 
-            explicit Exception(int SysError) : inherited(), m_SysError(0) {
+            explicit Exception(int SysError): inherited(), m_SysError(0) {
                 Clear();
                 SystemError(SysError);
             };
 
-            explicit Exception(LPCTSTR lpMsg, int SysError) : inherited(), m_SysError(0) {
+            explicit Exception(LPCTSTR lpMsg, int SysError): inherited(), m_SysError(0) {
                 Clear();
 
                 if (lpMsg != nullptr) {

@@ -47,8 +47,6 @@ namespace Delphi {
 
             CString m_pszFileName;
 
-            int m_nKeyLine;
-
             COnIniFileParseError m_OnIniFileParseError;
 
         protected:
@@ -338,6 +336,13 @@ namespace Delphi {
 
             CStrings &Sections(LPCTSTR Section);
             const CStrings &Sections(LPCTSTR Section) const;
+
+            virtual CMemIniFile &operator=(const CStrings &Strings) {
+                if (Strings.Count() > 0) {
+                    SetStrings((CStrings *) &Strings);
+                }
+                return *this;
+            }
 
             CStrings &operator[] (int Index) { return Sections(Index); }
             const CStrings &operator[] (int Index) const { return Sections(Index); }

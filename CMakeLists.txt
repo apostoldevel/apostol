@@ -1,21 +1,23 @@
 cmake_minimum_required(VERSION 3.13)
 project(apostol)
 
-list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-mod" )
+#set(CMAKE_BUILD_TYPE "Release")
+
+list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules" )
 
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 
 set(PROJECT_NAME "apostol")
 set(PROJECT_DESCRIPTION "Apostol Web Service")
-set(PROJECT_PREFIX "/etc/${PROJECT_NAME}/")
+set(PROJECT_PREFIX "/etc/${PROJECT_NAME}")
 
-#set(PROJECT_PREFIX "/usr/local/${PROJECT_NAME}/")
+#set(PROJECT_PREFIX "/usr/local/${PROJECT_NAME}")
 
 set(DELPHI_LIB_NAME delphi)
-set(APOSTOL_LIB_NAME apostol-core)
+set(CORE_LIB_NAME apostol-core)
 set(MODULES_LIB_NAME apostol-modules)
 
 message(STATUS "Project name: ${PROJECT_NAME}")
@@ -37,35 +39,90 @@ add_custom_target(
         -P ${CMAKE_SOURCE_DIR}/AutoVersion.cmake
 )
 
+# Find PostgreSQL
+#------------------------------------------------------------------------------
 find_package(PostgreSQL REQUIRED)
 
-include_directories(src/lib/delphi src/apostol src/core src/utils src/modules)
+# Find PkgConfig
+#------------------------------------------------------------------------------
+find_package( PkgConfig REQUIRED )
 
+set( prefix "${CMAKE_PREFIX_PATH}" )
+set( exec_prefix "\${prefix}" )
+set( libdir "\${exec_prefix}/lib" )
+set( includedir "\${exec_prefix}/include" )
+
+set( pkgconfigdir "${libdir}/pkgconfig" CACHE PATH "Path to pkgconfig directory." )
+
+# Find dl
+#------------------------------------------------------------------------------
+if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+    find_package( Dl REQUIRED )
+endif()
+
+# Define project common includes directories
+#------------------------------------------------------------------------------
+if (BUILD_SHARED_LIBS)
+    include_directories( SYSTEM
+            ${dl_INCLUDE_DIRS} )
+else()
+    include_directories( SYSTEM
+            ${dl_INCLUDE_DIRS} )
+endif()
+
+# Define project common library directories
+#------------------------------------------------------------------------------
+if (BUILD_SHARED_LIBS)
+    link_directories(
+            ${dl_LIBRARY_DIRS} )
+else()
+    link_directories(
+            ${dl_LIBRARY_DIRS} )
+endif()
+
+# Define project common libraries/linker flags.
+#------------------------------------------------------------------------------
+if (BUILD_SHARED_LIBS)
+    link_libraries(
+            "-fstack-protector"
+            "-fstack-protector-all"
+            ${dl_LIBRARIES} )
+else()
+    link_libraries(
+            "-fstack-protector"
+            "-fstack-protector-all"
+            ${dl_LIBRARIES} )
+endif()
+
+# Apostol
+# ----------------------------------------------------------------------------------------------------------------------
+include_directories(src/lib/delphi src/${PROJECT_NAME} src/core src/modules)
+
+file(GLOB project_files version.h src/${PROJECT_NAME}/*.hpp src/${PROJECT_NAME}/*.cpp)
 file(GLOB delphi_files src/lib/delphi/*.hpp src/lib/delphi/*.cpp)
 file(GLOB core_files src/core/*.hpp src/core/*.cpp)
-file(GLOB apostol_files version.h src/apostol/*.hpp src/apostol/*.cpp)
 file(GLOB modules_files src/modules/Modules.hpp src/modules/*/*.hpp src/modules/*/*.cpp)
-
-link_libraries(dl)
 
 # Delphi classes for C++
 # ----------------------------------------------------------------------------------------------------------------------
 add_definitions(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
 add_library(${DELPHI_LIB_NAME} STATIC ${delphi_files})
-target_link_libraries(${DELPHI_LIB_NAME} pthread pq sqlite3)
+target_link_libraries(${DELPHI_LIB_NAME} pthread sqlite3 pq)
 
 # Apostol Core
 # ----------------------------------------------------------------------------------------------------------------------
-add_library(${APOSTOL_LIB_NAME} STATIC ${core_files})
+add_library(${CORE_LIB_NAME} STATIC ${core_files})
 
-target_compile_definitions(${APOSTOL_LIB_NAME} PUBLIC
+target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_NAME="${PROJECT_NAME}"
         APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
         APP_DEFAULT_LOCALE="en_US.UTF-8"
         APP_VAR="${PROJECT_NAME}"
         APP_OLDPID_EXT=".oldbin"
-        APP_PREFIX="${PROJECT_PREFIX}"
+        APP_DEFAULT_USER="nobody"
+        APP_DEFAULT_GROUP="nogroup"
+        APP_PREFIX="${PROJECT_PREFIX}/"
         APP_CONF_PREFIX="conf/"
         APP_CACHE_PREFIX="cache/"
         APP_SBIN_PATH="sbin/${PROJECT_NAME}"
@@ -78,17 +135,17 @@ target_compile_definitions(${APOSTOL_LIB_NAME} PUBLIC
         APP_DOC_ROOT="www/"
         )
 
-target_link_libraries(${APOSTOL_LIB_NAME} ${DELPHI_LIB_NAME})
+target_link_libraries(${CORE_LIB_NAME} ${DELPHI_LIB_NAME})
 
 # Apostol modules
 # ----------------------------------------------------------------------------------------------------------------------
 add_library(${MODULES_LIB_NAME} STATIC ${modules_files})
-target_link_libraries(${MODULES_LIB_NAME} ${DELPHI_LIB_NAME} ${APOSTOL_LIB_NAME} crypto curl)
+target_link_libraries(${MODULES_LIB_NAME} ${DELPHI_LIB_NAME} crypto curl)
 
-# Apostol Web Service
+# Apostol Bitcoin
 # ----------------------------------------------------------------------------------------------------------------------
-add_executable(${PROJECT_NAME} ${apostol_files})
-target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${APOSTOL_LIB_NAME} ${MODULES_LIB_NAME})
+add_executable(${PROJECT_NAME} ${project_files})
+target_link_libraries(${PROJECT_NAME} ${DELPHI_LIB_NAME} ${CORE_LIB_NAME} ${MODULES_LIB_NAME})
 
 add_dependencies(${PROJECT_NAME} auto_increment_version)
 # ----------------------------------------------------------------------------------------------------------------------

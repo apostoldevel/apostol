@@ -61,9 +61,10 @@ Author:
 
 #define log_failure(msg) {                                  \
   if (GLog != nullptr)                                      \
-    GLog->Error(LOG_EMERG, 0, msg);                         \
+    GLog->Error(APP_LOG_EMERG, 0, msg);                     \
   else                                                      \
     std::cerr << APP_NAME << ": " << (msg) << std::endl;    \
+  exit(2);                                                  \
 }                                                           \
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -80,7 +81,13 @@ typedef enum ProcessType {
 //----------------------------------------------------------------------------------------------------------------------
 
 static LPCTSTR PROCESS_TYPE_NAME[] = {
-        _T("main"), _T("single"), _T("master"), _T("signaller"), _T("new binary"), _T("worker"), _T("bitmessage")
+        _T("main"),
+        _T("single"),
+        _T("master"),
+        _T("signaller"),
+        _T("new binary"),
+        _T("worker"),
+        _T("helper")
 };
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -364,33 +371,33 @@ namespace Apostol {
 
             virtual bool DoExecute(CTCPConnection *AConnection) abstract;
 
-            void DoDebug(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args);
-            void DoAccessLog(CTCPConnection *AConnection);
+            virtual void DoDebug(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args);
+            virtual void DoAccessLog(CTCPConnection *AConnection);
 
-            void DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException);
-            void DoPQConnectException(CPQConnection *AConnection, Delphi::Exception::Exception *AException);
+            virtual void DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException);
+            virtual void DoPQConnectException(CPQConnection *AConnection, Delphi::Exception::Exception *AException);
 
-            void DoPQStatus(CPQConnection *AConnection);
-            void DoPQPollingStatus(CPQConnection *AConnection);
+            virtual void DoPQStatus(CPQConnection *AConnection);
+            virtual void DoPQPollingStatus(CPQConnection *AConnection);
 
-            void DoPQReceiver(CPQConnection *AConnection, const PGresult *AResult);
-            void DoPQProcessor(CPQConnection *AConnection, LPCSTR AMessage);
+            virtual void DoPQReceiver(CPQConnection *AConnection, const PGresult *AResult);
+            virtual void DoPQProcessor(CPQConnection *AConnection, LPCSTR AMessage);
 
-            void DoPQConnect(CPQConnection *AConnection);
-            void DoPQDisconnect(CPQConnection *AConnection);
+            virtual void DoPQConnect(CObject *Sender);
+            virtual void DoPQDisconnect(CObject *Sender);
 
-            void DoPQSendQuery(CPQQuery *AQuery);
-            void DoPQResultStatus(CPQResult *AResult);
-            void DoPQResult(CPQResult *AResult, ExecStatusType AExecStatus);
+            virtual void DoPQSendQuery(CPQQuery *AQuery);
+            virtual void DoPQResultStatus(CPQResult *AResult);
+            virtual void DoPQResult(CPQResult *AResult, ExecStatusType AExecStatus);
 
-            void DoServerListenException(CSocketEvent *Sender, Delphi::Exception::Exception *AException);
-            void DoServerException(CTCPConnection *AConnection, Delphi::Exception::Exception *AException);
-            void DoServerEventHandlerException(CPollEventHandler *AHandler, Delphi::Exception::Exception *AException);
+            virtual void DoServerListenException(CSocketEvent *Sender, Delphi::Exception::Exception *AException);
+            virtual void DoServerException(CTCPConnection *AConnection, Delphi::Exception::Exception *AException);
+            virtual void DoServerEventHandlerException(CPollEventHandler *AHandler, Delphi::Exception::Exception *AException);
 
-            void DoServerConnected(CObject *Sender);
-            void DoServerDisconnected(CObject *Sender);
+            virtual void DoServerConnected(CObject *Sender);
+            virtual void DoServerDisconnected(CObject *Sender);
 
-            void DoNoCommandHandler(CSocketEvent *Sender, LPCTSTR AData, CTCPConnection *AConnection);
+            virtual void DoNoCommandHandler(CSocketEvent *Sender, LPCTSTR AData, CTCPConnection *AConnection);
 
             void SetServer(CHTTPServer *Value);
             void SetPQServer(CPQServer *Value);
@@ -406,8 +413,10 @@ namespace Apostol {
             void PQServer(CPQServer *Value) { SetPQServer(Value); };
 
             void InitializeServerHandlers();
-        };
 
+            virtual CPQPollQuery *GetQuery(CPollConnection *AConnection);
+
+        };
 
         //--------------------------------------------------------------------------------------------------------------
 

@@ -457,6 +457,7 @@ namespace Delphi {
         void CPQConnection::Disconnect() {
             if (m_TryConnect) {
                 DoDisconnected(this);
+                ClosePoll();
                 Finish();
             }
         }
@@ -869,8 +870,6 @@ namespace Delphi {
 
             m_OnStatus = nullptr;
             m_OnPollingStatus = nullptr;
-            m_OnConnected = nullptr;
-            m_OnDisconnected = nullptr;
 
             m_OnConnectException = nullptr;
             m_OnServerException = nullptr;
@@ -905,20 +904,6 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPQConnectPollEvent::DoConnected(CPQConnection *AConnection) {
-            if (m_OnConnected != nullptr) {
-                m_OnConnected(AConnection);
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CPQConnectPollEvent::DoDisconnected(CPQConnection *AConnection) {
-            if (m_OnDisconnected != nullptr) {
-                m_OnDisconnected(AConnection);
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         void CPQConnectPollEvent::DoConnectException(CPQConnection *AConnection,
                 Exception::Exception *AException) {
             if (m_OnConnectException != nullptr) {
@@ -932,25 +917,18 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQConnectPoll::CPQConnectPoll(size_t ASizeMin, size_t ASizeMax): CPQConnectPollEvent() {
+        CPQConnectPoll::CPQConnectPoll(size_t ASizeMin, size_t ASizeMax): CPQConnectPollEvent(), CEPollClient() {
             m_Active = false;
 
             m_SizeMin = ASizeMin;
             m_SizeMax = ASizeMax;
 
-            m_EventHandlers = nullptr;
-
-            m_PollStack = new CPollStack(ASizeMax);
             m_Queue = new CQueue;
 
             m_PollQueryManager = new CPQPollQueryManager();
             m_PollManager = new CPollManager;
 
-            m_FreePollStack = true;
-
             m_OnEventHandlerException = nullptr;
-
-            CreatePollEventHandlers();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -963,27 +941,8 @@ namespace Delphi {
         CPQConnectPoll::~CPQConnectPoll() {
             StopAll();
             FreeAndNil(m_Queue);
-            FreeAndNil(m_EventHandlers);
             FreeAndNil(m_PollManager);
             FreeAndNil(m_PollQueryManager);
-            if (m_FreePollStack)
-                FreeAndNil(m_PollStack);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CPQConnectPoll::SetPollStack(CPollStack *Value) {
-            if (m_PollStack != Value) {
-                FreeAndNil(m_PollStack);
-                m_PollStack = Value;
-                m_EventHandlers->PollStack(Value);
-                m_FreePollStack = false;
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CPQConnectPoll::CreatePollEventHandlers() {
-            m_EventHandlers = new CPollEventHandlers(m_PollStack);
-            m_EventHandlers->OnException(std::bind(&CPQConnectPoll::DoEventHandlersException, this, _1, _2));
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -993,7 +952,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         void CPQConnectPoll::Start() {
-            for (int I = 0; I < m_SizeMin; ++I) {
+            for (size_t I = 0; I < m_SizeMin; ++I) {
                 if (!NewConnection())
                     break;
             }
@@ -1030,11 +989,13 @@ namespace Delphi {
             try {
                 LEventHandler = m_EventHandlers->Add(AConnection->Socket());
 
-                LEventHandler->OnTimeOutEvent(std::bind(&CPQConnectPoll::DoTimeOutEvent, this, _1));
-                LEventHandler->OnReadEvent(std::bind(&CPQConnectPoll::DoReadEvent, this, _1));
-                LEventHandler->OnWriteEvent(std::bind(&CPQConnectPoll::DoWriteEvent, this, _1));
+                if (ExternalPollStack()) {
+                    LEventHandler->OnTimeOutEvent(std::bind(&CPQConnectPoll::DoTimeOut, this, _1));
+                    LEventHandler->OnReadEvent(std::bind(&CPQConnectPoll::DoRead, this, _1));
+                    LEventHandler->OnWriteEvent(std::bind(&CPQConnectPoll::DoWrite, this, _1));
+                }
 
-                LEventHandler->Binding(AConnection);
+                LEventHandler->Binding(AConnection, true);
                 LEventHandler->Start(etIO);
 
             } catch (Exception::Exception &E) {
@@ -1160,7 +1121,7 @@ namespace Delphi {
                 }
             }
 
-            if (LResult == nullptr && (m_EventHandlers->Count() < m_SizeMax)) {
+            if (LResult == nullptr && (m_PollManager->Count() < m_SizeMax)) {
                 if (!NewConnection())
                     throw Exception::EDBConnectionError(_T("Unable to create new database connection."));
             }
@@ -1169,12 +1130,17 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPQConnectPoll::DoTimeOutEvent(CPollEventHandler *AHandler) {
+        void CPQConnectPoll::DoTimeOut(CPollEventHandler *AHandler) {
             Stop(AHandler);
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPQConnectPoll::DoReadEvent(CPollEventHandler *AHandler) {
+        void CPQConnectPoll::DoConnect(CPollEventHandler *AHandler) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CPQConnectPoll::DoRead(CPollEventHandler *AHandler) {
             auto LConnection = GetConnection(AHandler);
             try {
                 switch (LConnection->ConnectionStatus()) {
@@ -1211,7 +1177,7 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPQConnectPoll::DoWriteEvent(CPollEventHandler *AHandler) {
+        void CPQConnectPoll::DoWrite(CPollEventHandler *AHandler) {
             auto LConnection = GetConnection(AHandler);
             try {
                 switch (LConnection->ConnectionStatus()) {
@@ -1222,7 +1188,6 @@ namespace Delphi {
                         } else {
                             LConnection->ConnectPoll();
                         }
-
                         break;
 
                     case qsReset:
@@ -1236,6 +1201,11 @@ namespace Delphi {
 
                     case qsReady:
                         LConnection->Flush();
+
+                        if (m_Queue->Count() == 0 && m_PollManager->Count() > m_SizeMax) {
+                            LConnection->Disconnect();
+                        }
+
                         CheckQueue();
                         break;
 
@@ -1263,12 +1233,6 @@ namespace Delphi {
                 LPollQuery->QueryStart();
             }
         }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CPQConnectPoll::DoEventHandlersException(CPollEventHandler *AHandler, Exception::Exception *AException) {
-            if (m_OnEventHandlerException != nullptr)
-                m_OnEventHandlerException(AHandler, AException);
-        }
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1281,10 +1245,10 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQPollQuery *CPQServer::FindQuryByConnection(CPollConnection *APollConnection) {
+        CPQPollQuery *CPQServer::FindQueryByConnection(CPollConnection *APollConnection) {
             for (int I = 0; I < PollQueryManager()->QueryCount(); ++I) {
-                if (PollQueryManager()->Querys(I)->PollConnection() == APollConnection)
-                    return PollQueryManager()->Querys(I);
+                if (PollQueryManager()->Queries(I)->PollConnection() == APollConnection)
+                    return PollQueryManager()->Queries(I);
             }
             return nullptr;
         }
@@ -1294,6 +1258,16 @@ namespace Delphi {
             if (m_OnServerException != nullptr) {
                 m_OnServerException(this, AException);
             }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CPQServer::DoCommand(CTCPConnection *AConnection) {
+            return false;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CPQServer::DoExecute(CTCPConnection *AConnection) {
+            return CEPollClient::DoExecute(AConnection);
         }
     }
 }

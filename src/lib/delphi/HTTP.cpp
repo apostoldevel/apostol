@@ -1804,7 +1804,7 @@ namespace Delphi {
 
                     LIOHandler->AfterAccept();
 
-                    LEventHandler = EventHandlers()->Add(LIOHandler->Binding()->Handle());
+                    LEventHandler = m_EventHandlers->Add(LIOHandler->Binding()->Handle());
                     LEventHandler->Binding(LConnection);
                     LEventHandler->Start(etIO);
 
@@ -1923,33 +1923,25 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CHTTPClient::DoTimeOut(CPollEventHandler *AHandler) {
-            CEPollClient::DoTimeOut(AHandler);
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         void CHTTPClient::DoConnectStart(CIOHandlerSocket *AIOHandler, CPollEventHandler *AHandler) {
             auto LConnection = new CHTTPClientConnection(this);
-            try {
-                LConnection->IOHandler(AIOHandler);
-                AHandler->Binding(LConnection);
-            } catch (Exception::Exception &E) {
-                DoException(LConnection, &E);
-            }
+            LConnection->IOHandler(AIOHandler);
+            AHandler->Binding(LConnection, true);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CHTTPClient::DoConnect(CPollEventHandler *AHandler) {
-            auto LConnection = (CHTTPClientConnection *) AHandler->Binding();
+            auto LConnection = dynamic_cast<CHTTPClientConnection *> (AHandler->Binding());
             try {
                 auto LIOHandler = (CIOHandlerSocket *) LConnection->IOHandler();
 
                 if (LIOHandler->Binding()->CheckConnection()) {
                     LConnection->OnDisconnected(std::bind(&CHTTPClient::DoDisconnected, this, _1));
                     AHandler->Start(etIO);
-                    DoConnected(AHandler->Binding());
+                    DoConnected(LConnection);
                 }
             } catch (Exception::Exception &E) {
+                delete AHandler;
                 throw ESocketError(E.ErrorCode(), "Connection failed ");
             }
         }
