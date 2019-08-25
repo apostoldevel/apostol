@@ -819,7 +819,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CServerProcess::DoDebug(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat,
+        void CServerProcess::DoVerbose(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat,
                                      va_list args) {
             Log()->Debug(0, AFormat, args);
         }

@@ -102,15 +102,12 @@ namespace Delphi {
                 }
             };
 
-            LPCTSTR Message() const noexcept { return m_Message.c_str(); };
+            CString& Message() noexcept { return m_Message; };
+            const CString& Message() const noexcept { return m_Message; };
 
             int ErrorCode() { return m_SysError; };
 
-            LPCWSTR wwhat() const noexcept { return m_Message.c_w_str(); };
-
-            LPCTSTR twhat() const noexcept { return m_Message.c_str(); };
-
-            LPCSTR what() const noexcept override { return m_Message.c_a_str(); };
+            LPCSTR what() const noexcept override { return m_Message.c_str(); };
         };
         //--------------------------------------------------------------------------------------------------------------
 

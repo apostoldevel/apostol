@@ -133,14 +133,14 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        CSocket CStack::Accept(CSocket ASocket, char *VIP, size_t ASize, unsigned short *VPort, int AFlags) {
+        CSocket CStack::Accept(CSocket ASocket, char *VIP, size_t ASize, unsigned short *VPort, unsigned int AFlags) {
             CSocket Socket;
 
             SOCKADDR_IN addr = {0};
             socklen_t addrlen = sizeof(SOCKADDR_IN);
 
             if (((AFlags & SOCK_NONBLOCK) == SOCK_NONBLOCK) || ((AFlags & SOCK_CLOEXEC) == SOCK_CLOEXEC))
-                Socket = ::accept4(ASocket, (struct sockaddr *) &addr, &addrlen, AFlags);
+                Socket = ::accept4(ASocket, (struct sockaddr *) &addr, &addrlen, (int) AFlags);
             else
                 Socket = ::accept(ASocket, (struct sockaddr *) &addr, &addrlen);
 
@@ -309,7 +309,7 @@ namespace Delphi {
         };
         //--------------------------------------------------------------------------------------------------------------
 
-        CSocket CStack::Socket(int ADomain, int AType, int AProtocol, int AFlag) {
+        CSocket CStack::Socket(int ADomain, int AType, int AProtocol, unsigned int AFlag) {
             CSocket Socket;
 
             Socket = ::socket(ADomain, AType, AProtocol);
@@ -499,7 +499,7 @@ namespace Delphi {
 
                 if (GInstanceCount == 0)
                 {
-                    GStack->DeleteSocket();
+                    Delphi::Socket::CStack::DeleteSocket();
                     GStack = nullptr;
                 }
             } catch (...) {
@@ -1810,7 +1810,7 @@ namespace Delphi {
         //--------------------------------------------------------------------------------------------------------------
 
         CSocketEvent::CSocketEvent(): CSocketComponent() {
-            m_OnDebug = nullptr;
+            m_OnVerbose = nullptr;
             m_OnAccessLog = nullptr;
             m_OnExecute = nullptr;
             m_OnException = nullptr;
@@ -1823,11 +1823,11 @@ namespace Delphi {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CSocketEvent::DoDebug(CTCPConnection *AConnection, LPCTSTR AFormat, ...) {
+        void CSocketEvent::DoVerbose(CTCPConnection *AConnection, LPCTSTR AFormat, ...) {
             va_list args;
-            if (m_OnDebug != nullptr) {
+            if (m_OnVerbose != nullptr) {
                 va_start(args, AFormat);
-                m_OnDebug(this, AConnection, AFormat, args);
+                m_OnVerbose(this, AConnection, AFormat, args);
                 va_end(args);
             }
         }

@@ -61,7 +61,10 @@ namespace Apostol {
             CString             m_cmdline;
 
             CString             m_name;
+            CString             m_description;
+            CString             m_version;
             CString             m_title;
+
             CString             m_header;
 
         protected:
@@ -100,11 +103,18 @@ namespace Apostol {
             CString& Name() { return m_name; };
             const CString& Name() const { return m_name; };
 
+            CString& Description() { return m_description; };
+            const CString& Description() const { return m_description; };
+
+            CString& Version() { return m_version; };
+            const CString& Version() const { return m_version; };
+
             CString& Title() { return m_title; };
             const CString& Title() const { return m_title; };
 
             CString& Header() { return m_header; };
 
+            // Replace command name
             void Header(const CString& Value) { SetHeader(Value.c_str()); };
             void Header(LPCTSTR Value) { SetHeader(Value); };
 

@@ -126,6 +126,8 @@ namespace Delphi {
             const CString &Values(LPCTSTR Name) const { return GetValue(Name); };
 
             CHeader& Headers(int Index) { return Get(Index); }
+            const CHeader& Headers(int Index) const { return Get(Index); }
+
             void Headers(int Index, const CHeader& Header) { Put(Index, Header); }
 
             CHeaders& operator= (const CHeaders& H) {
@@ -136,6 +138,9 @@ namespace Delphi {
 
             CHeader& operator[](int Index) { return Get(Index); }
             const CHeader& operator[](int Index) const { return Get(Index); }
+
+            CHeader& operator[](LPCTSTR Name) { return Headers(IndexOfName(Name)); }
+            const CHeader& operator[](LPCTSTR Name) const { return Headers(IndexOfName(Name)); }
         };
 
         //--------------------------------------------------------------------------------------------------------------

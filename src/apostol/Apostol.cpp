@@ -186,11 +186,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApostol::Run() {
-#ifdef _DEBUG
-            Log()->Error(APP_LOG_NOTICE, 0, "%s version: %s (%s build)", APP_DESCRIPTION, APP_VERSION, "debug");
-#else
-            Log()->Error(APP_LOG_NOTICE, 0, "%s version: %s (%s build)", APP_DESCRIPTION, APP_VERSION, "release");
-#endif
             CApplication::Run();
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -209,9 +204,14 @@ int main(int argc, char *argv[]) {
     try
     {
         Application = CApostol::Create(argc, argv);
+
         Application->Name() = APP_NAME;
+        Application->Description() = APP_DESCRIPTION;
+        Application->Version() = APP_VERSION;
         Application->Title() = APP_VER;
+
         Application->Run();
+
         exitcode = Application->ExitCode();
     }
     catch (std::exception& e)

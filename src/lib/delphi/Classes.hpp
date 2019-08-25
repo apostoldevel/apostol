@@ -818,9 +818,13 @@ namespace Delphi {
             typedef value_type& reference;
             typedef const value_type& const_reference;
 
+        private:
+
+            size_t m_MaxFormatSize;
+
         public:
 
-            CString(): CCustomString() {};
+            CString();
 
             CString(const CString& S);
 
@@ -845,16 +849,19 @@ namespace Delphi {
             void Format(LPCTSTR pszFormat, ...);
             void Format(LPCTSTR pszFormat, va_list argList);
 
+            size_t MaxFormatSize() { return m_MaxFormatSize; }
+            void MaxFormatSize(size_t Value) { m_MaxFormatSize = Value; }
+
             size_t Find(const CString& S, size_t Pos = 0) const;
             size_t Find(LPCTSTR Str, size_t Pos = 0) const;
             size_t Find(LPCTSTR Str, size_t Pos, size_t Length) const;
             size_t Find(TCHAR C, size_t Pos = 0) const;
 
             value_type GetFront() { return GetChar(0); };
-            const value_type GetFront() const { return GetChar(0); };
+            value_type GetFront() const { return GetChar(0); };
 
             value_type GetBack() { return GetChar(Length() - 1); };
-            const value_type GetBack() const { return GetChar(Length() - 1); };
+            value_type GetBack() const { return GetChar(Length() - 1); };
 
             int Compare(const CString& S) const;
             int Compare(const std::string& S) const;

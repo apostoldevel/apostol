@@ -451,13 +451,18 @@ namespace Apostol {
                 ExitRun(1);
             }
 
-            Log()->Error(APP_LOG_INFO, 0, "Config file: %s", Config()->ConfFile().c_str());
-
             CreateDirectories();
 
             DefaultLocale.SetLocale(Config()->Locale().c_str());
 
             CreateLogFile();
+
+#ifdef _DEBUG
+            Log()->Message("%s version: %s (%s build)", Description().c_str(), Version().c_str(), "debug");
+#else
+            Log()->Message("%s version: %s (%s build)", Description().c_str(), Version().c_str(), "release");
+#endif
+            Log()->Message("Config file: %s", Config()->ConfFile().c_str());
 
             StartProcess();
         }
@@ -539,7 +544,7 @@ namespace Apostol {
 
             LServer->OnExecute(std::bind(&CApplicationProcess::DoExecute, this, _1));
 
-            LServer->OnDebug(std::bind(&CApplicationProcess::DoDebug, this, _1, _2, _3, _4));
+            LServer->OnVerbose(std::bind(&CApplicationProcess::DoVerbose, this, _1, _2, _3, _4));
             LServer->OnAccessLog(std::bind(&CApplicationProcess::DoAccessLog, this, _1));
 
             LServer->OnException(std::bind(&CApplicationProcess::DoServerException, this, _1, _2));

@@ -371,7 +371,7 @@ namespace Apostol {
 
             virtual bool DoExecute(CTCPConnection *AConnection) abstract;
 
-            virtual void DoDebug(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args);
+            virtual void DoVerbose(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args);
             virtual void DoAccessLog(CTCPConnection *AConnection);
 
             virtual void DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException);

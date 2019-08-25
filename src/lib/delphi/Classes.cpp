@@ -1549,6 +1549,11 @@ namespace Delphi {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        CString::CString(): CCustomString(), m_MaxFormatSize(MaxFormatStringLength) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         CString::CString(const CString &S) : CString()  {
             Create(S);
         }
@@ -1701,7 +1706,7 @@ namespace Delphi {
         void CString::Format(LPCTSTR pszFormat, va_list argList) {
             CString LStr;
             size_t cchDest;
-            LStr.SetLength(MaxFormatStringLength);
+            LStr.SetLength(m_MaxFormatSize);
             cchDest = LStr.GetSize();
             chVERIFY(SUCCEEDED(StringPCchVPrintf(LStr.Data(), &cchDest, pszFormat, argList)));
             AddStr(LStr.Data(), cchDest / sizeof(TCHAR));

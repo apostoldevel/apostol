@@ -140,7 +140,7 @@ namespace Delphi {
 
             inline static class CStack *CreateSocket() { return GStack = new CStack; };
 
-            inline void DeleteSocket() { delete GStack; };
+            inline static void DeleteSocket() { delete GStack; };
 
             CSocket CreateSocketHandle(int ASocketType, int AProtocol = IPPROTO_IP, int AFlag = 0);
 
@@ -150,7 +150,7 @@ namespace Delphi {
 
             void RaiseSocketError(int AErr);
 
-            virtual CSocket Accept(CSocket ASocket, char *VIP, size_t ASize, unsigned short *VPort, int AFlags);
+            virtual CSocket Accept(CSocket ASocket, char *VIP, size_t ASize, unsigned short *VPort, unsigned int AFlags);
 
             virtual int Bind(CSocket ASocket, sa_family_t AFamily, LPCSTR AIP, unsigned short APort);
 
@@ -182,7 +182,7 @@ namespace Delphi {
 
             virtual int SetSockOpt(CSocket ASocket, int ALevel, int AOptName, const void *AOptVal, socklen_t AOptLen);
 
-            virtual CSocket Socket(int ADomain, int AType, int AProtocol, int AFlag);
+            virtual CSocket Socket(int ADomain, int AType, int AProtocol, unsigned int AFlag);
 
             virtual int Shutdown(CSocket ASocket, int AHow);
 
@@ -750,7 +750,7 @@ namespace Delphi {
         class CSocketEvent;
         //--------------------------------------------------------------------------------------------------------------
 
-        typedef std::function<void (CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args)> COnSocketDebugEvent;
+        typedef std::function<void (CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args)> COnSocketVerboseEvent;
 
         typedef std::function<bool (CTCPConnection *AConnection)> COnSocketExecuteEvent;
 
@@ -774,7 +774,7 @@ namespace Delphi {
 
         protected:
 
-            COnSocketDebugEvent m_OnDebug;
+            COnSocketVerboseEvent m_OnVerbose;
             COnSocketConnectionEvent m_OnAccessLog;
 
             COnSocketExecuteEvent m_OnExecute;
@@ -789,7 +789,7 @@ namespace Delphi {
             COnSocketAfterCommandHandlerEvent m_OnAfterCommandHandler;
             COnSocketNoCommandHandlerEvent m_OnNoCommandHandler;
 
-            virtual void DoDebug(CTCPConnection *AConnection, LPCTSTR AFormat, ...);
+            virtual void DoVerbose(CTCPConnection *AConnection, LPCTSTR AFormat, ...);
 
             virtual bool DoCommand(CTCPConnection *AConnection) abstract;
 
@@ -811,8 +811,8 @@ namespace Delphi {
 
             CSocketEvent();
 
-            const COnSocketDebugEvent &OnDebug() { return m_OnDebug; }
-            void OnDebug(COnSocketDebugEvent && Value) { m_OnDebug = Value; }
+            const COnSocketVerboseEvent &OnVerbose() { return m_OnVerbose; }
+            void OnVerbose(COnSocketVerboseEvent && Value) { m_OnVerbose = Value; }
 
             const COnSocketExecuteEvent &OnExecute() { return m_OnExecute; }
             void OnExecute(COnSocketExecuteEvent && Value) { m_OnExecute = Value; }
