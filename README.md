@@ -74,7 +74,7 @@ Apostol Web Service
 1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/)* (libraries and headers for C language backend development).
 1. Библиотека [sqllite3](https://www.sqlite.org/download/)* (SQLite 3);
 
-* В данной конфигурации PostgreSQL и Sqlite3 отключены. Поэтому библиотеки помеченные '*' можно не устанавливать.
+###### В данной конфигурации PostgreSQL и Sqlite3 отключены. Поэтому библиотеки помеченные '*' можно не устанавливать.
 
 Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
 ~~~
@@ -102,8 +102,8 @@ git clone https://github.com/ufocomp/apostol-bitcoin.git
 ~~~
 
 ###### Параметры конфигурации CMake
-Логический флаг USE_POSTGRESQL можно использовать, чтобы включить поддержку PostgreSQL. По умолчанию установлено в OFF.
-Логический флаг USE_SQLITE3 можно использовать, чтобы включить поддержку sqlite3. По умолчанию установлено в OFF.
+Логический флаг **USE_POSTGRESQL** можно использовать, чтобы включить поддержку PostgreSQL. По умолчанию установлено в OFF.
+Логический флаг **USE_SQLITE3** можно использовать, чтобы включить поддержку sqlite3. По умолчанию установлено в OFF.
 
 ###### Сборка:
 ~~~
