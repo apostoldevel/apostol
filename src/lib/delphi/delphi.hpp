@@ -29,13 +29,14 @@ Author:
 #include <cstdarg>
 #include <cmath>
 #include <climits>
+#include <ctime>
 #include <functional>
 #include <unistd.h>
 #include <fcntl.h>
 #include <malloc.h>
+#include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <sys/timerfd.h>
 #include <sys/types.h>
 #include <syscall.h>
@@ -261,13 +262,17 @@ inline void chMB(LPCSTR szMsg);
 #    include "HTTP.hpp"
 #  endif
 
-#  ifndef DELPHI_SQLLITE_HPP
-#    include "SQLite.hpp"
-#  endif
-
+#ifdef DELPHI_POSTGRESQL
 #  ifndef DELPHI_POSTGRES_HPP
 #    include "Postgres.hpp"
 #  endif
+#endif
+
+#ifdef DELPHI_SQLLITE
+#  ifndef DELPHI_SQLLITE_HPP
+#    include "SQLite.hpp"
+#  endif
+#endif
 
 #else
 #  define LIB_DELPHI

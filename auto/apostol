@@ -13,7 +13,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/apostol
 #DAEMOD_OPTS="-p /etc/apostol -c /etc/apostol/apostol.conf"
 NAME=apostol
-DESC=apostol
+DESC=Apostol Web Service
 
 # Include apostol defaults if available
 if [ -r /etc/default/apostol ]; then

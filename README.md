@@ -16,9 +16,7 @@ Apostol Web Service
     ├─lib/            содержит файлы с исходным кодом библиотек
     | └─delphi/       содержит файлы с исходным кодом библиотеки: Delphi classes for C++
     └─modules/        содержит файлы с исходным кодом дополнений (модулей)
-      ├─WebServer/    содержит файлы с исходным кодом дополнения: Web-Server
-      ├─Exchange/     содержит файлы с исходным кодом дополнения: Exchange (Криптобиржа)
-      └─Client365/    содержит файлы с исходным кодом дополнения: Клиент 365
+      └─WebServer/    содержит файлы с исходным кодом дополнения: Web-Server
 
 ОПИСАНИЕ
 -
@@ -50,7 +48,7 @@ Apostol Web Service
 
 #### **Асинхронный PostgreSQL сервер**.
 	
-Сервер создаёт пул подключений к СУБД Postgres и позволяет отправлять SQL запросы в **асинхронном** режиме.
+Сервер создаёт пул подключений к СУБД PostgreSQL и позволяет отправлять SQL запросы в **асинхронном** режиме.
 Указать диапазон минимального и максимального количества подключений к СУБД можно в файле конфигурации в секции `[postgres]`
 
 ###### Сервер построен на базе библиотеки `libpq` с применением асинхронных команд.
@@ -61,7 +59,7 @@ Apostol Web Service
 Апостол спроектирован таким образом, что основной код отвечает:
 - за работу приложения в качестве системной службы;
 - реализацию протоколов TCP/IP, HTTP;
-- взаимодействие с СУБД Postgres. 
+- взаимодействие с СУБД PostgreSQL. 
 
 Код реализующий логику того или иного сервиса находится отдельно от основного кода в расширениях (модулях). 
 
@@ -72,10 +70,11 @@ Apostol Web Service
 
 1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
-1. Библиотека [libbitcoin-system](https://github.com/libbitcoin/libbitcoin-system/) (Bitcoin Cross-Platform C++ Development Toolkit);
-1. Библиотека [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development);
-1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development).
-1. Библиотека [sqllite3](https://www.sqlite.org/download/) (SQLite 3);
+1. Библиотека [libpq-dev](https://www.postgresql.org/download/)* (libraries and headers for C language frontend development);
+1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/)* (libraries and headers for C language backend development).
+1. Библиотека [sqllite3](https://www.sqlite.org/download/)* (SQLite 3);
+
+* В данной конфигурации PostgreSQL и Sqlite3 отключены. Поэтому библиотеки помеченные '*' можно не устанавливать.
 
 Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
 ~~~
@@ -102,9 +101,13 @@ sudo apt-get install sqlite3 libsqlite3-dev
 git clone https://github.com/ufocomp/apostol-bitcoin.git
 ~~~
 
+###### Параметры конфигурации CMake
+Логический флаг USE_POSTGRESQL можно использовать, чтобы включить поддержку PostgreSQL. По умолчанию установлено в OFF.
+Логический флаг USE_SQLITE3 можно использовать, чтобы включить поддержку sqlite3. По умолчанию установлено в OFF.
+
 ###### Сборка:
 ~~~
-cd apostol-bitcoin
+cd apostol
 cmake -DCMAKE_BUILD_TYPE=Release . -B cmake-build-release
 ~~~
 
@@ -122,7 +125,7 @@ sudo make install
 
 Файл конфигурации и необходимые для работы файлы будут расположены в: 
 ~~~
-/etc/abc
+/etc/apostol
 ~~~
 
 ЗАПУСК
@@ -133,20 +136,19 @@ sudo make install
 
 Для запуска Апостол выполните:
 ~~~
-sudo service abc start
+sudo service apostol start
 ~~~
 
 Для проверки статуса выполните:
 ~~~
-sudo service abc status
+sudo service apostol status
 ~~~
 
 Результат должен быть **примерно** таким:
 ~~~
-sudo systemctl status apostol
-● apostol.service - LSB: starts the apostol web service
+● apostol.service - LSB: starts the Apostol Web Service
    Loaded: loaded (/etc/init.d/apostol)
-   Active: active (running) since Sun 2019-04-07 01:42:54 MSK; 21h ago
+   Active: active (running) since Wed 2019-01-02 03:04:05 MSK; 21h ago
    CGroup: /system.slice/apostol.service
            ├─26772 apostol: master process /usr/sbin/apostol
            └─26773 apostol: worker process (apostol)

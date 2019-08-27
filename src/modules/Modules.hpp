@@ -29,13 +29,9 @@ Author:
 //----------------------------------------------------------------------------------------------------------------------
 
 #include "WebServer/WebServer.hpp"
-#include "Client365/Client365.hpp"
-#include "Exchange/Exchange.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 static void CreateModule(CModuleManager *AManager) {
-    CClient365::CreateModule(AManager);
-    CExchange::CreateModule(AManager);
     CWebServer::CreateModule(AManager);
 }
 
