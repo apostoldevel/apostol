@@ -1,0 +1,4 @@
+/.idea
+version.h
+/cmake-build-*
+/src/lib/delphi
