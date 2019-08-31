@@ -60,43 +60,6 @@ add_subdirectory(${DELPHI_LIB_DIR})
 include_directories(${DELPHI_LIB_DIR}/include)
 include_directories(${DELPHI_LIB_DIR}/src)
 
-# Find PkgConfig
-#------------------------------------------------------------------------------
-find_package( PkgConfig REQUIRED )
-
-set( prefix "${CMAKE_PREFIX_PATH}" )
-set( exec_prefix "\${prefix}" )
-set( libdir "\${exec_prefix}/lib" )
-set( includedir "\${exec_prefix}/include" )
-
-set( pkgconfigdir "${libdir}/pkgconfig" CACHE PATH "Path to pkgconfig directory." )
-
-# Find dl
-#------------------------------------------------------------------------------
-if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
-    find_package( Dl REQUIRED )
-endif()
-
-# Define project common includes directories
-#------------------------------------------------------------------------------
-include_directories( SYSTEM
-        ${dl_INCLUDE_DIRS}
-        )
-
-# Define project common library directories
-#------------------------------------------------------------------------------
-link_directories(
-        ${dl_LIBRARY_DIRS}
-)
-
-# Define project common libraries/linker flags.
-#------------------------------------------------------------------------------
-link_libraries(
-        "-fstack-protector"
-        "-fstack-protector-all"
-        ${dl_LIBRARIES}
-)
-
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
 include_directories(src/${PROJECT_NAME} src/core src/modules)
@@ -133,24 +96,25 @@ target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_DOC_ROOT="www/"
         )
 
-target_link_libraries(${CORE_LIB_NAME} pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME})
+target_link_libraries(${CORE_LIB_NAME} dl pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME})
 
 # Apostol modules
 # ----------------------------------------------------------------------------------------------------------------------
 add_library(${MODULES_LIB_NAME} STATIC ${modules_files})
 target_link_libraries(${MODULES_LIB_NAME} ${CORE_LIB_NAME})
 
-# Apostol Bitcoin
+# Apostol
 # ----------------------------------------------------------------------------------------------------------------------
 add_executable(${PROJECT_NAME} ${project_files})
 target_link_libraries(${PROJECT_NAME} ${MODULES_LIB_NAME})
 
 add_dependencies(${PROJECT_NAME} auto_increment_version)
-# ----------------------------------------------------------------------------------------------------------------------
 
+# Install
+# ----------------------------------------------------------------------------------------------------------------------
 set(INSTALL_PATH "${PROJECT_PREFIX}")
 
-install(TARGETS ${PROJECT_NAME} CONFIGURATIONS Release DESTINATION ${INSTALL_BIN_PATH})
+install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_BIN_PATH})
 install(FILES auto/${PROJECT_NAME} DESTINATION /etc/init.d PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 install(DIRECTORY DESTINATION ${INSTALL_PATH})
