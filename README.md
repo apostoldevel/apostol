@@ -14,7 +14,6 @@ Apostol Web Service
     ├─apostol/        содержит файлы с исходным кодом: Apostol Web Service
     ├─core/           содержит файлы с исходным кодом: Apostol Core
     ├─lib/            содержит файлы с исходным кодом библиотек
-    | └─delphi/       содержит файлы с исходным кодом библиотеки: Delphi classes for C++
     └─modules/        содержит файлы с исходным кодом дополнений (модулей)
       └─WebServer/    содержит файлы с исходным кодом дополнения: Web-Server
 
@@ -51,7 +50,7 @@ Apostol Web Service
 Сервер создаёт пул подключений к СУБД PostgreSQL и позволяет отправлять SQL запросы в **асинхронном** режиме.
 Указать диапазон минимального и максимального количества подключений к СУБД можно в файле конфигурации в секции `[postgres]`
 
-###### Сервер построен на базе библиотеки `libpq` с применением асинхронных команд.
+###### По умолчанию поддержка PostgreSQL отключена.
 	
 МОДУЛИ
 -
@@ -63,6 +62,17 @@ Apostol Web Service
 
 Код реализующий логику того или иного сервиса находится отдельно от основного кода в расширениях (модулях). 
 
+НАСТРОЙКА
+-
+
+###### Параметры конфигурации CMake
+
+В файле `CMakeLists.txt` укажите фаги:
+
+Логический флаг **USE_POSTGRESQL** можно использовать, чтобы включить поддержку PostgreSQL. По умолчанию установлено в OFF.
+
+Логический флаг **USE_SQLITE3** можно использовать, чтобы включить поддержку sqlite3. По умолчанию установлено в OFF.
+
 СБОРКА
 -
 
@@ -70,20 +80,17 @@ Apostol Web Service
 
 1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
-1. Библиотека [libpq-dev](https://www.postgresql.org/download/)* (libraries and headers for C language frontend development);
-1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/)* (libraries and headers for C language backend development).
-1. Библиотека [sqllite3](https://www.sqlite.org/download/)* (SQLite 3);
+1. Библиотека [libdelphi](https://github.com/ufocomp/apostol/libdelphi/) (Delphi classes for C++);
 
-###### В данной конфигурации PostgreSQL и Sqlite3 отключены. Поэтому библиотеки помеченные '*' можно не устанавливать.
+###### **ВНИМАНИЕ**: Устанавливать `libdelphi` не нужно, достаточно скачать и разместить в каталоге `src/lib` проекта.
+
+Если включена поддержка PostgreSQL то Вам потребуется:
+1. Библиотека [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development);
+1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development).
 
 Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
 ~~~
 sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
-~~~
-
-Для того чтобы установить SQLite3 выполните:
-~~~
-sudo apt-get install sqlite3 libsqlite3-dev
 ~~~
 
 Для того чтобы установить PostgreSQL воспользуйтесь инструкцией по [этой](https://www.postgresql.org/download/) ссылке.
@@ -92,18 +99,23 @@ sudo apt-get install sqlite3 libsqlite3-dev
 
 Для сборки **Апостол**, необходимо:
 
-1. Скачать **Апостол** по [ссылке](https://github.com/ufocomp/apostol-bitcoin/archive/master.zip);
+1. Скачать **Апостол** по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
 1. Распаковать;
-1. Скомпилировать (см. ниже).
+1. Скачать **libdelphi** по [ссылке](https://github.com/ufocomp/libdelphi/archive/master.zip);
+1. Распаковать в `src/lib/delphi`;
+1. Настроить `CMakeLists.txt` (по необходимости);
+1. Скомпилировать **Апостол** (см. ниже).
 
 Для сборки **Апостол**, с помощью Git выполните:
 ~~~
-git clone https://github.com/ufocomp/apostol-bitcoin.git
+git clone https://github.com/ufocomp/apostol.git
 ~~~
 
-###### Параметры конфигурации CMake
-Логический флаг **USE_POSTGRESQL** можно использовать, чтобы включить поддержку PostgreSQL. По умолчанию установлено в OFF.
-Логический флаг **USE_SQLITE3** можно использовать, чтобы включить поддержку sqlite3. По умолчанию установлено в OFF.
+Чтобы добавить **libdelphi** в проект, с помощью Git выполните:
+~~~
+cd apostol/src/lib
+git clone https://github.com/ufocomp/libdelphi.git delphi
+~~~
 
 ###### Сборка:
 ~~~

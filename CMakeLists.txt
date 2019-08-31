@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(apostol)
 
-list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules" )
-
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
 set(CMAKE_CXX_STANDARD 14)
