@@ -37,6 +37,7 @@ add_custom_target(
 # Delphi classes for C++
 # ----------------------------------------------------------------------------------------------------------------------
 add_compile_options("-DDELPHI_LIB_EXPORTS")
+add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
 set(USE_POSTGRESQL  OFF CACHE BOOL "Build with PostgreSQL")
 set(USE_SQLITE3     OFF CACHE BOOL "Build with Sqlite3.")
@@ -130,7 +131,6 @@ target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_ACCESS_LOG_FILE="logs/access.log"
         APP_POSTGRES_LOG_FILE="logs/postgres.log"
         APP_DOC_ROOT="www/"
-        WWWServerName="${PROJECT_DESCRIPTION}"
         )
 
 target_link_libraries(${CORE_LIB_NAME} pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME})
