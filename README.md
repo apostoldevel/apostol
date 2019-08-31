@@ -115,6 +115,7 @@ git clone https://github.com/ufocomp/apostol.git
 ~~~
 cd apostol/src/lib
 git clone https://github.com/ufocomp/libdelphi.git delphi
+cd ../../../
 ~~~
 
 ###### Сборка:
