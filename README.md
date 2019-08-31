@@ -80,7 +80,7 @@ Apostol Web Service
 
 1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
-1. Библиотека [libdelphi](https://github.com/ufocomp/apostol/libdelphi/) (Delphi classes for C++);
+1. Библиотека [libdelphi](https://github.com/ufocomp/libdelphi/) (Delphi classes for C++);
 
 ###### **ВНИМАНИЕ**: Устанавливать `libdelphi` не нужно, достаточно скачать и разместить в каталоге `src/lib` проекта.
 
