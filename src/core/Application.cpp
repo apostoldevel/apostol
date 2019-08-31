@@ -413,9 +413,10 @@ namespace Apostol {
             }
 
             Start(CApplicationProcess::Create(this, m_ProcessType));
-
+#ifdef USE_POSTGRESQL
             // Delete PQServer
             SetPQServer(nullptr);
+#endif
             // Delete HTTPServer
             SetServer(nullptr);
 
@@ -518,7 +519,9 @@ namespace Apostol {
             auto LProcess = dynamic_cast<CApplicationProcess *> (AProcess);
 
             SetServer(LProcess->Server());
+#ifdef USE_POSTGRESQL
             SetPQServer(LProcess->PQServer());
+#endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -566,6 +569,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::CreatePQServer() {
+#ifdef USE_POSTGRESQL
             CPQServer *LPQServer = nullptr;
 
             LPQServer = new CPQServer(Config()->PostgresPollMin(), Config()->PostgresPollMax());
@@ -592,9 +596,9 @@ namespace Apostol {
             LPQServer->OnDisconnected(std::bind(&CApplicationProcess::DoPQDisconnect, this, _1));
 
             SetPQServer(LPQServer);
+#endif
         }
         //--------------------------------------------------------------------------------------------------------------
-
         void CApplicationProcess::DoExitSigAlarm(uint_t AMsec) {
 
             sigset_t set, wset;
@@ -888,20 +892,22 @@ namespace Apostol {
             Server()->ActiveLevel(alShutDown);
         }
         //--------------------------------------------------------------------------------------------------------------
-
         void CApplicationProcess::PQServerStart() {
+#ifdef USE_POSTGRESQL
             if (Config()->PostgresConnect()) {
                 PQServer()->ConnInfo().SetParameters(Config()->PostgresConnInfo());
                 PQServer()->Active(true);
             }
+#endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::PQServerStop() {
+#ifdef USE_POSTGRESQL
             PQServer()->Active(false);
+#endif
         }
         //--------------------------------------------------------------------------------------------------------------
-
         void CApplicationProcess::OnFilerError(Pointer Sender, int Error, LPCTSTR lpFormat, va_list args) {
             Log()->Error(APP_LOG_ALERT, Error, lpFormat, args);
         }
@@ -919,8 +925,9 @@ namespace Apostol {
 
             InitSignals();
 
+#ifdef USE_POSTGRESQL
             PQServer()->PollStack(Server()->PollStack());
-
+#endif
             ServerStart();
             PQServerStart();
         }
@@ -1380,8 +1387,9 @@ namespace Apostol {
 
             SetUser(Config()->User().c_str(), Config()->Group().c_str());
 
+#ifdef USE_POSTGRESQL
             PQServer()->PollStack(Server()->PollStack());
-
+#endif
             ServerStart();
             PQServerStart();
 

@@ -16,9 +16,6 @@ message(STATUS "Project description: ${PROJECT_DESCRIPTION}")
 
 set(INSTALL_LOCAL   OFF CACHE BOOL "Install local")
 
-set(USE_POSTGRESQL  OFF CACHE BOOL "Build with PostgreSQL")
-set(USE_SQLITE3     OFF CACHE BOOL "Build with Sqlite3.")
-
 if (INSTALL_LOCAL)
     set(INSTALL_BIN_PATH "/usr/local/sbin")
     set(PROJECT_PREFIX "~/.${PROJECT_NAME}")
@@ -27,28 +24,8 @@ else()
     set(PROJECT_PREFIX "/etc/${PROJECT_NAME}")
 endif()
 
-if (USE_POSTGRESQL)
-    message(STATUS "Using PostgreSQL.")
-    find_package(PostgreSQL REQUIRED)
-    set(PQ_LIB_NAME "pq")
-    add_compile_options("-DDELPHI_POSTGRESQL")
-endif()
-
-if (USE_SQLITE3)
-    message(STATUS "Using SQLite3.")
-    set(SQLITE3_LIB_NAME "sqlite3")
-    add_compile_options("-DDELPHI_SQLITE3")
-endif()
-
-set(DELPHI_LIB_NAME delphi)
 set(CORE_LIB_NAME apostol-core)
 set(MODULES_LIB_NAME apostol-modules)
-
-#find_library(GCC_LIBRARY libgcc.a)
-#find_library(GCC++_LIBRARY libgcc++.a)
-
-#add_definitions(-static-libgcc)
-#add_definitions(-D_UNICODE)
 
 add_custom_target(
         auto_increment_version
@@ -56,6 +33,31 @@ add_custom_target(
         -D VERSION_FILE=${CMAKE_SOURCE_DIR}/version.h
         -P ${CMAKE_SOURCE_DIR}/AutoVersion.cmake
 )
+
+# Delphi classes for C++
+# ----------------------------------------------------------------------------------------------------------------------
+add_compile_options("-DDELPHI_LIB_EXPORTS")
+
+set(USE_POSTGRESQL  OFF CACHE BOOL "Build with PostgreSQL")
+set(USE_SQLITE3     OFF CACHE BOOL "Build with Sqlite3.")
+
+if (USE_POSTGRESQL)
+    set(PQ_LIB_NAME "pq")
+    add_compile_options("-DDELPHI_POSTGRESQL")
+endif()
+
+if (USE_SQLITE3)
+    set(SQLITE3_LIB_NAME "sqlite3")
+    add_compile_options("-DDELPHI_SQLITE3")
+endif()
+
+set(DELPHI_LIB_DIR "src/lib/delphi")
+
+add_subdirectory(${DELPHI_LIB_DIR})
+
+# -Iinclude
+include_directories(${DELPHI_LIB_DIR}/include)
+include_directories(${DELPHI_LIB_DIR}/src)
 
 # Find PkgConfig
 #------------------------------------------------------------------------------
@@ -76,59 +78,38 @@ endif()
 
 # Define project common includes directories
 #------------------------------------------------------------------------------
-if (BUILD_SHARED_LIBS)
-    include_directories( SYSTEM
-            ${dl_INCLUDE_DIRS} )
-else()
-    include_directories( SYSTEM
-            ${dl_INCLUDE_DIRS} )
-endif()
+include_directories( SYSTEM
+        ${dl_INCLUDE_DIRS}
+        )
 
 # Define project common library directories
 #------------------------------------------------------------------------------
-if (BUILD_SHARED_LIBS)
-    link_directories(
-            ${dl_LIBRARY_DIRS} )
-else()
-    link_directories(
-            ${dl_LIBRARY_DIRS} )
-endif()
+link_directories(
+        ${dl_LIBRARY_DIRS}
+)
 
 # Define project common libraries/linker flags.
 #------------------------------------------------------------------------------
-if (BUILD_SHARED_LIBS)
-    link_libraries(
-            "-fstack-protector"
-            "-fstack-protector-all"
-            ${dl_LIBRARIES} )
-else()
-    link_libraries(
-            "-fstack-protector"
-            "-fstack-protector-all"
-            ${dl_LIBRARIES} )
-endif()
+link_libraries(
+        "-fstack-protector"
+        "-fstack-protector-all"
+        ${dl_LIBRARIES}
+)
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
-include_directories(src/lib/delphi src/${PROJECT_NAME} src/core src/modules)
+include_directories(src/${PROJECT_NAME} src/core src/modules)
 
 file(GLOB project_files version.h src/${PROJECT_NAME}/*.hpp src/${PROJECT_NAME}/*.cpp)
-file(GLOB delphi_files src/lib/delphi/*.hpp src/lib/delphi/*.cpp)
 file(GLOB core_files src/core/*.hpp src/core/*.cpp)
 file(GLOB modules_files src/modules/Modules.hpp src/modules/*/*.hpp src/modules/*/*.cpp)
 
-# Delphi classes for C++
-# ----------------------------------------------------------------------------------------------------------------------
-add_library(${DELPHI_LIB_NAME} STATIC ${delphi_files})
-target_link_libraries(${DELPHI_LIB_NAME} pthread ${SQLITE3_LIB_NAME} ${PQ_LIB_NAME})
-target_compile_definitions(${DELPHI_LIB_NAME} PUBLIC WWWServerName="${PROJECT_DESCRIPTION}")
-
-add_definitions(-DDELPHI_LIB_EXPORTS)
-add_definitions(-DSYS_ERRNO_COUNT=135)
-
 # Apostol Core
 # ----------------------------------------------------------------------------------------------------------------------
-add_library(${CORE_LIB_NAME} STATIC ${core_files})
+add_library(${CORE_LIB_NAME} STATIC
+        $<TARGET_OBJECTS:delphi>
+        ${core_files}
+        )
 
 target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_NAME="${PROJECT_NAME}"
@@ -149,9 +130,10 @@ target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_ACCESS_LOG_FILE="logs/access.log"
         APP_POSTGRES_LOG_FILE="logs/postgres.log"
         APP_DOC_ROOT="www/"
+        WWWServerName="${PROJECT_DESCRIPTION}"
         )
 
-target_link_libraries(${CORE_LIB_NAME} ${DELPHI_LIB_NAME})
+target_link_libraries(${CORE_LIB_NAME} pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME})
 
 # Apostol modules
 # ----------------------------------------------------------------------------------------------------------------------

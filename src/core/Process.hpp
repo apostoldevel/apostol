@@ -355,8 +355,9 @@ namespace Apostol {
         private:
 
             CHTTPServer *m_pServer;
+#ifdef USE_POSTGRESQL
             CPQServer *m_pPQServer;
-
+#endif
             void DoOptions(CCommand *ACommand);
             void DoGet(CCommand *ACommand);
             void DoHead(CCommand *ACommand);
@@ -374,6 +375,18 @@ namespace Apostol {
             virtual void DoVerbose(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat, va_list args);
             virtual void DoAccessLog(CTCPConnection *AConnection);
 
+            virtual void DoServerListenException(CSocketEvent *Sender, Delphi::Exception::Exception *AException);
+            virtual void DoServerException(CTCPConnection *AConnection, Delphi::Exception::Exception *AException);
+            virtual void DoServerEventHandlerException(CPollEventHandler *AHandler, Delphi::Exception::Exception *AException);
+
+            virtual void DoServerConnected(CObject *Sender);
+            virtual void DoServerDisconnected(CObject *Sender);
+
+            virtual void DoNoCommandHandler(CSocketEvent *Sender, LPCTSTR AData, CTCPConnection *AConnection);
+
+            void SetServer(CHTTPServer *Value);
+
+#ifdef USE_POSTGRESQL
             virtual void DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException);
             virtual void DoPQConnectException(CPQConnection *AConnection, Delphi::Exception::Exception *AException);
 
@@ -390,32 +403,22 @@ namespace Apostol {
             virtual void DoPQResultStatus(CPQResult *AResult);
             virtual void DoPQResult(CPQResult *AResult, ExecStatusType AExecStatus);
 
-            virtual void DoServerListenException(CSocketEvent *Sender, Delphi::Exception::Exception *AException);
-            virtual void DoServerException(CTCPConnection *AConnection, Delphi::Exception::Exception *AException);
-            virtual void DoServerEventHandlerException(CPollEventHandler *AHandler, Delphi::Exception::Exception *AException);
-
-            virtual void DoServerConnected(CObject *Sender);
-            virtual void DoServerDisconnected(CObject *Sender);
-
-            virtual void DoNoCommandHandler(CSocketEvent *Sender, LPCTSTR AData, CTCPConnection *AConnection);
-
-            void SetServer(CHTTPServer *Value);
             void SetPQServer(CPQServer *Value);
-
+#endif
         public:
 
             CServerProcess(CProcessType AType, CCustomProcess *AParent);
 
+            void InitializeServerHandlers();
+
             CHTTPServer *Server() { return m_pServer; };
             void Server(CHTTPServer *Value) { SetServer(Value); };
-
+#ifdef USE_POSTGRESQL
             CPQServer *PQServer() { return m_pPQServer; };
             void PQServer(CPQServer *Value) { SetPQServer(Value); };
 
-            void InitializeServerHandlers();
-
             virtual CPQPollQuery *GetQuery(CPollConnection *AConnection);
-
+#endif
         };
 
         //--------------------------------------------------------------------------------------------------------------

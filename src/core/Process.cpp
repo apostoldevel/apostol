@@ -545,7 +545,9 @@ namespace Apostol {
 
         CServerProcess::CServerProcess(CProcessType AType, CCustomProcess *AParent): CSignalProcess(AType, AParent) {
             m_pServer = nullptr;
+#ifdef USE_POSTGRESQL
             m_pPQServer = nullptr;
+#endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -560,7 +562,7 @@ namespace Apostol {
             }
         }
         //--------------------------------------------------------------------------------------------------------------
-
+#ifdef USE_POSTGRESQL
         void CServerProcess::SetPQServer(CPQServer *Value) {
             if (m_pPQServer != Value) {
 /*
@@ -578,7 +580,7 @@ namespace Apostol {
             }
         }
         //--------------------------------------------------------------------------------------------------------------
-
+#endif
         void CServerProcess::InitializeServerHandlers() {
 
             if (Assigned(m_pServer)) {
@@ -625,7 +627,7 @@ namespace Apostol {
             }
         }
         //--------------------------------------------------------------------------------------------------------------
-
+#ifdef USE_POSTGRESQL
         CPQPollQuery *CServerProcess::GetQuery(CPollConnection *AConnection) {
             CPQPollQuery *LQuery = nullptr;
 
@@ -777,7 +779,7 @@ namespace Apostol {
             }
         }
         //--------------------------------------------------------------------------------------------------------------
-
+#endif
         void CServerProcess::DoServerListenException(CSocketEvent *Sender, Delphi::Exception::Exception *AException) {
             Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
@@ -806,7 +808,7 @@ namespace Apostol {
 
         void CServerProcess::DoServerDisconnected(CObject *Sender) {
             auto LConnection = dynamic_cast<CHTTPServerConnection *>(Sender);
-
+#ifdef USE_POSTGRESQL
             if (LConnection != nullptr) {
                 auto LPollQuery = PQServer()->FindQueryByConnection(LConnection);
                 if (LPollQuery != nullptr) {
@@ -816,6 +818,7 @@ namespace Apostol {
                 Log()->Message(_T("[%s:%d] Client closed connection."), LConnection->Socket()->Binding()->PeerIP(),
                                LConnection->Socket()->Binding()->PeerPort());
             }
+#endif
         }
         //--------------------------------------------------------------------------------------------------------------
 

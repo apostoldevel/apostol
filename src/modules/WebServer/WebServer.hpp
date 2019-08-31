@@ -70,10 +70,10 @@ namespace Apostol {
             void InitHeaders();
 
             const CString& GetAllowedMethods();
-
+#ifdef USE_POSTGRESQL
             void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) override {};
             void DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) override {};
-
+#endif
         public:
 
             explicit CWebServer(CModuleManager *AManager);

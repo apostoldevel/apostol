@@ -31,6 +31,7 @@ namespace Apostol {
 
     namespace Module {
 
+#ifdef USE_POSTGRESQL
         CPQPollQuery *CApostolModule::GetQuery(CPollConnection *AConnection) {
             CPQPollQuery *LQuery = Application::Application->GetQuery(AConnection);
 
@@ -41,7 +42,7 @@ namespace Apostol {
 
             return LQuery;
         }
-
+#endif
         //--------------------------------------------------------------------------------------------------------------
 
         //-- CApostolModule --------------------------------------------------------------------------------------------

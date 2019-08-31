@@ -40,10 +40,10 @@ namespace Apostol {
 
         class CApostolModule: public CCollectionItem, public CGlobalComponent {
         protected:
-
+#ifdef USE_POSTGRESQL
             virtual void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) abstract;
             virtual void DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) abstract;
-
+#endif
         public:
 
             CApostolModule();
@@ -55,9 +55,9 @@ namespace Apostol {
             virtual bool CheckUrerArent(const CString& Value) abstract;
 
             virtual void Execute(CHTTPServerConnection *AConnection) abstract;
-
+#ifdef USE_POSTGRESQL
             CPQPollQuery *GetQuery(CPollConnection *AConnection);
-
+#endif
         };
 
         //--------------------------------------------------------------------------------------------------------------
