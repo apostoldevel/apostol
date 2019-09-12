@@ -869,10 +869,10 @@ namespace Apostol {
         void CServerProcess::DoOptions(CCommand *ACommand) {
             auto LConnection = dynamic_cast<CHTTPServerConnection *> (ACommand->Connection());
             auto LRequest = LConnection->Request();
-
+#ifdef _DEBUG
             if (LRequest->Uri == _T("/quit"))
                 SignalProcess()->Quit();
-
+#endif
             LConnection->SendStockReply(CReply::ok);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -928,12 +928,12 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CModuleProcess::DoBeforeExecuteModule(CApostolModule *AModule) {
-
+            AModule->BeforeExecute(this);
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CModuleProcess::DoAfterExecuteModule(CApostolModule *AModule) {
-
+            AModule->AfterExecute(this);
         }
         //--------------------------------------------------------------------------------------------------------------
 

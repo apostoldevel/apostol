@@ -31,13 +31,7 @@ namespace Apostol {
     namespace WebServer {
 
         CWebServer::CWebServer(CModuleManager *AManager): CApostolModule(AManager) {
-            m_Headers = new CStringList(true);
             InitHeaders();
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        CWebServer::~CWebServer() {
-            delete m_Headers;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -51,54 +45,6 @@ namespace Apostol {
             m_Headers->AddObject(_T("HEAD"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
             m_Headers->AddObject(_T("PATCH"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
             m_Headers->AddObject(_T("CONNECT"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        const CString &CWebServer::GetAllowedMethods() {
-            if (m_AllowedMethods.IsEmpty()) {
-                if (m_Headers->Count() > 0) {
-                    CHeaderHandler *Handler;
-                    for (int i = 0; i < m_Headers->Count(); ++i) {
-                        Handler = (CHeaderHandler *) m_Headers->Objects(i);
-                        if (Handler->Allow()) {
-                            if (m_AllowedMethods.IsEmpty())
-                                m_AllowedMethods = m_Headers->Strings(i);
-                            else
-                                m_AllowedMethods += _T(", ") + m_Headers->Strings(i);
-                        }
-                    }
-                }
-            }
-            return m_AllowedMethods;
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CWebServer::MethodNotAllowed(CHTTPServerConnection *AConnection) {
-            auto LReply = AConnection->Reply();
-
-            CReply::GetStockReply(LReply, CReply::not_allowed);
-
-            if (!AllowedMethods().IsEmpty())
-                LReply->AddHeader(_T("Allow"), AllowedMethods().c_str());
-
-            AConnection->SendReply();
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CWebServer::DoOptions(CHTTPServerConnection *AConnection) {
-
-            auto LReply = AConnection->Reply();
-#ifdef _DEBUG
-            auto LRequest = AConnection->Request();
-            if (LRequest->Uri == _T("/quit"))
-                Application::Application->SignalProcess()->Quit();
-#endif
-            CReply::GetStockReply(LReply, CReply::ok);
-
-            if (!AllowedMethods().IsEmpty())
-                LReply->AddHeader(_T("Allow"), AllowedMethods().c_str());
-
-            AConnection->SendReply();
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -170,6 +116,21 @@ namespace Apostol {
             if (i == m_Headers->Count()) {
                 AConnection->SendStockReply(CReply::not_implemented);
             }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CWebServer::BeforeExecute(Pointer Data) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CWebServer::AfterExecute(Pointer Data) {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CWebServer::CheckUserAgent(const CString &Value) {
+            return true;
         }
 
     }
