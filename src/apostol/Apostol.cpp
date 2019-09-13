@@ -39,7 +39,7 @@ namespace Apostol {
 
     namespace Apostol {
 
-        void CApostol::ShowVersioInfo() {
+        void CApostol::ShowVersionInfo() {
 
             std::cerr << APP_NAME " version: " APP_VERSION " (" APP_DESCRIPTION ")" LINEFEED << std::endl;
 

@@ -233,12 +233,7 @@ namespace Apostol {
             if (Debug.IsEmpty()) {
                 Log()->AddLogFile(Config()->ErrorLog().c_str(), APP_LOG_DEBUG);
             }
-
-            LogFile = Log()->AddLogFile(Config()->PostgresLog().c_str(), APP_LOG_DEBUG);
-#else
-            LogFile = Log()->AddLogFile(Config()->PostgresLog().c_str(), APP_LOG_NOTICE);
 #endif
-            LogFile->LogType(ltPostgres);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -401,8 +396,14 @@ namespace Apostol {
             }
 
             if (m_ProcessType != ptSignaller) {
+
+                m_PollStack = new CPollStack();
+                m_PollStack->TimeOut(Config()->TimeOut());
+
                 CreateHTTPServer();
+#ifdef USE_POSTGRESQL
                 CreatePQServer();
+#endif
             }
 
             if ( Config()->Daemon() ) {
@@ -420,6 +421,8 @@ namespace Apostol {
             // Delete HTTPServer
             SetServer(nullptr);
 
+            delete m_PollStack;
+
             Log()->Debug(0, MSG_PROCESS_STOP, GetProcessName());
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -429,7 +432,7 @@ namespace Apostol {
             ParseCmdLine();
 
             if (Config()->Flags().show_version) {
-                ShowVersioInfo();
+                ShowVersionInfo();
                 ExitRun(0);
             }
 
@@ -538,12 +541,14 @@ namespace Apostol {
         void CApplicationProcess::CreateHTTPServer() {
             CHTTPServer *LServer = nullptr;
 
-            LServer = new CHTTPServer((ushort) Config()->Listen(), Config()->DocRoot().c_str());
+            LServer = new CHTTPServer((ushort) Config()->Port(), Config()->DocRoot().c_str());
 
             LServer->ServerName() = m_pApplication->Title();
 
-            //LServer->PollStack(APollStack);
-            LServer->PollStack()->TimeOut(Config()->TimeOut());
+            CSocketHandle* LBinding = LServer->Bindings()->Add();
+            LBinding->IP(Config()->Listen().c_str());
+
+            LServer->PollStack(m_PollStack);
 
             LServer->OnExecute(std::bind(&CApplicationProcess::DoExecute, this, _1));
 
@@ -568,16 +573,13 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CApplicationProcess::CreatePQServer() {
 #ifdef USE_POSTGRESQL
-            CPQServer *LPQServer = nullptr;
-
+        void CApplicationProcess::CreatePQServer() {
             LPQServer = new CPQServer(Config()->PostgresPollMin(), Config()->PostgresPollMax());
 
             LPQServer->ConnInfo().ApplicationName() = "'" + m_pApplication->Title() + "'"; //application_name;
 
-            //LPQServer->PollStack(APollStack);
-            LPQServer->PollStack()->TimeOut(Config()->TimeOut());
+            LServer->PollStack(m_PollStack);
 
             if (Config()->PostgresNotice()) {
                 //LPQServer->OnReceiver(std::bind(&CApplicationProcess::DoPQReceiver, this, _1, _2));
@@ -596,9 +598,10 @@ namespace Apostol {
             LPQServer->OnDisconnected(std::bind(&CApplicationProcess::DoPQDisconnect, this, _1));
 
             SetPQServer(LPQServer);
-#endif
+            CPQServer *LPQServer = nullptr;
         }
         //--------------------------------------------------------------------------------------------------------------
+#endif
         void CApplicationProcess::DoExitSigAlarm(uint_t AMsec) {
 
             sigset_t set, wset;
@@ -892,22 +895,20 @@ namespace Apostol {
             Server()->ActiveLevel(alShutDown);
         }
         //--------------------------------------------------------------------------------------------------------------
-        void CApplicationProcess::PQServerStart() {
 #ifdef USE_POSTGRESQL
+        void CApplicationProcess::PQServerStart() {
             if (Config()->PostgresConnect()) {
                 PQServer()->ConnInfo().SetParameters(Config()->PostgresConnInfo());
                 PQServer()->Active(true);
             }
-#endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::PQServerStop() {
-#ifdef USE_POSTGRESQL
             PQServer()->Active(false);
-#endif
         }
         //--------------------------------------------------------------------------------------------------------------
+#endif
         void CApplicationProcess::OnFilerError(Pointer Sender, int Error, LPCTSTR lpFormat, va_list args) {
             Log()->Error(APP_LOG_ALERT, Error, lpFormat, args);
         }
@@ -925,16 +926,17 @@ namespace Apostol {
 
             InitSignals();
 
-#ifdef USE_POSTGRESQL
-            PQServer()->PollStack(Server()->PollStack());
-#endif
             ServerStart();
+#ifdef USE_POSTGRESQL
             PQServerStart();
+#endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessSingle::AfterRun() {
+#ifdef USE_POSTGRESQL
             PQServerStop();
+#endif
             ServerStop();
             CApplicationProcess::AfterRun();
         }
@@ -946,13 +948,17 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessSingle::Reload() {
+#ifdef USE_POSTGRESQL
             PQServerStop();
+#endif
             ServerStop();
 
             Config()->Reload();
 
             ServerStart();
+#ifdef USE_POSTGRESQL
             PQServerStart();
+#endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1387,18 +1393,18 @@ namespace Apostol {
 
             SetUser(Config()->User().c_str(), Config()->Group().c_str());
 
-#ifdef USE_POSTGRESQL
-            PQServer()->PollStack(Server()->PollStack());
-#endif
             ServerStart();
+#ifdef USE_POSTGRESQL
             PQServerStart();
-
+#endif
             SigProcMask(SIG_UNBLOCK, SigAddSet(&set));
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessWorker::AfterRun() {
+#ifdef USE_POSTGRESQL
             PQServerStop();
+#endif
             ServerStop();
             CApplicationProcess::AfterRun();
         }

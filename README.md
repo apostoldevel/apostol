@@ -76,7 +76,7 @@ Apostol Web Service
 СБОРКА
 -
 
-Для сборки проекта Вам потребуется:
+Для установки **Апостол** Вам потребуется:
 
 1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
@@ -97,16 +97,16 @@ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake 
 
 ###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство. 
 
-Для сборки **Апостол**, необходимо:
+Для установки **Апостол** (без Git) необходимо:
 
 1. Скачать **Апостол** по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
 1. Распаковать;
 1. Скачать **libdelphi** по [ссылке](https://github.com/ufocomp/libdelphi/archive/master.zip);
 1. Распаковать в `src/lib/delphi`;
 1. Настроить `CMakeLists.txt` (по необходимости);
-1. Скомпилировать **Апостол** (см. ниже).
+1. Собрать и скомпилировать (см. ниже).
 
-Для сборки **Апостол**, с помощью Git выполните:
+Для установки **Апостол**, с помощью Git выполните:
 ~~~
 git clone https://github.com/ufocomp/apostol.git
 ~~~

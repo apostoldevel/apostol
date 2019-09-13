@@ -81,6 +81,7 @@ target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_OLDPID_EXT=".oldbin"
         APP_DEFAULT_USER="nobody"
         APP_DEFAULT_GROUP="nogroup"
+        APP_DEFAULT_LISTEN="0.0.0.0"
         APP_PREFIX="${PROJECT_PREFIX}/"
         APP_CONF_PREFIX="conf/"
         APP_CACHE_PREFIX="cache/"

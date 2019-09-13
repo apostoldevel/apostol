@@ -45,7 +45,7 @@ namespace Apostol {
         protected:
 
             void ParseCmdLine() override;
-            void ShowVersioInfo() override;
+            void ShowVersionInfo() override;
 
         public:
 

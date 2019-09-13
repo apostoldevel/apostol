@@ -253,14 +253,13 @@ namespace Apostol {
             unsigned int m_uErrorCount;
 
             int m_nWorkers;
-            int m_nListen;
+            int m_nPort;
 
             int m_nTimeOut;
             int m_nConnectTimeOut;
 
             bool m_fMaster;
             bool m_fDaemon;
-            bool m_fBitmessage;
 
             bool m_fPostgresConnect;
             bool m_fPostgresNotice;
@@ -270,6 +269,7 @@ namespace Apostol {
 
             CString m_sUser;
             CString m_sGroup;
+            CString m_sListen;
             CString m_sPrefix;
             CString m_sConfPrefix;
             CString m_sCachePrefix;
@@ -299,6 +299,7 @@ namespace Apostol {
 
             void SetUser(LPCTSTR AValue);
             void SetGroup(LPCTSTR AValue);
+            void SetListen(LPCTSTR AValue);
             void SetPrefix(LPCTSTR AValue);
             void SetConfPrefix(LPCTSTR AValue);
             void SetConfFile(LPCTSTR AValue);
@@ -345,7 +346,7 @@ namespace Apostol {
 
             bool Daemon() { return m_fDaemon; };
 
-            int Listen() { return m_nListen; };
+            int Port() { return m_nPort; };
 
             int TimeOut() { return m_nTimeOut; };
 
@@ -365,6 +366,10 @@ namespace Apostol {
             const CString& Group() const { return m_sGroup; };
             void Group(const CString& AValue) { SetGroup(AValue.c_str()); };
             void Group(LPCTSTR AValue) { SetGroup(AValue); };
+
+            const CString& Listen() { return m_sListen; };
+            void Listen(const CString& AValue) { SetListen(AValue.c_str()); };
+            void Listen(LPCTSTR AValue) { SetListen(AValue); };
 
             const CString& Prefix() const { return m_sPrefix; };
             void Prefix(const CString& AValue) { SetPrefix(AValue.c_str()); };

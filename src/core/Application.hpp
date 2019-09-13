@@ -145,9 +145,12 @@ namespace Apostol {
 
         protected:
 
-            void CreateHTTPServer();
-            void CreatePQServer();
+            CPollStack *m_PollStack;
 
+            void CreateHTTPServer();
+#ifdef USE_POSTGRESQL
+            void CreatePQServer();
+#endif
             void DoExitSigAlarm(uint_t AMsec);
 
             pid_t SwapProcess(CProcessType Type, int Flag, Pointer Data = nullptr);
@@ -181,10 +184,10 @@ namespace Apostol {
             void ServerStart();
             void ServerStop();
             void ServerShutDown();
-
+#ifdef USE_POSTGRESQL
             void PQServerStart();
             void PQServerStop();
-
+#endif
             void OnFilerError(Pointer Sender, int Error, LPCTSTR lpFormat, va_list args);
 
         }; // class CApplicationProcess
@@ -249,7 +252,7 @@ namespace Apostol {
             void SetProcessType(CProcessType Value);
 
             virtual void ParseCmdLine() abstract;
-            virtual void ShowVersioInfo() abstract;
+            virtual void ShowVersionInfo() abstract;
 
         public:
 

@@ -154,12 +154,21 @@ namespace Apostol {
         CConfig::CConfig(CLog *ALog): CCustomConfig() {
             m_pLog = ALog;
             m_uErrorCount = 0;
+
+            m_nWorkers = 0;
+            m_nPort = 0;
+
+            m_nTimeOut = INFINITE;
+            m_nConnectTimeOut = 0;
+
+            m_fMaster = false;
+            m_fDaemon = false;
+
             m_Flags = {false, false, false, false};
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetUser(LPCTSTR AValue) {
-
             if (m_sUser != AValue) {
                 if (AValue != nullptr) {
                     m_sUser = AValue;
@@ -169,7 +178,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetGroup(LPCTSTR AValue) {
-
             if (m_sGroup != AValue) {
                 if (AValue != nullptr) {
                     m_sGroup = AValue;
@@ -178,8 +186,16 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CConfig::SetPrefix(LPCTSTR AValue) {
+        void CConfig::SetListen(LPCTSTR AValue) {
+            if (m_sListen != AValue) {
+                if (AValue != nullptr) {
+                    m_sListen = AValue;
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
 
+        void CConfig::SetPrefix(LPCTSTR AValue) {
             if (m_sPrefix != AValue) {
 
                 if (AValue != nullptr) {
@@ -196,7 +212,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetConfPrefix(LPCTSTR AValue) {
-
             if (m_sConfPrefix != AValue) {
 
                 if (AValue != nullptr)
@@ -220,7 +235,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetCachePrefix(LPCTSTR AValue) {
-
             if (m_sCachePrefix != AValue) {
 
                 if (AValue != nullptr)
@@ -244,7 +258,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetConfFile(LPCTSTR AValue) {
-
             if (m_sConfFile != AValue) {
                 m_sConfFile = AValue;
                 if (!path_separator(m_sConfFile.front())) {
@@ -255,7 +268,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetConfParam(LPCTSTR AValue) {
-
             if (m_sConfParam != AValue) {
                 m_sConfParam = AValue;
             }
@@ -263,7 +275,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetSignal(LPCTSTR AValue) {
-
             if (m_sSignal != AValue) {
                 m_sSignal = AValue;
             }
@@ -271,7 +282,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetPidFile(LPCTSTR AValue) {
-
             if (m_sPidFile != AValue) {
                 m_sPidFile = AValue;
                 if (!path_separator(m_sPidFile.front())) {
@@ -282,7 +292,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetLockFile(LPCTSTR AValue) {
-
             if (m_sLockFile != AValue) {
                 m_sLockFile = AValue;
                 if (!path_separator(m_sLockFile.front())) {
@@ -293,7 +302,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetErrorLog(LPCTSTR AValue) {
-
             if (m_sErrorLog != AValue) {
                 m_sErrorLog = AValue;
                 if (!path_separator(m_sErrorLog.front())) {
@@ -304,7 +312,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetAccessLog(LPCTSTR AValue) {
-
             if (m_sAccessLog != AValue) {
                 m_sAccessLog = AValue;
                 if (!path_separator(m_sAccessLog.front())) {
@@ -315,7 +322,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetPostgresLog(LPCTSTR AValue) {
-
             if (m_sPostgresLog != AValue) {
                 m_sPostgresLog = AValue;
                 if (!path_separator(m_sPostgresLog.front())) {
@@ -326,7 +332,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetDocRoot(LPCTSTR AValue) {
-
             if (m_sDocRoot != AValue) {
                 m_sDocRoot = AValue;
                 if (!path_separator(m_sDocRoot.front())) {
@@ -337,7 +342,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetLocale(LPCTSTR AValue) {
-
             if (m_sLocale != AValue) {
                 m_sLocale = AValue;
             }
@@ -345,19 +349,16 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::SetDefault() {
-
             m_uErrorCount = 0;
 
             m_nWorkers = 1;
-            m_nListen = 4977;
+            m_nPort = 4977;
 
-//            m_nTimeOut = INFINITE;
             m_nTimeOut = 5000;
             m_nConnectTimeOut = 5;
 
             m_fMaster = true;
             m_fDaemon = true;
-            m_fBitmessage = false;
 
             m_fPostgresConnect = false;
             m_fPostgresNotice = false;
@@ -368,13 +369,15 @@ namespace Apostol {
             SetUser(m_sUser.empty() ? APP_DEFAULT_USER : m_sUser.c_str());
             SetGroup(m_sGroup.empty() ? APP_DEFAULT_GROUP : m_sGroup.c_str());
 
-            SetLocale(m_sLocale.empty() ? APP_DEFAULT_LOCALE : m_sLocale.c_str());
+            SetListen(m_sListen.empty() ? APP_DEFAULT_LISTEN : m_sListen.c_str());
 
             SetPrefix(m_sPrefix.empty() ? APP_PREFIX : m_sPrefix.c_str());
             SetConfPrefix(m_sConfPrefix.empty() ? APP_CONF_PREFIX : m_sConfPrefix.c_str());
             SetCachePrefix(m_sCachePrefix.empty() ? APP_CACHE_PREFIX : m_sCachePrefix.c_str());
             SetConfFile(m_sConfFile.empty() ? APP_CONF_FILE : m_sConfFile.c_str());
             SetDocRoot(m_sDocRoot.empty() ? APP_DOC_ROOT : m_sDocRoot.c_str());
+
+            SetLocale(m_sLocale.empty() ? APP_DEFAULT_LOCALE : m_sLocale.c_str());
 
             SetPidFile(m_sPidFile.empty() ? APP_PID_FILE : m_sPidFile.c_str());
             SetLockFile(m_sLockFile.empty() ? APP_LOCK_FILE : m_sLockFile.c_str());
@@ -399,7 +402,8 @@ namespace Apostol {
             Add(new CConfigCommand(_T("daemon"), _T("daemon"), &m_fDaemon));
             Add(new CConfigCommand(_T("daemon"), _T("pid"), m_sPidFile.c_str(), std::bind(&CConfig::SetPidFile, this, _1)));
 
-            Add(new CConfigCommand(_T("server"), _T("listen"), &m_nListen));
+            Add(new CConfigCommand(_T("server"), _T("listen"), m_sListen.c_str(), std::bind(&CConfig::SetListen, this, _1)));
+            Add(new CConfigCommand(_T("server"), _T("port"), &m_nPort));
             Add(new CConfigCommand(_T("server"), _T("timeout"), &m_nTimeOut));
             Add(new CConfigCommand(_T("server"), _T("root"), m_sDocRoot.c_str(), std::bind(&CConfig::SetDocRoot, this, _1)));
 
@@ -415,8 +419,6 @@ namespace Apostol {
 
             Add(new CConfigCommand(_T("postgres/poll"), _T("min"), &m_nPostgresPollMin));
             Add(new CConfigCommand(_T("postgres/poll"), _T("max"), &m_nPostgresPollMax));
-
-            Add(new CConfigCommand(_T("bitmessage"), _T("bitmessage"), &m_fBitmessage));
         }
         //--------------------------------------------------------------------------------------------------------------
 
