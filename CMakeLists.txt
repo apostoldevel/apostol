@@ -62,9 +62,9 @@ include_directories(${DELPHI_LIB_DIR}/src)
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
-include_directories(src/${PROJECT_NAME} src/core src/modules)
+include_directories(src/app src/core src/modules)
 
-file(GLOB project_files version.h src/${PROJECT_NAME}/*.hpp src/${PROJECT_NAME}/*.cpp)
+file(GLOB app_files version.h src/app/*.hpp src/app/*.cpp)
 file(GLOB core_files src/core/*.hpp src/core/*.cpp)
 file(GLOB modules_files src/modules/Modules.hpp src/modules/*/*.hpp src/modules/*/*.cpp)
 
@@ -106,7 +106,7 @@ target_link_libraries(${MODULES_LIB_NAME} ${CORE_LIB_NAME})
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
-add_executable(${PROJECT_NAME} ${project_files})
+add_executable(${PROJECT_NAME} ${app_files})
 target_link_libraries(${PROJECT_NAME} ${MODULES_LIB_NAME})
 
 add_dependencies(${PROJECT_NAME} auto_increment_version)
