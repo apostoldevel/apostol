@@ -401,7 +401,7 @@ namespace Apostol {
                 m_PollStack->TimeOut(Config()->TimeOut());
 
                 CreateHTTPServer();
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
                 CreatePQServer();
 #endif
             }
@@ -414,7 +414,7 @@ namespace Apostol {
             }
 
             Start(CApplicationProcess::Create(this, m_ProcessType));
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             // Delete PQServer
             SetPQServer(nullptr);
 #endif
@@ -522,7 +522,7 @@ namespace Apostol {
             auto LProcess = dynamic_cast<CApplicationProcess *> (AProcess);
 
             SetServer(LProcess->Server());
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             SetPQServer(LProcess->PQServer());
 #endif
         }
@@ -573,7 +573,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
         void CApplicationProcess::CreatePQServer() {
             LPQServer = new CPQServer(Config()->PostgresPollMin(), Config()->PostgresPollMax());
 
@@ -895,7 +895,7 @@ namespace Apostol {
             Server()->ActiveLevel(alShutDown);
         }
         //--------------------------------------------------------------------------------------------------------------
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
         void CApplicationProcess::PQServerStart() {
             if (Config()->PostgresConnect()) {
                 PQServer()->ConnInfo().SetParameters(Config()->PostgresConnInfo());
@@ -927,14 +927,14 @@ namespace Apostol {
             InitSignals();
 
             ServerStart();
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             PQServerStart();
 #endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessSingle::AfterRun() {
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             PQServerStop();
 #endif
             ServerStop();
@@ -948,7 +948,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessSingle::Reload() {
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             PQServerStop();
 #endif
             ServerStop();
@@ -956,7 +956,7 @@ namespace Apostol {
             Config()->Reload();
 
             ServerStart();
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             PQServerStart();
 #endif
         }
@@ -1394,7 +1394,7 @@ namespace Apostol {
             SetUser(Config()->User().c_str(), Config()->Group().c_str());
 
             ServerStart();
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             PQServerStart();
 #endif
             SigProcMask(SIG_UNBLOCK, SigAddSet(&set));
@@ -1402,7 +1402,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessWorker::AfterRun() {
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             PQServerStop();
 #endif
             ServerStop();

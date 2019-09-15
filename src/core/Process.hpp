@@ -355,7 +355,7 @@ namespace Apostol {
         private:
 
             CHTTPServer *m_pServer;
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             CPQServer *m_pPQServer;
 #endif
             void DoOptions(CCommand *ACommand);
@@ -386,7 +386,7 @@ namespace Apostol {
 
             void SetServer(CHTTPServer *Value);
 
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             virtual void DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException);
             virtual void DoPQConnectException(CPQConnection *AConnection, Delphi::Exception::Exception *AException);
 
@@ -413,7 +413,7 @@ namespace Apostol {
 
             CHTTPServer *Server() { return m_pServer; };
             void Server(CHTTPServer *Value) { SetServer(Value); };
-#ifdef USE_POSTGRESQL
+#ifdef WITH_POSTGESQL
             CPQServer *PQServer() { return m_pPQServer; };
             void PQServer(CPQServer *Value) { SetPQServer(Value); };
 

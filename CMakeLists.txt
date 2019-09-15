@@ -1,6 +1,21 @@
 cmake_minimum_required(VERSION 3.13)
 project(apostol)
 
+# Settings
+# ----------------------------------------------------------------------------------------------------------------------
+set(INSTALL_AS_ROOT  ON  CACHE BOOL "Install as root")
+set(WITH_POSTGRESQL  OFF CACHE BOOL "Build with PostgreSQL")
+set(WITH_SQLITE3     OFF CACHE BOOL "Build with Sqlite3")
+# ----------------------------------------------------------------------------------------------------------------------
+
+if (INSTALL_AS_ROOT)
+    set(INSTALL_BIN_PATH "/usr/sbin")
+    set(PROJECT_PREFIX "/etc/${PROJECT_NAME}")
+else()
+    set(INSTALL_BIN_PATH "/usr/bin")
+    set(PROJECT_PREFIX "$ENV{HOME}/.${PROJECT_NAME}")
+endif()
+
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
 set(CMAKE_CXX_STANDARD 14)
@@ -11,16 +26,6 @@ set(PROJECT_DESCRIPTION "Apostol Web Service")
 
 message(STATUS "Project name: ${PROJECT_NAME}")
 message(STATUS "Project description: ${PROJECT_DESCRIPTION}")
-
-set(INSTALL_LOCAL   OFF CACHE BOOL "Install local")
-
-if (INSTALL_LOCAL)
-    set(INSTALL_BIN_PATH "/usr/local/sbin")
-    set(PROJECT_PREFIX "~/.${PROJECT_NAME}")
-else()
-    set(INSTALL_BIN_PATH "/usr/sbin")
-    set(PROJECT_PREFIX "/etc/${PROJECT_NAME}")
-endif()
 
 set(CORE_LIB_NAME apostol-core)
 set(MODULES_LIB_NAME apostol-modules)
@@ -37,15 +42,12 @@ add_custom_target(
 add_compile_options("-DDELPHI_LIB_EXPORTS")
 add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
-set(USE_POSTGRESQL  OFF CACHE BOOL "Build with PostgreSQL")
-set(USE_SQLITE3     OFF CACHE BOOL "Build with Sqlite3.")
-
-if (USE_POSTGRESQL)
+if (WITH_POSTGRESQL)
     set(PQ_LIB_NAME "pq")
     add_compile_options("-DDELPHI_POSTGRESQL")
 endif()
 
-if (USE_SQLITE3)
+if (WITH_SQLITE3)
     set(SQLITE3_LIB_NAME "sqlite3")
     add_compile_options("-DDELPHI_SQLITE3")
 endif()
@@ -114,7 +116,6 @@ add_dependencies(${PROJECT_NAME} auto_increment_version)
 set(INSTALL_PATH "${PROJECT_PREFIX}")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_BIN_PATH})
-install(FILES auto/${PROJECT_NAME} DESTINATION /etc/init.d PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 install(DIRECTORY DESTINATION ${INSTALL_PATH})
 install(DIRECTORY DESTINATION ${INSTALL_PATH}/conf)
@@ -122,4 +123,8 @@ install(DIRECTORY DESTINATION ${INSTALL_PATH}/logs)
 install(DIRECTORY doc/www/ DESTINATION ${INSTALL_PATH}/www)
 install(FILES conf/${PROJECT_NAME}.conf DESTINATION ${INSTALL_PATH}/conf RENAME default.conf)
 install(FILES conf/${PROJECT_NAME}.conf DESTINATION ${INSTALL_PATH})
-install(CODE "execute_process(COMMAND update-rc.d ${PROJECT_NAME} defaults)")
+
+if (INSTALL_AS_ROOT)
+    install(FILES auto/daemon DESTINATION /etc/init.d RENAME ${PROJECT_NAME} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    install(CODE "execute_process(COMMAND update-rc.d ${PROJECT_NAME} defaults)")
+endif()
