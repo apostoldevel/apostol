@@ -71,6 +71,19 @@ namespace Apostol {
 
             return P;
         }
+        //--------------------------------------------------------------------------------------------------------------
+
+        inline char * GetHomeDir(uid_t uid) {
+            struct passwd  *pwd;
+
+            errno = 0;
+            pwd = getpwuid(uid);
+            if (pwd == nullptr) {
+                throw Delphi::Exception::ExceptionFrm("getpwuid(\"%d\") failed.", uid);
+            }
+
+            return pwd->pw_dir;
+        }
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -202,6 +215,12 @@ namespace Apostol {
                     m_sPrefix = AValue;
                 } else {
                     m_sPrefix = GetCwd();
+                }
+
+                if (m_sPrefix.front() == '~') {
+                    CString S = m_sPrefix.SubString(1);
+                    m_sPrefix = GetHomeDir(getuid());
+                    m_sPrefix << S;
                 }
 
                 if (!path_separator(m_sPrefix.back())) {
