@@ -31,20 +31,20 @@ namespace Apostol {
     namespace WebServer {
 
         CWebServer::CWebServer(CModuleManager *AManager): CApostolModule(AManager) {
-            InitHeaders();
+            InitMethods();
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CWebServer::InitHeaders() {
-            m_Headers->AddObject(_T("GET"), (CObject *) new CHeaderHandler(true, std::bind(&CWebServer::DoGet, this, _1)));
-            m_Headers->AddObject(_T("OPTIONS"), (CObject *) new CHeaderHandler(true, std::bind(&CWebServer::DoOptions, this, _1)));
-            m_Headers->AddObject(_T("POST"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
-            m_Headers->AddObject(_T("PUT"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
-            m_Headers->AddObject(_T("DELETE"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
-            m_Headers->AddObject(_T("TRACE"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
-            m_Headers->AddObject(_T("HEAD"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
-            m_Headers->AddObject(_T("PATCH"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
-            m_Headers->AddObject(_T("CONNECT"), (CObject *) new CHeaderHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
+        void CWebServer::InitMethods() {
+            m_Methods.AddObject(_T("GET"), (CObject *) new CMethodHandler(true, std::bind(&CWebServer::DoGet, this, _1)));
+            m_Methods.AddObject(_T("OPTIONS"), (CObject *) new CMethodHandler(true, std::bind(&CWebServer::DoOptions, this, _1)));
+            m_Methods.AddObject(_T("POST"), (CObject *) new CMethodHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
+            m_Methods.AddObject(_T("PUT"), (CObject *) new CMethodHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
+            m_Methods.AddObject(_T("DELETE"), (CObject *) new CMethodHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
+            m_Methods.AddObject(_T("TRACE"), (CObject *) new CMethodHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
+            m_Methods.AddObject(_T("HEAD"), (CObject *) new CMethodHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
+            m_Methods.AddObject(_T("PATCH"), (CObject *) new CMethodHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
+            m_Methods.AddObject(_T("CONNECT"), (CObject *) new CMethodHandler(false, std::bind(&CWebServer::MethodNotAllowed, this, _1)));
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -101,11 +101,11 @@ namespace Apostol {
             LReply->Clear();
             LReply->ContentType = CReply::html;
 
-            CHeaderHandler *Handler;
-            for (i = 0; i < m_Headers->Count(); ++i) {
-                Handler = (CHeaderHandler *) m_Headers->Objects(i);
+            CMethodHandler *Handler;
+            for (i = 0; i < m_Methods.Count(); ++i) {
+                Handler = (CMethodHandler *) m_Methods.Objects(i);
                 if (Handler->Allow()) {
-                    const CString& Method = m_Headers->Strings(i);
+                    const CString& Method = m_Methods.Strings(i);
                     if (Method == LRequest->Method) {
                         Handler->Handler(AConnection);
                         break;
@@ -113,7 +113,7 @@ namespace Apostol {
                 }
             }
 
-            if (i == m_Headers->Count()) {
+            if (i == m_Methods.Count()) {
                 AConnection->SendStockReply(CReply::not_implemented);
             }
         }

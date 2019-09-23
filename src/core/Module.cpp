@@ -137,26 +137,21 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CApostolModule::CApostolModule(CModuleManager *AManager): CCollectionItem(AManager), CGlobalComponent() {
-            m_Headers = new CStringList(true);
-        }
-        //--------------------------------------------------------------------------------------------------------------
 
-        CApostolModule::~CApostolModule() {
-            delete m_Headers;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         const CString &CApostolModule::GetAllowedMethods(CString &AllowedMethods) const {
             if (AllowedMethods.IsEmpty()) {
-                if (m_Headers->Count() > 0) {
-                    CHeaderHandler *Handler;
-                    for (int i = 0; i < m_Headers->Count(); ++i) {
-                        Handler = (CHeaderHandler *) m_Headers->Objects(i);
+                if (m_Methods.Count() > 0) {
+                    CMethodHandler *Handler;
+                    for (int i = 0; i < m_Methods.Count(); ++i) {
+                        Handler = (CMethodHandler *) m_Methods.Objects(i);
                         if (Handler->Allow()) {
                             if (AllowedMethods.IsEmpty())
-                                AllowedMethods = m_Headers->Strings(i);
+                                AllowedMethods = m_Methods.Strings(i);
                             else
-                                AllowedMethods += _T(", ") + m_Headers->Strings(i);
+                                AllowedMethods += _T(", ") + m_Methods.Strings(i);
                         }
                     }
                 }
@@ -179,17 +174,53 @@ namespace Apostol {
 
         void CApostolModule::DoOptions(CHTTPServerConnection *AConnection) {
             auto LReply = AConnection->Reply();
-#ifdef _DEBUG
             auto LRequest = AConnection->Request();
-            if (LRequest->Uri == _T("/quit"))
-                Application::Application->SignalProcess()->Quit();
-#endif
-            CReply::GetStockReply(LReply, CReply::ok);
+
+            CReply::GetStockReply(LReply, CReply::no_content);
 
             if (!AllowedMethods().IsEmpty())
                 LReply->AddHeader(_T("Allow"), AllowedMethods());
 
+            CORS(Config()->ConfPrefix() + "options.cors", LReply->Headers);
+
             AConnection->SendReply();
+#ifdef _DEBUG
+            if (LRequest->Uri == _T("/quit"))
+                Application::Application->SignalProcess()->Quit();
+#endif
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApostolModule::CORS(const CString &FileName, CHeaders& Headers) {
+            size_t Pos;
+            TCHAR ch;
+
+            const CString& Origin = Headers.Values("origin");
+            if (Origin.IsEmpty())
+                return;
+
+            if (FileExists(FileName.c_str())) {
+                CStringList Cors;
+                CString Name;
+                CString Value;
+                Cors.NameValueSeparator(':');
+                Cors.LoadFromFile(FileName.c_str());
+                for (int i = 0; i < Cors.Count(); i++) {
+                    const CString &Line = Cors[i];
+                    Pos = Line.Find(':');
+                    if (Pos != CString::npos) {
+                        Name = Line.SubString(0, Pos);
+                        ch = Line.at(Pos);
+                        while (ch == ' ')
+                            ch = Line.at(++Pos);
+                        Value = Line.SubString(Pos + 1);
+                        Headers.AddPair(Name, Value);
+                    }
+                }
+            } else {
+                Headers.AddPair("Access-Control-Allow-Origin", Origin);
+                Headers.AddPair("Access-Control-Allow-Methods", AllowedMethods());
+            }
         }
         //--------------------------------------------------------------------------------------------------------------
 #ifdef WITH_POSTGESQL

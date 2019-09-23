@@ -46,7 +46,7 @@ namespace Apostol {
                 return new CWebServer(AManager);
             }
 
-            void InitHeaders() override;
+            void InitMethods() override;
 
             void BeforeExecute(Pointer Data) override;
             void AfterExecute(Pointer Data) override;
