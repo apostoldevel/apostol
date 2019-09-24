@@ -173,8 +173,8 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApostolModule::DoOptions(CHTTPServerConnection *AConnection) {
-            auto LReply = AConnection->Reply();
             auto LRequest = AConnection->Request();
+            auto LReply = AConnection->Reply();
 
             CReply::GetStockReply(LReply, CReply::no_content);
 
@@ -189,35 +189,21 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CApostolModule::CORS(const CString &FileName, CHeaders& Headers) {
-            size_t Pos;
-            TCHAR ch;
+        void CApostolModule::CORS(CHTTPServerConnection *AConnection) {
+            auto LRequest = AConnection->Request();
+            auto LReply = AConnection->Reply();
 
-            const CString& Origin = Headers.Values("origin");
-            if (Origin.IsEmpty())
-                return;
+            const CHeaders& LRequestHeaders = LRequest->Headers;
+            CHeaders& LReplyHeaders = LReply->Headers;
 
-            if (FileExists(FileName.c_str())) {
-                CStringList Cors;
-                CString Name;
-                CString Value;
-                Cors.NameValueSeparator(':');
-                Cors.LoadFromFile(FileName.c_str());
-                for (int i = 0; i < Cors.Count(); i++) {
-                    const CString &Line = Cors[i];
-                    Pos = Line.Find(':');
-                    if (Pos != CString::npos) {
-                        Name = Line.SubString(0, Pos);
-                        ch = Line.at(Pos);
-                        while (ch == ' ')
-                            ch = Line.at(++Pos);
-                        Value = Line.SubString(Pos + 1);
-                        Headers.AddPair(Name, Value);
-                    }
-                }
-            } else {
-                Headers.AddPair("Access-Control-Allow-Origin", Origin);
-                Headers.AddPair("Access-Control-Allow-Methods", AllowedMethods());
+            const CString& Origin = LRequestHeaders.Values("origin");
+            if (!Origin.IsEmpty()) {
+                LReplyHeaders.AddPair("Access-Control-Allow-Origin", Origin);
+                LReplyHeaders.AddPair("Access-Control-Allow-Methods", AllowedMethods());
+
+                const CString& ControlRequestHeaders = LRequestHeaders.Values("Access-Control-Request-Headers");
+                if (!ControlRequestHeaders.IsEmpty())
+                    LReplyHeaders.AddPair("Access-Control-Allow-Headers", ControlRequestHeaders);
             }
         }
         //--------------------------------------------------------------------------------------------------------------

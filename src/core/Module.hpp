@@ -137,6 +137,8 @@ namespace Apostol {
 
             CStringList m_Methods;
 
+            virtual void CORS(CHTTPServerConnection *AConnection);
+
             virtual void DoOptions(CHTTPServerConnection *AConnection);
 
             virtual void MethodNotAllowed(CHTTPServerConnection *AConnection);
@@ -163,8 +165,6 @@ namespace Apostol {
             virtual void Execute(CHTTPServerConnection *AConnection) abstract;
 
             const CString& AllowedMethods() { return GetAllowedMethods(m_AllowedMethods); };
-
-            virtual void CORS(const CString& FileName, CHeaders& Headers);
 
 #ifdef DELPHI_POSTGRESQL
 
