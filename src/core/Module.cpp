@@ -69,7 +69,7 @@ namespace Apostol {
 
             return S;
         }
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
         //--------------------------------------------------------------------------------------------------------------
 
         //-- CJob ------------------------------------------------------------------------------------------------------
@@ -181,8 +181,6 @@ namespace Apostol {
             if (!AllowedMethods().IsEmpty())
                 LReply->AddHeader(_T("Allow"), AllowedMethods());
 
-            CORS(Config()->ConfPrefix() + "options.cors", LReply->Headers);
-
             AConnection->SendReply();
 #ifdef _DEBUG
             if (LRequest->Uri == _T("/quit"))
@@ -223,7 +221,7 @@ namespace Apostol {
             }
         }
         //--------------------------------------------------------------------------------------------------------------
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
         void CApostolModule::QueryToResult(CPQPollQuery *APollQuery, CQueryResult &AResult) {
             CPQResult *LResult = nullptr;
             CStringList LFields;

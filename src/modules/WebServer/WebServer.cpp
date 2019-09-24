@@ -107,6 +107,7 @@ namespace Apostol {
                 if (Handler->Allow()) {
                     const CString& Method = m_Methods.Strings(i);
                     if (Method == LRequest->Method) {
+                        CORS(Config()->ConfPrefix() + Method.Lower() + ".cors", LReply->Headers);
                         Handler->Handler(AConnection);
                         break;
                     }
