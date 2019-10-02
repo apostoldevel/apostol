@@ -69,7 +69,7 @@ namespace Apostol {
 
             return S;
         }
-#ifdef DELPHI_POSTGRESQL
+#ifdef WITH_POSTGRESQL
         //--------------------------------------------------------------------------------------------------------------
 
         //-- CJob ------------------------------------------------------------------------------------------------------
@@ -207,7 +207,7 @@ namespace Apostol {
             }
         }
         //--------------------------------------------------------------------------------------------------------------
-#ifdef DELPHI_POSTGRESQL
+#ifdef WITH_POSTGRESQL
         void CApostolModule::QueryToResult(CPQPollQuery *APollQuery, CQueryResult &AResult) {
             CPQResult *LResult = nullptr;
             CStringList LFields;

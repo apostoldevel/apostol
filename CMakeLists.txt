@@ -44,12 +44,12 @@ add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
 if (WITH_POSTGRESQL)
     set(PQ_LIB_NAME "pq")
-    add_compile_options("-DDELPHI_POSTGRESQL")
+    add_compile_options("-DWITH_POSTGRESQL")
 endif()
 
 if (WITH_SQLITE3)
     set(SQLITE3_LIB_NAME "sqlite3")
-    add_compile_options("-DDELPHI_SQLITE3")
+    add_compile_options("-DWITH_SQLITE3")
 endif()
 
 set(DELPHI_LIB_DIR "src/lib/delphi")
