@@ -148,7 +148,7 @@ namespace Apostol {
             CPollStack *m_PollStack;
 
             void CreateHTTPServer();
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             void CreatePQServer();
 #endif
             void DoExitSigAlarm(uint_t AMsec);
@@ -184,7 +184,7 @@ namespace Apostol {
             void ServerStart();
             void ServerStop();
             void ServerShutDown();
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             void PQServerStart();
             void PQServerStop();
 #endif

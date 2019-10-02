@@ -401,7 +401,7 @@ namespace Apostol {
                 m_PollStack->TimeOut(Config()->TimeOut());
 
                 CreateHTTPServer();
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
                 CreatePQServer();
 #endif
             }
@@ -414,7 +414,7 @@ namespace Apostol {
             }
 
             Start(CApplicationProcess::Create(this, m_ProcessType));
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             // Delete PQServer
             SetPQServer(nullptr);
 #endif
@@ -522,7 +522,7 @@ namespace Apostol {
             auto LProcess = dynamic_cast<CApplicationProcess *> (AProcess);
 
             SetServer(LProcess->Server());
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             SetPQServer(LProcess->PQServer());
 #endif
         }
@@ -539,9 +539,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::CreateHTTPServer() {
-            CHTTPServer *LServer = nullptr;
-
-            LServer = new CHTTPServer((ushort) Config()->Port(), Config()->DocRoot().c_str());
+            auto LServer = new CHTTPServer((ushort) Config()->Port(), Config()->DocRoot().c_str());
 
             LServer->ServerName() = m_pApplication->Title();
 
@@ -573,13 +571,13 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
         void CApplicationProcess::CreatePQServer() {
-            LPQServer = new CPQServer(Config()->PostgresPollMin(), Config()->PostgresPollMax());
+            auto LPQServer = new CPQServer(Config()->PostgresPollMin(), Config()->PostgresPollMax());
 
             LPQServer->ConnInfo().ApplicationName() = "'" + m_pApplication->Title() + "'"; //application_name;
 
-            LServer->PollStack(m_PollStack);
+            LPQServer->PollStack(m_PollStack);
 
             if (Config()->PostgresNotice()) {
                 //LPQServer->OnReceiver(std::bind(&CApplicationProcess::DoPQReceiver, this, _1, _2));
@@ -598,7 +596,6 @@ namespace Apostol {
             LPQServer->OnDisconnected(std::bind(&CApplicationProcess::DoPQDisconnect, this, _1));
 
             SetPQServer(LPQServer);
-            CPQServer *LPQServer = nullptr;
         }
         //--------------------------------------------------------------------------------------------------------------
 #endif
@@ -895,7 +892,7 @@ namespace Apostol {
             Server()->ActiveLevel(alShutDown);
         }
         //--------------------------------------------------------------------------------------------------------------
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
         void CApplicationProcess::PQServerStart() {
             if (Config()->PostgresConnect()) {
                 PQServer()->ConnInfo().SetParameters(Config()->PostgresConnInfo());
@@ -927,14 +924,14 @@ namespace Apostol {
             InitSignals();
 
             ServerStart();
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             PQServerStart();
 #endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessSingle::AfterRun() {
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             PQServerStop();
 #endif
             ServerStop();
@@ -948,7 +945,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessSingle::Reload() {
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             PQServerStop();
 #endif
             ServerStop();
@@ -956,7 +953,7 @@ namespace Apostol {
             Config()->Reload();
 
             ServerStart();
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             PQServerStart();
 #endif
         }
@@ -1394,7 +1391,7 @@ namespace Apostol {
             SetUser(Config()->User().c_str(), Config()->Group().c_str());
 
             ServerStart();
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             PQServerStart();
 #endif
             SigProcMask(SIG_UNBLOCK, SigAddSet(&set));
@@ -1402,7 +1399,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CProcessWorker::AfterRun() {
-#ifdef WITH_POSTGESQL
+#ifdef DELPHI_POSTGRESQL
             PQServerStop();
 #endif
             ServerStop();
