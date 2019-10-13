@@ -5,7 +5,7 @@ project(apostol)
 # ----------------------------------------------------------------------------------------------------------------------
 set(INSTALL_AS_ROOT  ON  CACHE BOOL "Install as root")
 set(WITH_POSTGRESQL  OFF CACHE BOOL "Build with PostgreSQL")
-set(WITH_SQLITE3     OFF CACHE BOOL "Build with Sqlite3")
+set(WITH_SQLITE      OFF CACHE BOOL "Build with Sqlite")
 # ----------------------------------------------------------------------------------------------------------------------
 
 if (INSTALL_AS_ROOT)
@@ -47,9 +47,9 @@ if (WITH_POSTGRESQL)
     add_compile_options("-DWITH_POSTGRESQL")
 endif()
 
-if (WITH_SQLITE3)
+if (WITH_SQLITE)
     set(SQLITE3_LIB_NAME "sqlite3")
-    add_compile_options("-DWITH_SQLITE3")
+    add_compile_options("-DWITH_SQLITE")
 endif()
 
 set(DELPHI_LIB_DIR "src/lib/delphi")
