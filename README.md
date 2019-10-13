@@ -134,7 +134,7 @@ The configuration file and the necessary files will be located in:
 /etc/apostol
 ~~~
 
-RUN
+Run
 -
 
 **`apostol`** - Linux system service (daemon).
