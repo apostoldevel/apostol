@@ -3,7 +3,7 @@ Apostol Web Service
 
 **Apostol Web Service**, C++ source codes.
 
-CATALOG STRUCTURE
+Structure
 -
 
     auto/             contains script files
@@ -17,7 +17,7 @@ CATALOG STRUCTURE
     └─modules/        contains files with source code of modules (add-ons)
       └─WebServer/    contains add-on source files: Web-Server
 
-DESCRIPTION
+Overview
 -
 
 **Apostol Web Service** (AWS) - C++ Framework for quick creation **RESTful API**
@@ -44,7 +44,7 @@ The server creates a connection pool with the PostgreSQL DBMS and allows sending
 
 ###### PostgreSQL support is disabled by default.
 	
-MODULES
+Modules
 -
 
 The apostle is arranged so that the main code answers:
@@ -54,7 +54,7 @@ The apostle is arranged so that the main code answers:
 
 The code that implements the service logic is located separately from the main code in modules (add-ons).
 
-SETTINGS
+Settings
 -
 
 ###### CMake configuration options
@@ -65,18 +65,19 @@ Boolean flag **WITH_POSTGRESQL** can be used to enable PostgreSQL support. The d
 
 Boolean flag **WITH_SQLITE3** can be used to enable sqlite3 support. The default value is **OFF**.
 
-BUILDING AND INSTALLATION
+Build and installing
 -
 
 To build you need:
 
-1. The compiler C ++;
+1. The compiler C++;
 1. [CMake](https://cmake.org);
 1. The library [libdelphi](https://github.com/ufocomp/libdelphi/) (Delphi classes for C++);
 
 ###### **ATTENTION**: You do not need to install `libdelphi`, just download and put it in the `src/lib` directory of the project.
 
-If PostgreSQL support is enabled, you will need::
+If PostgreSQL support is enabled, you will need:
+
 1. The library [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development);
 1. The library [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development).
 
