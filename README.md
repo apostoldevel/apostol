@@ -40,7 +40,7 @@ The HTTP server accepts requests from clients and, depending on the value in the
 
 #### **PostgreSQL server**.
 	
-The server creates a connection pool with the PostgreSQL DBMS and allows sending SQL queries in ** asynchronous ** mode. You can specify the range of minimum and maximum number of connections to the DBMS in the configuration file in the section `[postgres]`.
+The server creates a connection pool with the PostgreSQL DBMS and allows sending SQL queries in **asynchronous** mode. You can specify the range of minimum and maximum number of connections to the DBMS in the configuration file in the section `[postgres]`.
 
 ###### PostgreSQL support is disabled by default.
 	
@@ -160,25 +160,25 @@ The result should be something like this:
            └─26773 apostol: worker process (apostol)
 ~~~
 
-### Management of the **Apostol**.
+### Controlling **Apostol**.
 
-**`apostol`** can be controlled by signals.
+**`apostol`** can be controlled with signals.
 
-The default process number is written to the file `/usr/local/apostol/logs/apostol.pid`.
-You can change the name of this file when configuring the assembly or in the section `apostol.conf` of the key `[daemon]` key `pid`.
+The process ID of the master process is written to the file `/usr/local/apostol/logs/apostol.pid` by default.
+This name may be changed at configuration time, or in the section `apostol.conf` of the key `[daemon]` key `pid`.
 
-The main process supports the following signals:
-
-| Signal | Action |
-| --------- | ------------------ |
-| TIME, INT | quick completion |
-| EXIT | smooth completion |
-| HUP | configuration changes, launching new workflows with a new configuration, smooth completion of old workflows |
-| Winch smooth completion of work processes |
-
-Workflow management is not required separately. However, they also support some signals:
+The master process supports the following signals:
 
 | Signal | Action |
 | --------- | ------------------ |
-| TIME, INT | quick completion |
-| EXIT | smooth completion |
+| TERM, INT | fast shutdown |
+| QUIT | graceful shutdown |
+| HUP | changing configuration, starting new worker processes with a new configuration, graceful shutdown of old worker processes |
+| WINCH | graceful shutdown of worker processes |
+
+Individual worker processes can be controlled with signals as well, though it is not required. The supported signals are:
+
+| Signal | Action |
+| --------- | ------------------ |
+| TERM, INT | fast shutdown |
+| QUIT | graceful shutdown |
