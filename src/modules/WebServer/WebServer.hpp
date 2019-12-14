@@ -34,6 +34,12 @@ namespace Apostol {
         class CWebServer: public CApostolModule {
         private:
 
+            static void DebugRequest(CRequest *ARequest);
+            static void DebugReply(CReply *AReply);
+            static void DebugConnection(CHTTPServerConnection *AConnection);
+
+        protected:
+
             void DoGet(CHTTPServerConnection *AConnection);
 
         public:
