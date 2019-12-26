@@ -645,6 +645,35 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        bool CServerProcess::ExecSQL(CPollConnection *AConnection, const CStringList &SQL,
+                                     COnPQPollQueryExecutedEvent &&OnExecuted,
+                                     COnPQPollQueryExceptionEvent &&OnException) {
+
+            auto LQuery = GetQuery(AConnection);
+
+            if (LQuery == nullptr)
+                throw Delphi::Exception::Exception("ExecSQL: GetQuery() failed!");
+
+            if (OnExecuted != nullptr)
+                LQuery->OnPollExecuted(static_cast<COnPQPollQueryExecutedEvent &&>(OnExecuted));
+
+            if (OnException != nullptr)
+                LQuery->OnException(static_cast<COnPQPollQueryExceptionEvent &&>(OnException));
+
+            LQuery->SQL() = SQL;
+
+            if (LQuery->QueryStart() != POLL_QUERY_START_ERROR) {
+                return true;
+            } else {
+                delete LQuery;
+            }
+
+            Log()->Error(APP_LOG_ALERT, 0, "ExecSQL: QueryStart() failed!");
+
+            return false;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CServerProcess::DoPQReceiver(CPQConnection *AConnection, const PGresult *AResult) {
             CPQConnInfo &Info = AConnection->ConnInfo();
             if (Info.ConnInfo().IsEmpty()) {

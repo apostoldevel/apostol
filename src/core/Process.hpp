@@ -418,6 +418,10 @@ namespace Apostol {
             void PQServer(CPQServer *Value) { SetPQServer(Value); };
 
             virtual CPQPollQuery *GetQuery(CPollConnection *AConnection);
+
+            bool ExecSQL(CPollConnection *AConnection, const CStringList &SQL,
+                         COnPQPollQueryExecutedEvent && OnExecuted = nullptr,
+                         COnPQPollQueryExceptionEvent && OnException = nullptr);
 #endif
         };
 
