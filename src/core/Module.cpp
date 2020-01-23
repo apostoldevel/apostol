@@ -42,9 +42,6 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-//      A0000-P0000-O0000-S0000-T0000-O0000-L00000
-//      012345678901234567890123456789012345678901
-//      0         1         2         3         4
         CString GetUID(unsigned int len) {
             CString S(len, ' ');
 
@@ -52,6 +49,17 @@ namespace Apostol {
                 unsigned char rc = random_char();
                 ByteToHexStr(S.Data() + i * 2 * sizeof(unsigned char), S.Size(), &rc, 1);
             }
+
+            return S;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+//      A0000-P0000-O0000-S0000-T0000-O0000-L00000
+//      012345678901234567890123456789012345678901
+//      0         1         2         3         4
+        CString ApostolUID() {
+
+            CString S(GetUID(APOSTOL_MODULE_UID_LENGTH));
 
             S[ 0] = 'A';
             S[ 5] = '-';
@@ -77,7 +85,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CJob::CJob(CCollection *ACCollection) : CCollectionItem(ACCollection) {
-            m_JobId = GetUID(APOSTOL_MODULE_UID_LENGTH);
+            m_JobId = ApostolUID();
             m_PollQuery = nullptr;
         }
 
