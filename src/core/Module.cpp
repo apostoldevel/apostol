@@ -232,12 +232,12 @@ namespace Apostol {
                         LFields.Add(LResult->fName(I));
                     }
 
-                    AResult.Add(TList<CStringList>());
+                    AResult.Add(TList<CStringPairs>());
                     for (int Row = 0; Row < LResult->nTuples(); ++Row) {
-                        AResult[i].Add(CStringList());
+                        AResult[i].Add(CStringPairs());
                         for (int Col = 0; Col < LResult->nFields(); ++Col) {
                             if (LResult->GetIsNull(Row, Col)) {
-                                AResult[i].Last().AddPair(LFields[Col].c_str(), "<null>");
+                                AResult[i].Last().AddPair(LFields[Col].c_str(), "");
                             } else {
                                 if (LResult->fFormat(Col) == 0) {
                                     AResult[i].Last().AddPair(LFields[Col].c_str(), LResult->GetValue(Row, Col));
@@ -267,14 +267,18 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         bool CApostolModule::ExecSQL(CPollConnection *AConnection, const CStringList &SQL,
-                                     COnPQPollQueryExecutedEvent &&Executed) {
+                COnPQPollQueryExecutedEvent &&OnExecuted, COnPQPollQueryExceptionEvent &&OnException) {
+
             auto LQuery = GetQuery(AConnection);
 
             if (LQuery == nullptr)
                 throw Delphi::Exception::Exception("ExecSQL: GetQuery() failed!");
 
-            if (Executed != nullptr)
-                LQuery->OnPollExecuted(static_cast<COnPQPollQueryExecutedEvent &&>(Executed));
+            if (OnExecuted != nullptr)
+                LQuery->OnPollExecuted(static_cast<COnPQPollQueryExecutedEvent &&>(OnExecuted));
+
+            if (OnException != nullptr)
+                LQuery->OnException(static_cast<COnPQPollQueryExceptionEvent &&>(OnException));
 
             LQuery->SQL() = SQL;
 

@@ -32,7 +32,7 @@ namespace Apostol {
 
     namespace Module {
 
-        typedef TList<TList<CStringList>> CQueryResult;
+        typedef TList<TList<CStringPairs>> CQueryResult;
         //--------------------------------------------------------------------------------------------------------------
 
         typedef std::function<void (CHTTPServerConnection *AConnection)> COnMethodHandlerEvent;
@@ -176,7 +176,9 @@ namespace Apostol {
 
             CPQPollQuery *GetQuery(CPollConnection *AConnection);
 
-            bool ExecSQL(CPollConnection *AConnection, const CStringList &SQL, COnPQPollQueryExecutedEvent &&Executed = nullptr);
+            bool ExecSQL(CPollConnection *AConnection, const CStringList &SQL,
+                         COnPQPollQueryExecutedEvent && OnExecuted = nullptr,
+                         COnPQPollQueryExceptionEvent && OnException = nullptr);
 #endif
         };
 
