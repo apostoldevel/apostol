@@ -567,7 +567,7 @@ namespace Apostol {
 
             SetServer(LServer);
 
-            InitializeServerHandlers();
+            InitializeHandlers(LServer->CommandHandlers());
         }
         //--------------------------------------------------------------------------------------------------------------
 
