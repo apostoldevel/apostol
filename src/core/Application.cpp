@@ -481,11 +481,16 @@ namespace Apostol {
                 CProcessType AType): CModuleProcess(AType, AParent), CCollectionItem((CProcessManager *) AApplication),
                 m_pApplication(AApplication) {
 
+            m_Timer = nullptr;
+            m_TimerInterval = 0;
+
             m_pwd.uid = -1;
             m_pwd.gid = -1;
 
             m_pwd.username = nullptr;
             m_pwd.groupname = nullptr;
+
+            m_PollStack = nullptr;
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -528,6 +533,90 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CApplicationProcess::SetPwd() {
+            if (geteuid() == 0) {
+                if (setgid(m_pwd.gid) == -1) {
+                    throw Delphi::Exception::ExceptionFrm("setgid(%d) failed.", m_pwd.gid);
+                }
+
+                if (initgroups(m_pwd.username, m_pwd.gid) == -1) {
+                    throw Delphi::Exception::ExceptionFrm("initgroups(%s, %d) failed.", m_pwd.username, m_pwd.gid);
+                }
+
+                if (setuid(m_pwd.uid) == -1) {
+                    throw Delphi::Exception::ExceptionFrm("setuid(%d) failed.", m_pwd.username, m_pwd.gid);
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApplicationProcess::SetUser(const char *AUserName, const char *AGroupName) {
+            if (m_pwd.uid == (uid_t) -1 && geteuid() == 0) {
+
+                struct group   *grp;
+                struct passwd  *pwd;
+
+                errno = 0;
+                pwd = getpwnam(AUserName);
+                if (pwd == nullptr) {
+                    throw Delphi::Exception::ExceptionFrm("getpwnam(\"%s\") failed.", AUserName);
+                }
+
+                errno = 0;
+                grp = getgrnam(AGroupName);
+                if (grp == nullptr) {
+                    throw Delphi::Exception::ExceptionFrm("getgrnam(\"%s\") failed.", AGroupName);
+                }
+
+                m_pwd.username = AUserName;
+                m_pwd.uid = pwd->pw_uid;
+
+                m_pwd.groupname = AGroupName;
+                m_pwd.gid = grp->gr_gid;
+
+                SetPwd();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApplicationProcess::SetUser(const CString &UserName, const CString &GroupName) {
+            SetUser(UserName.c_str(), GroupName.c_str());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApplicationProcess::SetLimitNoFile(uint32_t value) {
+            if (value != static_cast<uint32_t>(-1)) {
+                struct rlimit rlmt = { 0, 0 };
+
+                rlmt.rlim_cur = (rlim_t) value;
+                rlmt.rlim_max = (rlim_t) value;
+
+                if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
+                    throw Delphi::Exception::ExceptionFrm("setrlimit(RLIMIT_NOFILE, %i) failed.", value);
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApplicationProcess::SetTimerInterval(int Value) {
+            if (m_TimerInterval != Value) {
+                m_TimerInterval = Value;
+                UpdateTimer();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApplicationProcess::UpdateTimer() {
+            if (Server() != nullptr) {
+                if (m_Timer == nullptr) {
+                    m_Timer = Server()->CreateTimer(CLOCK_MONOTONIC, 1000, m_TimerInterval, TFD_NONBLOCK);
+                } else {
+                    CEPoll::SetTimer(m_Timer, 1000, m_TimerInterval);
+                }
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CApplicationProcess::BeforeRun() {
             Log()->Debug(0, MSG_PROCESS_START, GetProcessName(), Application()->CmdLine().c_str());
         }
@@ -548,6 +637,7 @@ namespace Apostol {
 
             LServer->PollStack(m_PollStack);
 
+            LServer->OnTimer(std::bind(&CApplicationProcess::DoTimer, this, _1));
             LServer->OnExecute(std::bind(&CApplicationProcess::DoExecute, this, _1));
 
             LServer->OnVerbose(std::bind(&CApplicationProcess::DoVerbose, this, _1, _2, _3, _4));
@@ -566,8 +656,6 @@ namespace Apostol {
             LServer->ActiveLevel(alBinding);
 
             SetServer(LServer);
-
-            InitializeHandlers(LServer->CommandHandlers());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -831,52 +919,6 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CApplicationProcess::SetPwd() {
-            if (geteuid() == 0) {
-                if (setgid(m_pwd.gid) == -1) {
-                    throw Delphi::Exception::ExceptionFrm("setgid(%d) failed.", m_pwd.gid);
-                }
-
-                if (initgroups(m_pwd.username, m_pwd.gid) == -1) {
-                    throw Delphi::Exception::ExceptionFrm("initgroups(%s, %d) failed.", m_pwd.username, m_pwd.gid);
-                }
-
-                if (setuid(m_pwd.uid) == -1) {
-                    throw Delphi::Exception::ExceptionFrm("setuid(%d) failed.", m_pwd.username, m_pwd.gid);
-                }
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CApplicationProcess::SetUser(const char *AUserName, const char *AGroupName) {
-            if (m_pwd.uid == (uid_t) -1 && geteuid() == 0) {
-
-                struct group   *grp;
-                struct passwd  *pwd;
-
-                errno = 0;
-                pwd = getpwnam(AUserName);
-                if (pwd == nullptr) {
-                    throw Delphi::Exception::ExceptionFrm("getpwnam(\"%s\") failed.", AUserName);
-                }
-
-                errno = 0;
-                grp = getgrnam(AGroupName);
-                if (grp == nullptr) {
-                    throw Delphi::Exception::ExceptionFrm("getgrnam(\"%s\") failed.", AGroupName);
-                }
-
-                m_pwd.username = AUserName;
-                m_pwd.uid = pwd->pw_uid;
-
-                m_pwd.groupname = AGroupName;
-                m_pwd.gid = grp->gr_gid;
-
-                SetPwd();
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         void CApplicationProcess::ServerStart() {
             Server()->DocRoot() = Config()->DocRoot();
             Server()->ActiveLevel(alActive);
@@ -923,10 +965,13 @@ namespace Apostol {
 
             InitSignals();
 
+            SetLimitNoFile(Config()->LimitNoFile());
+
             ServerStart();
 #ifdef WITH_POSTGRESQL
             PQServerStart();
 #endif
+            SetTimerInterval(1000);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1388,6 +1433,8 @@ namespace Apostol {
 
             Config()->Reload();
 
+            SetLimitNoFile(Config()->LimitNoFile());
+
             SetUser(Config()->User().c_str(), Config()->Group().c_str());
 
             ServerStart();
@@ -1395,6 +1442,8 @@ namespace Apostol {
             PQServerStart();
 #endif
             SigProcMask(SIG_UNBLOCK, SigAddSet(&set));
+
+            SetTimerInterval(1000);
         }
         //--------------------------------------------------------------------------------------------------------------
 

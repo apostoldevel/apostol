@@ -310,7 +310,13 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CModuleManager::ExecuteModule(CTCPConnection *AConnection) {
+        void CModuleManager::HeartbeatModules() {
+            for (int i = 0; i < ModuleCount(); i++)
+                Modules(i)->Heartbeat();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CModuleManager::ExecuteModules(CTCPConnection *AConnection) {
             auto LConnection = dynamic_cast<CHTTPServerConnection *> (AConnection);
 
             CApostolModule *LModule = nullptr;

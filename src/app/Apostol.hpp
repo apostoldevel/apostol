@@ -50,7 +50,7 @@ namespace Apostol {
         public:
 
             CApostol(int argc, char *const *argv): CApplication(argc, argv) {
-                CreateModule(this);
+                CreateModules(this);
             };
 
             ~CApostol() override = default;

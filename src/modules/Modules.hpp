@@ -31,8 +31,8 @@ Author:
 #include "WebServer/WebServer.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-static void CreateModule(CModuleManager *AManager) {
-    CWebServer::CreateModule(AManager);
+static void CreateModules(CModuleManager *AManager) {
+    CWebServer::CreateModule(AManager)->InitMethods();
 }
 
 #endif //APOSTOL_MODULES_HPP

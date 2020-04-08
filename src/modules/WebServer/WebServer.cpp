@@ -31,7 +31,7 @@ namespace Apostol {
     namespace WebServer {
 
         CWebServer::CWebServer(CModuleManager *AManager): CApostolModule(AManager) {
-            InitMethods();
+
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -127,6 +127,11 @@ namespace Apostol {
 
             // Fill out the CReply to be sent to the client.
             AConnection->SendReply(CReply::ok, Mapping::ExtToType(ExtractFileExt(szExt, LRequestPath.c_str())));
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CWebServer::Heartbeat() {
+
         }
         //--------------------------------------------------------------------------------------------------------------
 

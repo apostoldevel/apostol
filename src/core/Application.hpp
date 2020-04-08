@@ -132,6 +132,10 @@ namespace Apostol {
 
             CApplication *m_pApplication;
 
+            CEPollTimer *m_Timer;
+
+            int m_TimerInterval;
+
             typedef struct pwd_t {
                 const char *username;
                 const char *groupname;
@@ -142,6 +146,8 @@ namespace Apostol {
             CPasswd m_pwd;
 
             void SetPwd();
+
+            void UpdateTimer();
 
         protected:
 
@@ -158,6 +164,8 @@ namespace Apostol {
             pid_t ExecProcess(CExecuteContext *AContext);
 
             void ChildProcessGetStatus() override;
+
+            void SetTimerInterval(int Value);
 
         public:
 
@@ -180,6 +188,12 @@ namespace Apostol {
             void DeletePidFile();
 
             void SetUser(const char *AUserName, const char *AGroupName);
+            void SetUser(const CString& UserName, const CString& GroupName);
+
+            static void SetLimitNoFile(uint32_t value);
+
+            int TimerInterval() { return m_TimerInterval; }
+            void TimerInterval(int Value) { SetTimerInterval(Value); }
 
             void ServerStart();
             void ServerStop();

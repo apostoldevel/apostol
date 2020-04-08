@@ -167,6 +167,7 @@ namespace Apostol {
             virtual void BeforeExecute(Pointer Data) abstract;
             virtual void AfterExecute(Pointer Data) abstract;
 
+            virtual void Heartbeat() abstract;
             virtual void Execute(CHTTPServerConnection *AConnection) abstract;
 
             const CString& AllowedMethods() { return GetAllowedMethods(m_AllowedMethods); };
@@ -205,7 +206,9 @@ namespace Apostol {
 
             };
 
-            bool ExecuteModule(CTCPConnection *AConnection);
+            void HeartbeatModules();
+
+            bool ExecuteModules(CTCPConnection *AConnection);
 
             int ModuleCount() { return inherited::Count(); };
             void DeleteModule(int Index) { inherited::Delete(Index); };
