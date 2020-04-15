@@ -1,6 +1,6 @@
 /*++
 
-Programm name:
+Program name:
 
   Apostol
 

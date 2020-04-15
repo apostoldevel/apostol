@@ -1,6 +1,6 @@
 /*++
 
-Programm name:
+Program name:
 
   Apostol
 
@@ -34,7 +34,7 @@ namespace Apostol {
         class CWebServer: public CApostolModule {
         protected:
 
-            void DoGet(CHTTPServerConnection *AConnection);
+            static void DoGet(CHTTPServerConnection *AConnection);
 
         public:
 
@@ -57,7 +57,6 @@ namespace Apostol {
             bool CheckUserAgent(const CString& Value) override;
 
         };
-
     }
 }
 
