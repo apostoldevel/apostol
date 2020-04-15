@@ -56,7 +56,7 @@ namespace Apostol {
 
             };
 
-            bool Allow() { return m_Allow; };
+            bool Allow() const { return m_Allow; };
 
             void Handler(CHTTPServerConnection *AConnection) {
                 if (m_Allow && m_Handler)
@@ -147,7 +147,6 @@ namespace Apostol {
             virtual void DoOptions(CHTTPServerConnection *AConnection);
 
             virtual void MethodNotAllowed(CHTTPServerConnection *AConnection);
-
 #ifdef WITH_POSTGRESQL
             virtual void DoPostgresQueryExecuted(CPQPollQuery *APollQuery) abstract;
             virtual void DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException) abstract;
@@ -172,9 +171,7 @@ namespace Apostol {
 
             const CString& AllowedMethods() { return GetAllowedMethods(m_AllowedMethods); };
             const CString& AllowedHeaders() { return GetAllowedHeaders(m_AllowedHeaders); };
-
 #ifdef WITH_POSTGRESQL
-
             static void EnumQuery(CPQResult *APQResult, CQueryResult& AResult);
             static void QueryToResults(CPQPollQuery *APollQuery, CQueryResults& AResults);
 
@@ -184,6 +181,12 @@ namespace Apostol {
                          COnPQPollQueryExecutedEvent && OnExecuted = nullptr,
                          COnPQPollQueryExceptionEvent && OnException = nullptr);
 #endif
+            static CHTTPClient * GetClient(const CString &Host, uint16_t Port);
+
+            static void DebugRequest(CRequest *ARequest);
+            static void DebugReply(CReply *AReply);
+            static void DebugConnection(CHTTPServerConnection *AConnection);
+
         };
 
         //--------------------------------------------------------------------------------------------------------------

@@ -304,6 +304,54 @@ namespace Apostol {
             return false;
         }
 #endif
+        CHTTPClient *CApostolModule::GetClient(const CString &Host, uint16_t Port) {
+            return Application::Application->GetClient(Host.c_str(), Port);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApostolModule::DebugRequest(CRequest *ARequest) {
+            DebugMessage("[%p] Request:\n%s %s HTTP/%d.%d\n", ARequest, ARequest->Method.c_str(), ARequest->Uri.c_str(), ARequest->VMajor, ARequest->VMinor);
+
+            for (int i = 0; i < ARequest->Headers.Count(); i++)
+                DebugMessage("%s: %s\n", ARequest->Headers[i].Name.c_str(), ARequest->Headers[i].Value.c_str());
+
+            if (!ARequest->Content.IsEmpty())
+                DebugMessage("\n%s\n", ARequest->Content.c_str());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApostolModule::DebugReply(CReply *AReply) {
+            DebugMessage("[%p] Reply:\nHTTP/%d.%d %d %s\n", AReply, AReply->VMajor, AReply->VMinor, AReply->Status, AReply->StatusText.c_str());
+
+            for (int i = 0; i < AReply->Headers.Count(); i++)
+                DebugMessage("%s: %s\n", AReply->Headers[i].Name.c_str(), AReply->Headers[i].Value.c_str());
+
+            if (!AReply->Content.IsEmpty())
+                DebugMessage("\n%s\n", AReply->Content.c_str());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CApostolModule::DebugConnection(CHTTPServerConnection *AConnection) {
+            DebugMessage("\n[%p] [%s:%d] [%d] ", AConnection, AConnection->Socket()->Binding()->PeerIP(),
+                         AConnection->Socket()->Binding()->PeerPort(), AConnection->Socket()->Binding()->Handle());
+
+            DebugRequest(AConnection->Request());
+
+            static auto OnReply = [](CObject *Sender) {
+                auto LConnection = dynamic_cast<CHTTPServerConnection *> (Sender);
+                auto LBinding = LConnection->Socket()->Binding();
+
+                if (Assigned(LBinding)) {
+                    DebugMessage("\n[%p] [%s:%d] [%d] ", LConnection, LBinding->PeerIP(),
+                                 LBinding->PeerPort(), LBinding->Handle());
+                }
+
+                DebugReply(LConnection->Reply());
+            };
+
+            AConnection->OnReply(OnReply);
+        }
+
         //--------------------------------------------------------------------------------------------------------------
 
         //-- CModuleManager --------------------------------------------------------------------------------------------
