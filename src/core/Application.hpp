@@ -303,19 +303,21 @@ namespace Apostol {
             void BeforeRun() override;
             void AfterRun() override;
 
-            void Reload();
+        protected:
 
             void DoExit();
 
         public:
 
-            explicit CProcessSingle(CCustomProcess* AParent, CApplication *AApplication):
+            CProcessSingle(CCustomProcess *AParent, CApplication *AApplication):
                     inherited(AParent, AApplication, ptSingle) {
             };
 
             ~CProcessSingle() override = default;
 
             void Run() override;
+
+            void Reload();
 
         };
         //--------------------------------------------------------------------------------------------------------------
@@ -340,7 +342,7 @@ namespace Apostol {
 
         public:
 
-            explicit CProcessMaster(CCustomProcess* AParent, CApplication *AApplication):
+            CProcessMaster(CCustomProcess* AParent, CApplication *AApplication):
                     inherited(AParent, AApplication, ptMaster) {
             };
 
@@ -360,7 +362,7 @@ namespace Apostol {
 
         public:
 
-            explicit CProcessSignaller(CCustomProcess* AParent, CApplication *AApplication):
+            CProcessSignaller(CCustomProcess* AParent, CApplication *AApplication):
                     inherited(AParent, AApplication, ptSignaller) {
             };
 
@@ -375,7 +377,7 @@ namespace Apostol {
 
         public:
 
-            explicit CProcessNewBinary(CCustomProcess* AParent, CApplication *AApplication):
+            CProcessNewBinary(CCustomProcess* AParent, CApplication *AApplication):
                     inherited(AParent, AApplication, ptNewBinary) {
             };
 
@@ -393,17 +395,20 @@ namespace Apostol {
             void BeforeRun() override;
             void AfterRun() override;
 
+        protected:
+
             void DoExit();
 
         public:
 
-            explicit CProcessWorker(CCustomProcess* AParent, CApplication *AApplication):
+            CProcessWorker(CCustomProcess *AParent, CApplication *AApplication):
                     inherited(AParent, AApplication, ptWorker) {
-            };
+            }
 
             ~CProcessWorker() override = default;
 
             void Run() override;
+
         };
         //--------------------------------------------------------------------------------------------------------------
 
@@ -419,7 +424,7 @@ namespace Apostol {
 
         public:
 
-            explicit CProcessHelper(CCustomProcess* AParent, CApplication *AApplication):
+            CProcessHelper(CCustomProcess* AParent, CApplication *AApplication):
                     inherited(AParent, AApplication, ptHelper) {
             };
 

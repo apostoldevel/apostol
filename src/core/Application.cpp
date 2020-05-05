@@ -634,7 +634,7 @@ namespace Apostol {
                                      FileName.c_str(), Line);
                     else
                         Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue _T(" - ignored and set by default: \"%s\""), lpszSectionName, lpszKeyName, lpszValue,
-                            FileName.c_str(), Line, lpszDefault);
+                                     FileName.c_str(), Line, lpszDefault);
                 }
             };
 
@@ -1046,6 +1046,26 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        void CProcessSingle::DoExit() {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CProcessSingle::Reload() {
+#ifdef WITH_POSTGRESQL
+            PQServerStop();
+#endif
+            ServerStop();
+
+            Config()->Reload();
+
+            ServerStart();
+#ifdef WITH_POSTGRESQL
+            PQServerStart();
+#endif
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CProcessSingle::BeforeRun() {
             Application()->Header(Application()->Name() + ": single process " + Application()->CmdLine());
 
@@ -1068,27 +1088,8 @@ namespace Apostol {
             PQServerStop();
 #endif
             ServerStop();
+
             CApplicationProcess::AfterRun();
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CProcessSingle::DoExit() {
-
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CProcessSingle::Reload() {
-#ifdef WITH_POSTGRESQL
-            PQServerStop();
-#endif
-            ServerStop();
-
-            Config()->Reload();
-
-            ServerStart();
-#ifdef WITH_POSTGRESQL
-            PQServerStart();
-#endif
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1513,6 +1514,11 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
+        void CProcessWorker::DoExit() {
+
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CProcessWorker::BeforeRun() {
             sigset_t set;
 
@@ -1544,11 +1550,6 @@ namespace Apostol {
 #endif
             ServerStop();
             CApplicationProcess::AfterRun();
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CProcessWorker::DoExit() {
-
         }
         //--------------------------------------------------------------------------------------------------------------
 
