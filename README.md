@@ -1,7 +1,7 @@
 Apostol Web Service
 =
 
-**Apostol Web Service**, C++ source codes.
+**[Apostol Web Service](https://www.apostol-web-service.ru/)**, C++ source codes.
 
 Structure
 -
@@ -15,7 +15,7 @@ Structure
     ├─core/           contains source files: Apostol Core
     ├─lib/            contains library source files
     └─modules/        contains files with source code of modules (add-ons)
-      └─WebServer/    contains add-on source files: Web-Server
+      └─WebService/   contains add-on source files: Web-Service
 
 Overview
 -
@@ -34,7 +34,7 @@ Binary file **`apostol`** - Linux system service (daemon), whose task is to star
 
 #### **HTTP Server**.
 
-The HTTP server accepts requests from clients and, depending on the value in the `User-Agent` header, distributes them between the modules (add-ons). If the header or value of the `User-Agent` is missing, sends a request to the module **`WebServer`** turns AWS into **Web Server**.
+The HTTP server accepts requests from clients and, depending on the value in the `User-Agent` header, distributes them between the modules (add-ons). If the header or value of the `User-Agent` is missing, sends a request to the module **`WebService`** turns AWS into **Web Server**.
 
 ###### Asynchronous server operation is performed using `epoll API`. 
 
@@ -83,7 +83,7 @@ If PostgreSQL support is enabled, you will need:
 
 To install the C++ compiler and necessary libraries in Ubuntu, run:
 ~~~
-sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
+$ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
 ~~~
 
 To install PostgreSQL, use the instructions for [this](https://www.postgresql.org/download/) link.
@@ -101,27 +101,27 @@ To install (without Git) you need:
 
 To install (with Git) you need:
 ~~~
-git clone https://github.com/ufocomp/apostol.git
+$ git clone https://github.com/ufocomp/apostol.git
 ~~~
 
 To add **libdelphi** to the project, using Git, do:
 ~~~
-cd apostol/src/lib
-git clone https://github.com/ufocomp/libdelphi.git delphi
-cd ../../../
+$ cd apostol/src/lib
+$ git clone https://github.com/ufocomp/libdelphi.git delphi
+$ cd ../../../
 ~~~
 
 ###### Build:
 ~~~
-cd apostol
-cmake -DCMAKE_BUILD_TYPE=Release . -B cmake-build-release
+$ cd apostol
+$ cmake -DCMAKE_BUILD_TYPE=Release . -B cmake-build-release
 ~~~
 
 ###### Make and install:
 ~~~
-cd cmake-build-release
-make
-sudo make install
+$ cd cmake-build-release
+$ make
+$ sudo make install
 ~~~
 
 By default **apostle** will be set to:
@@ -143,12 +143,12 @@ To manage **Apostol**, use the standard service management commands.
 
 To start **Apostol**, run:
 ~~~
-sudo service apostol start
+$ sudo service apostol start
 ~~~
 
 To check the status, run:
 ~~~
-sudo service apostol status
+$ sudo service apostol status
 ~~~
 
 The result should be something like this:

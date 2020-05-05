@@ -103,7 +103,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CCustomProcess::CCustomProcess(CProcessType AType, CCustomProcess *AParent): CObject(), CGlobalComponent(),
-            m_Type(AType), m_pParent(AParent) {
+                                                                                     m_Type(AType), m_pParent(AParent) {
 
             m_Pid = MainThreadID;
 
@@ -856,13 +856,13 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerException(CTCPConnection *AConnection,
-                Delphi::Exception::Exception *AException) {
+                                               Delphi::Exception::Exception *AException) {
             Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerEventHandlerException(CPollEventHandler *AHandler,
-                Delphi::Exception::Exception *AException) {
+                                                           Delphi::Exception::Exception *AException) {
             Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -910,7 +910,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoVerbose(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat,
-                va_list args) {
+                                       va_list args) {
             Log()->Debug(0, AFormat, args);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -931,7 +931,7 @@ namespace Apostol {
                 const CString &LUserAgent = LRequest->Headers.Values(_T("user-agent"));
 
                 auto LBinding = LConnection->Socket()->Binding();
-                if ( LBinding != nullptr) {
+                if (LBinding != nullptr) {
                     Log()->Access(_T("%s %d %8.2f ms [%s] \"%s %s HTTP/%d.%d\" %d %d \"%s\" \"%s\"\r\n"),
                                   LBinding->PeerIP(), LBinding->PeerPort(),
                                   double((clock() - AConnection->Tag()) / (double) CLOCKS_PER_SEC * 1000), szTime,
@@ -1000,7 +1000,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CModuleProcess::CModuleProcess(CProcessType AType, CCustomProcess *AParent): CModuleManager(),
-            CServerProcess(AType, AParent) {
+                                                                                     CServerProcess(AType, AParent) {
         }
         //--------------------------------------------------------------------------------------------------------------
 

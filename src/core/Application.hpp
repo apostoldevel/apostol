@@ -89,12 +89,12 @@ namespace Apostol {
 
             char *const *Environ() { return &m_environ; };
 
-            int ExitCode() { return m_exitcode; };
+            int ExitCode() const { return m_exitcode; };
             void ExitCode(int Status) { m_exitcode = Status; };
 
             const CStringList &argv() { return m_argv; };
 
-            int argc() { return m_argc; };
+            int argc() const { return m_argc; };
 
             char *const *os_argv() { return m_os_argv; };
 
@@ -192,7 +192,9 @@ namespace Apostol {
 
             static void SetLimitNoFile(uint32_t value);
 
-            int TimerInterval() { return m_TimerInterval; }
+            static void LoadSites(CSites &Sites);
+
+            int TimerInterval() const { return m_TimerInterval; }
             void TimerInterval(int Value) { SetTimerInterval(Value); }
 
             void ServerStart();
@@ -308,7 +310,7 @@ namespace Apostol {
         public:
 
             explicit CProcessSingle(CCustomProcess* AParent, CApplication *AApplication):
-                inherited(AParent, AApplication, ptSingle) {
+                    inherited(AParent, AApplication, ptSingle) {
             };
 
             ~CProcessSingle() override = default;
@@ -339,7 +341,7 @@ namespace Apostol {
         public:
 
             explicit CProcessMaster(CCustomProcess* AParent, CApplication *AApplication):
-                inherited(AParent, AApplication, ptMaster) {
+                    inherited(AParent, AApplication, ptMaster) {
             };
 
             ~CProcessMaster() override = default;
@@ -359,7 +361,7 @@ namespace Apostol {
         public:
 
             explicit CProcessSignaller(CCustomProcess* AParent, CApplication *AApplication):
-                inherited(AParent, AApplication, ptSignaller) {
+                    inherited(AParent, AApplication, ptSignaller) {
             };
 
             ~CProcessSignaller() override = default;
@@ -396,7 +398,7 @@ namespace Apostol {
         public:
 
             explicit CProcessWorker(CCustomProcess* AParent, CApplication *AApplication):
-                inherited(AParent, AApplication, ptWorker) {
+                    inherited(AParent, AApplication, ptWorker) {
             };
 
             ~CProcessWorker() override = default;

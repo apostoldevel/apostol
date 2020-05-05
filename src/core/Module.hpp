@@ -41,6 +41,70 @@ namespace Apostol {
 
         CString GetUID(unsigned int len);
         CString ApostolUID();
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CAuthorization --------------------------------------------------------------------------------------------
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        enum CAuthorizationSchemes { asUnknown, asBasic, asSession };
+        //--------------------------------------------------------------------------------------------------------------
+
+        typedef struct CAuthorization {
+
+            CAuthorizationSchemes Schema;
+
+            CString Username;
+            CString Password;
+            CString Session;
+
+            CAuthorization(): Schema(asUnknown) {
+
+            }
+
+            explicit CAuthorization(const CString& String): CAuthorization() {
+                Parse(String);
+            }
+
+            void Parse(const CString& String) {
+                if (String.IsEmpty())
+                    throw Delphi::Exception::Exception("Authorization error: Data not found.");
+
+                if (String.SubString(0, 5) == "Basic") {
+                    const CString LPassphrase(base64_decode(String.SubString(6)));
+
+                    const size_t LPos = LPassphrase.Find(':');
+                    if (LPos == CString::npos)
+                        throw Delphi::Exception::Exception("Authorization error: Incorrect passphrase.");
+
+                    Schema = asBasic;
+                    Username = LPassphrase.SubString(0, LPos);
+                    Password = LPassphrase.SubString(LPos + 1);
+
+                    if (Username.IsEmpty() || Password.IsEmpty())
+                        throw Delphi::Exception::Exception("Authorization error: Username and password has not be empty.");
+                } else if (String.SubString(0, 7) == "Session") {
+                    Schema = asSession;
+                    Session = String.SubString(8);
+                    if (Session.Length() != 40)
+                        throw Delphi::Exception::Exception("Authorization error: Incorrect Session length.");
+                } else {
+                    throw Delphi::Exception::Exception("Authorization error: Unknown schema.");
+                }
+            }
+
+            CAuthorization &operator << (const CString& String) {
+                Parse(String);
+                return *this;
+            }
+
+        } CAuthorization;
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        //-- CMethodHandler --------------------------------------------------------------------------------------------
+
         //--------------------------------------------------------------------------------------------------------------
 
         class CMethodHandler: CObject {
@@ -177,7 +241,7 @@ namespace Apostol {
 
             CPQPollQuery *GetQuery(CPollConnection *AConnection);
 
-            bool ExecSQL(CPollConnection *AConnection, const CStringList &SQL,
+            bool ExecSQL(const CStringList &SQL, CPollConnection *AConnection = nullptr,
                          COnPQPollQueryExecutedEvent && OnExecuted = nullptr,
                          COnPQPollQueryExceptionEvent && OnException = nullptr);
 #endif

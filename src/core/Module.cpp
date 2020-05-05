@@ -269,16 +269,21 @@ namespace Apostol {
             CPQPollQuery *LQuery = Application::Application->GetQuery(AConnection);
 
             if (Assigned(LQuery)) {
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+                LQuery->OnPollExecuted([this](auto && APollQuery) { DoPostgresQueryExecuted(APollQuery); });
+                LQuery->OnException([this](auto && APollQuery, auto && AException) { DoPostgresQueryException(APollQuery, AException); });
+#else
                 LQuery->OnPollExecuted(std::bind(&CApostolModule::DoPostgresQueryExecuted, this, _1));
                 LQuery->OnException(std::bind(&CApostolModule::DoPostgresQueryException, this, _1, _2));
+#endif
             }
 
             return LQuery;
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CApostolModule::ExecSQL(CPollConnection *AConnection, const CStringList &SQL,
-                COnPQPollQueryExecutedEvent &&OnExecuted, COnPQPollQueryExceptionEvent &&OnException) {
+        bool CApostolModule::ExecSQL(const CStringList &SQL, CPollConnection *AConnection,
+                                     COnPQPollQueryExecutedEvent &&OnExecuted, COnPQPollQueryExceptionEvent &&OnException) {
 
             auto LQuery = GetQuery(AConnection);
 
@@ -303,6 +308,7 @@ namespace Apostol {
 
             return false;
         }
+        //--------------------------------------------------------------------------------------------------------------
 #endif
         CHTTPClient *CApostolModule::GetClient(const CString &Host, uint16_t Port) {
             return Application::Application->GetClient(Host.c_str(), Port);

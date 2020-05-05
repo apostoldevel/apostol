@@ -28,11 +28,11 @@ Author:
 #include "Module.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "WebServer/WebServer.hpp"
+#include "WebService/WebService.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 static void CreateModules(CModuleManager *AManager) {
-    CWebServer::CreateModule(AManager)->InitMethods();
+    CWebService::CreateModule(AManager)->InitMethods();
 }
 
 #endif //APOSTOL_MODULES_HPP

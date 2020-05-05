@@ -25,21 +25,7 @@ Author:
 #include "Application.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-#define ARS_TEMPLATE_MESSAGE "Hello, %s\n\n%s\n\n--\nThank you,\nPayments.net"
-#define ARS_MESSAGE_HELP "Send a message with the subject \"help\" to this address for more information."
-#define ARS_ERROR_SUBJECT "Invalid message subject. " ARS_MESSAGE_HELP
-#define ARS_ERROR_BODY "Message body must not be empty. " ARS_MESSAGE_HELP
-#define ARS_EXCEPTION_MESSAGE "Sorry, something went wrong and led to an error.\n\n%s"
-
-#define PGP_BEGIN_PUBLIC_KEY "BEGIN PGP PUBLIC KEY"
-#define PGP_END_PUBLIC_KEY "END PGP PUBLIC KEY"
-#define BM_PREFIX "BM-"
-#define HTTP_PREFIX "http"
-#define HTTP_PREFIX_SIZE 4
-
-#define ARS_DELETE_BTC_KEY  0x010u
-#define ARS_DELETE_PGP_KEY  0x020u
-#define ARS_DELETE_ACCOUNT  0x100u
+#define APP_FILE_NOT_FOUND "File not found: %s"
 
 extern "C++" {
 
@@ -196,7 +182,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CApplication::CApplication(int argc, char *const *argv): CProcessManager(),
-            CApplicationProcess(nullptr, this, ptMain), CCustomApplication(argc, argv) {
+                                                                 CApplicationProcess(nullptr, this, ptMain), CCustomApplication(argc, argv) {
             m_ProcessType = ptSingle;
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -227,6 +213,11 @@ namespace Apostol {
 
             LogFile = Log()->AddLogFile(Config()->AccessLog().c_str(), 0);
             LogFile->LogType(ltAccess);
+
+#ifdef WITH_POSTGRESQL
+            LogFile = Log()->AddLogFile(Config()->PostgresLog().c_str(), 0);
+            LogFile->LogType(ltPostgres);
+#endif
 
 #ifdef _DEBUG
             const CString &Debug = Config()->LogFiles().Values(_T("debug"));
@@ -478,8 +469,8 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CApplicationProcess::CApplicationProcess(CCustomProcess *AParent, CApplication *AApplication,
-                CProcessType AType): CModuleProcess(AType, AParent), CCollectionItem((CProcessManager *) AApplication),
-                m_pApplication(AApplication) {
+                                                 CProcessType AType): CModuleProcess(AType, AParent), CCollectionItem((CProcessManager *) AApplication),
+                                                                      m_pApplication(AApplication) {
 
             m_Timer = nullptr;
             m_TimerInterval = 0;
@@ -627,8 +618,69 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CApplicationProcess::LoadSites(CSites &Sites) {
+
+            const CString FileName(Config()->ConfPrefix() + "sites.conf");
+
+            auto OnIniFileParseError = [&FileName](Pointer Sender, LPCTSTR lpszSectionName, LPCTSTR lpszKeyName,
+                                                   LPCTSTR lpszValue, LPCTSTR lpszDefault, int Line)
+            {
+                if ((lpszValue == nullptr) || (lpszValue[0] == '\0')) {
+                    if ((lpszDefault == nullptr) || (lpszDefault[0] == '\0'))
+                        Log()->Error(APP_LOG_EMERG, 0, ConfMsgEmpty, lpszSectionName, lpszKeyName, FileName.c_str(), Line);
+                } else {
+                    if ((lpszDefault == nullptr) || (lpszDefault[0] == '\0'))
+                        Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue, lpszSectionName, lpszKeyName, lpszValue,
+                                     FileName.c_str(), Line);
+                    else
+                        Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue _T(" - ignored and set by default: \"%s\""), lpszSectionName, lpszKeyName, lpszValue,
+                            FileName.c_str(), Line, lpszDefault);
+                }
+            };
+
+            if (FileExists(FileName.c_str())) {
+                const CString pathSites(Config()->Prefix() + "sites/");
+
+                CIniFile HostFile(FileName.c_str());
+                HostFile.OnIniFileParseError(OnIniFileParseError);
+
+                CStringList configFiles;
+                CString configFile;
+
+                HostFile.ReadSectionValues("hosts", &configFiles);
+                for (int i = 0; i < configFiles.Count(); i++) {
+                    const auto& siteName = configFiles.Names(i);
+
+                    configFile = configFiles.ValueFromIndex(i);
+                    if (!path_separator(configFile.front())) {
+                        configFile = pathSites + configFile;
+                    }
+
+                    if (FileExists(configFile.c_str())) {
+                        int Index = Sites.AddPair(siteName, CJSON());
+                        auto& Config = Sites[Index].Config;
+                        Config.LoadFromFile(configFile.c_str());
+                    } else {
+                        Log()->Error(APP_LOG_EMERG, 0, APP_FILE_NOT_FOUND, configFile.c_str());
+                    }
+                }
+            } else {
+                Log()->Error(APP_LOG_EMERG, 0, APP_FILE_NOT_FOUND, FileName.c_str());
+            }
+
+            auto& defaultSite = Sites.Default().Config;
+            if (defaultSite.ValueType() == jvtNull) {
+                auto& objectJson = defaultSite.Object();
+                objectJson.AddPair("root", Config()->DocRoot());
+                objectJson.AddPair("listen", (int) Config()->Port());
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CApplicationProcess::CreateHTTPServer() {
-            auto LServer = new CHTTPServer((ushort) Config()->Port(), Config()->DocRoot().c_str());
+            auto LServer = new CHTTPServer((ushort) Config()->Port());
+
+            LoadSites(LServer->Sites());
 
             LServer->ServerName() = m_pApplication->Title();
 
@@ -637,6 +689,23 @@ namespace Apostol {
 
             LServer->PollStack(m_PollStack);
 
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+            LServer->OnTimer([this](auto && AHandler) { DoTimer(AHandler); });
+            LServer->OnExecute([this](auto && AConnection) { return DoExecute(AConnection); });
+
+            LServer->OnVerbose([this](auto && Sender, auto && AConnection, auto && AFormat, auto && args) { DoVerbose(Sender, AConnection, AFormat, args); });
+            LServer->OnAccessLog([this](auto && AConnection) { DoAccessLog(AConnection); });
+
+            LServer->OnException([this](auto && AConnection, auto && AException) { DoServerException(AConnection, AException); });
+            LServer->OnListenException([this](auto && AConnection, auto && AException) { DoServerListenException(AConnection, AException); });
+
+            LServer->OnEventHandlerException([this](auto && AHandler, auto && AException) { DoServerEventHandlerException(AHandler, AException); });
+
+            LServer->OnConnected([this](auto && Sender) { DoServerConnected(Sender); });
+            LServer->OnDisconnected([this](auto && Sender) { DoServerDisconnected(Sender); });
+
+            LServer->OnNoCommandHandler([this](auto && Sender, auto && AData, auto && AConnection) { DoNoCommandHandler(Sender, AData, AConnection); });
+#else
             LServer->OnTimer(std::bind(&CApplicationProcess::DoTimer, this, _1));
             LServer->OnExecute(std::bind(&CApplicationProcess::DoExecute, this, _1));
 
@@ -652,7 +721,7 @@ namespace Apostol {
             LServer->OnDisconnected(std::bind(&CApplicationProcess::DoServerDisconnected, this, _1));
 
             LServer->OnNoCommandHandler(std::bind(&CApplicationProcess::DoNoCommandHandler, this, _1, _2, _3));
-
+#endif
             LServer->ActiveLevel(alBinding);
 
             SetServer(LServer);
@@ -667,6 +736,23 @@ namespace Apostol {
 
             LPQServer->PollStack(m_PollStack);
 
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+            if (Config()->PostgresNotice()) {
+                //LPQServer->OnReceiver([this](auto && AConnection, auto && AResult) { DoPQReceiver(AConnection, AResult); });
+                LPQServer->OnProcessor([this](auto && AConnection, auto && AMessage) { DoPQProcessor(AConnection, AMessage); });
+            }
+
+            LPQServer->OnConnectException([this](auto && AConnection, auto && AException) { DoPQConnectException(AConnection, AException); });
+            LPQServer->OnServerException([this](auto && AServer, auto && AException) { DoPQServerException(AServer, AException); });
+
+            LPQServer->OnEventHandlerException([this](auto && AHandler, auto && AException) { DoServerEventHandlerException(AHandler, AException); });
+
+            LPQServer->OnStatus([this](auto && AConnection) { DoPQStatus(AConnection); });
+            LPQServer->OnPollingStatus([this](auto && AConnection) { DoPQPollingStatus(AConnection); });
+
+            LPQServer->OnConnected([this](auto && Sender) { DoPQConnect(Sender); });
+            LPQServer->OnDisconnected([this](auto && Sender) { DoPQDisconnect(Sender); });
+#else
             if (Config()->PostgresNotice()) {
                 //LPQServer->OnReceiver(std::bind(&CApplicationProcess::DoPQReceiver, this, _1, _2));
                 LPQServer->OnProcessor(std::bind(&CApplicationProcess::DoPQProcessor, this, _1, _2));
@@ -682,7 +768,7 @@ namespace Apostol {
 
             LPQServer->OnConnected(std::bind(&CApplicationProcess::DoPQConnect, this, _1));
             LPQServer->OnDisconnected(std::bind(&CApplicationProcess::DoPQDisconnect, this, _1));
-
+#endif
             SetPQServer(LPQServer);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -893,8 +979,11 @@ namespace Apostol {
 
                 CFile File(Config()->PidFile().c_str(), FILE_RDWR | create);
 
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+                File.setOnFilerError([this](auto && Sender, auto && Error, auto && lpFormat, auto && args) { OnFilerError(Sender, Error, lpFormat, args); });
+#else
                 File.setOnFilerError(std::bind(&CApplicationProcess::OnFilerError, this, _1, _2, _3, _4));
-
+#endif
                 File.Open();
 
                 if (!Config()->Flags().test_config) {
@@ -920,7 +1009,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::ServerStart() {
-            Server()->DocRoot() = Config()->DocRoot();
             Server()->ActiveLevel(alActive);
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -1227,16 +1315,16 @@ namespace Apostol {
                 LProcess = Application()->Process(i);
 
                 log_debug9(APP_LOG_DEBUG_EVENT, Log(), 0,
-                              "process (%s)\t: %P - %i %P e:%d t:%d d:%d r:%d j:%d",
-                               LProcess->GetProcessName(),
-                               Pid(),
-                               i,
-                               LProcess->Pid(),
-                               LProcess->Exiting() ? 1 : 0,
-                               LProcess->Exited() ? 1 : 0,
-                               LProcess->Detached() ? 1 : 0,
-                               LProcess->Respawn() ? 1 : 0,
-                               LProcess->JustSpawn() ? 1 : 0);
+                           "process (%s)\t: %P - %i %P e:%d t:%d d:%d r:%d j:%d",
+                           LProcess->GetProcessName(),
+                           Pid(),
+                           i,
+                           LProcess->Pid(),
+                           LProcess->Exiting() ? 1 : 0,
+                           LProcess->Exited() ? 1 : 0,
+                           LProcess->Detached() ? 1 : 0,
+                           LProcess->Respawn() ? 1 : 0,
+                           LProcess->JustSpawn() ? 1 : 0);
             }
 
             live = true;
@@ -1386,8 +1474,11 @@ namespace Apostol {
 
             CFile File(lpszPid, FILE_RDONLY | FILE_OPEN);
 
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+            File.setOnFilerError([this](auto && Sender, auto && Error, auto && lpFormat, auto && args) { OnFilerError(Sender, Error, lpFormat, args); });
+#else
             File.setOnFilerError(std::bind(&CApplicationProcess::OnFilerError, this, _1, _2, _3, _4));
-
+#endif
             File.Open();
 
             n = File.Read(buf, _INT64_LEN + 2, 0);

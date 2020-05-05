@@ -25,10 +25,6 @@ Author:
 #include "Config.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-#define ConfMsgInvalidKey   _T("section \"%s\" invalid key \"%s\" in %s")
-#define ConfMsgInvalidValue _T("section \"%s\" key \"%s\" invalid value \"%s\" in %s:%d")
-#define ConfMsgEmpty        _T("section \"%s\" key \"%s\" value is empty in %s:%d")
-
 extern "C++" {
 
 namespace Apostol {
@@ -176,14 +172,8 @@ namespace Apostol {
 
             m_nLimitNoFile = static_cast<uint32_t>(-1);
 
-            m_nPostgresPollMin = 0;
-            m_nPostgresPollMax = 0;
-
             m_fMaster = false;
             m_fDaemon = false;
-
-            m_fPostgresConnect = false;
-            m_fPostgresNotice = false;
 
             m_Flags = {false, false, false, false};
         }
@@ -375,11 +365,25 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CConfig::SetJoinUser(LPCTSTR AValue) {
+            if (m_sJoinUser != AValue) {
+                m_sJoinUser = AValue;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CConfig::SetJoinPassword(LPCTSTR AValue) {
+            if (m_sJoinPassword != AValue) {
+                m_sJoinPassword = AValue;
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CConfig::SetDefault() {
             m_uErrorCount = 0;
 
             m_nWorkers = 1;
-            m_nPort = 4977;
+            m_nPort = 8080;
 
             m_nTimeOut = 5000;
             m_nConnectTimeOut = 5;
@@ -448,6 +452,9 @@ namespace Apostol {
 
             Add(new CConfigCommand(_T("postgres/poll"), _T("min"), &m_nPostgresPollMin));
             Add(new CConfigCommand(_T("postgres/poll"), _T("max"), &m_nPostgresPollMax));
+
+            Add(new CConfigCommand(_T("join"), _T("user"), m_sJoinUser.c_str(), std::bind(&CConfig::SetJoinUser, this, _1)));
+            Add(new CConfigCommand(_T("join"), _T("password"), m_sJoinPassword.c_str(), std::bind(&CConfig::SetJoinPassword, this, _1)));
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -549,7 +556,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::OnIniFileParseError(Pointer Sender, LPCTSTR lpszSectionName, LPCTSTR lpszKeyName,
-                LPCTSTR lpszValue, LPCTSTR lpszDefault, int Line) {
+                                          LPCTSTR lpszValue, LPCTSTR lpszDefault, int Line) {
 
             m_uErrorCount++;
             if ((lpszValue == nullptr) || (lpszValue[0] == '\0')) {
@@ -557,14 +564,14 @@ namespace Apostol {
                     Log()->Error(APP_LOG_EMERG, 0, ConfMsgEmpty, lpszSectionName, lpszKeyName, m_sConfFile.c_str(), Line);
                 else
                     Log()->Error(APP_LOG_EMERG, 0, ConfMsgEmpty _T(" - ignored and set by default: \"%s\""), lpszSectionName,
-                                lpszKeyName, m_sConfFile.c_str(), Line, lpszDefault);
+                                 lpszKeyName, m_sConfFile.c_str(), Line, lpszDefault);
             } else {
                 if (Flags().test_config || (lpszDefault == nullptr) || (lpszDefault[0] == '\0'))
                     Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue, lpszSectionName, lpszKeyName, lpszValue,
-                                m_sConfFile.c_str(), Line);
+                                 m_sConfFile.c_str(), Line);
                 else
                     Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue _T(" - ignored and set by default: \"%s\""), lpszSectionName, lpszKeyName, lpszValue,
-                                m_sConfFile.c_str(), Line, lpszDefault);
+                                 m_sConfFile.c_str(), Line, lpszDefault);
             }
         }
 
