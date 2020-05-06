@@ -811,7 +811,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 #endif
         void CServerProcess::DebugRequest(CRequest *ARequest) {
-            DebugMessage("[%p] Request:\n%s %s HTTP/%d.%d\n", ARequest, ARequest->Method.c_str(), ARequest->Uri.c_str(), ARequest->VMajor, ARequest->VMinor);
+            DebugMessage("[%p] Request:\n%s %s HTTP/%d.%d\n", ARequest, ARequest->Method.c_str(), ARequest->URI.c_str(), ARequest->VMajor, ARequest->VMinor);
 
             for (int i = 0; i < ARequest->Headers.Count(); i++)
                 DebugMessage("%s: %s\n", ARequest->Headers[i].Name.c_str(), ARequest->Headers[i].Value.c_str());
@@ -838,14 +838,21 @@ namespace Apostol {
             LClient->ClientName() = Application::Application->Title();
 
             LClient->PollStack(m_pServer->PollStack());
-
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+            LClient->OnVerbose([this](auto && Sender, auto && AConnection, auto && AFormat, auto && args) { DoVerbose(Sender, AConnection, AFormat, args); });
+            LClient->OnException([this](auto && AConnection, auto && AException) { DoServerException(AConnection, AException); });
+            LClient->OnEventHandlerException([this](auto && AHandler, auto && AException) { DoServerEventHandlerException(AHandler, AException); });
+            LClient->OnConnected([this](auto && Sender) { DoClientConnected(Sender); });
+            LClient->OnDisconnected([this](auto && Sender) { DoClientDisconnected(Sender); });
+            LClient->OnNoCommandHandler([this](auto && Sender, auto && AData, auto && AConnection) { DoNoCommandHandler(Sender, AData, AConnection); });
+#else
             LClient->OnVerbose(std::bind(&CServerProcess::DoVerbose, this, _1, _2, _3, _4));
             LClient->OnException(std::bind(&CServerProcess::DoServerException, this, _1, _2));
             LClient->OnEventHandlerException(std::bind(&CServerProcess::DoServerEventHandlerException, this, _1, _2));
             LClient->OnConnected(std::bind(&CServerProcess::DoClientConnected, this, _1));
             LClient->OnDisconnected(std::bind(&CServerProcess::DoClientDisconnected, this, _1));
             LClient->OnNoCommandHandler(std::bind(&CServerProcess::DoNoCommandHandler, this, _1, _2, _3));
-
+#endif
             return LClient;
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -935,7 +942,7 @@ namespace Apostol {
                     Log()->Access(_T("%s %d %8.2f ms [%s] \"%s %s HTTP/%d.%d\" %d %d \"%s\" \"%s\"\r\n"),
                                   LBinding->PeerIP(), LBinding->PeerPort(),
                                   double((clock() - AConnection->Tag()) / (double) CLOCKS_PER_SEC * 1000), szTime,
-                                  LRequest->Method.c_str(), LRequest->Uri.c_str(), LRequest->VMajor, LRequest->VMinor,
+                                  LRequest->Method.c_str(), LRequest->URI.c_str(), LRequest->VMajor, LRequest->VMinor,
                                   LReply->Status, LReply->Content.Size(),
                                   LReferer.IsEmpty() ? "-" : LReferer.c_str(),
                                   LUserAgent.IsEmpty() ? "-" : LUserAgent.c_str());

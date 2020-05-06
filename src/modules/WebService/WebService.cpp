@@ -77,19 +77,27 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CWebService::InitRoots(const CSites &Sites) {
-            m_Roots.AddPair("default", Sites.Default().Config["root"].AsString());
-            for (int i = 0; i < Sites.Count(); i++) {
+            for (int i = 0; i < Sites.Count(); ++i) {
                 const auto& Site = Sites[i];
-                if (Site.Site != "default")
-                    m_Roots.AddPair(Site.Site, Site.Config["root"].AsString());
+                if (Site.Name != "default") {
+                    const auto& Hosts = Site.Config["hosts"];
+                    const auto& Root = Site.Config["root"].AsString();
+                    if (!Hosts.IsNull()) {
+                        for (int l = 0; l < Hosts.Count(); ++l)
+                            m_Roots.AddPair(Hosts[l].AsString(), Root);
+                    } else {
+                        m_Roots.AddPair(Site.Name, Root);
+                    }
+                }
             }
+            m_Roots.AddPair("*", Sites.Default().Config["root"].AsString());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         const CString &CWebService::GetRoot(const CString &Host) const {
             auto Index = m_Roots.IndexOfName(Host);
             if (Index == -1)
-                return m_Roots["default"].Value;
+                return m_Roots["*"].Value;
             return m_Roots[Index].Value;
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -113,7 +121,7 @@ namespace Apostol {
             auto LRequest = AConnection->Request();
             auto LReply = AConnection->Reply();
 
-            const CString& LFullPath = GetRoot(LRequest->Host) + Path;
+            const CString& LFullPath = GetRoot(LRequest->Location.Host()) + Path;
             const CString& LResource = LFullPath.back() == '/' ? LFullPath + "index.html" : LFullPath;
 
             if (!FileExists(LResource.c_str())) {
@@ -199,7 +207,7 @@ namespace Apostol {
             LReply->ContentType = CReply::json;
 
             CStringList LRouts;
-            SplitColumns(LRequest->Uri, LRouts, '/');
+            SplitColumns(LRequest->URI, LRouts, '/');
 
             if (LRouts.Count() < 3) {
                 AConnection->SendStockReply(CReply::not_found);
@@ -255,7 +263,7 @@ namespace Apostol {
 
             // Decode url to path.
             CString url;
-            if (!CHTTPServer::URLDecode(LRequest->Uri, url)) {
+            if (!CHTTPServer::URLDecode(LRequest->URI, url)) {
                 AConnection->SendStockReply(CReply::bad_request);
                 return;
             }

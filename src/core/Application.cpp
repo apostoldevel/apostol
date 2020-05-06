@@ -638,6 +638,8 @@ namespace Apostol {
                 }
             };
 
+            Sites.Clear();
+
             if (FileExists(FileName.c_str())) {
                 const CString pathSites(Config()->Prefix() + "sites/");
 
@@ -668,11 +670,13 @@ namespace Apostol {
                 Log()->Error(APP_LOG_EMERG, 0, APP_FILE_NOT_FOUND, FileName.c_str());
             }
 
-            auto& defaultSite = Sites.Default().Config;
-            if (defaultSite.ValueType() == jvtNull) {
-                auto& objectJson = defaultSite.Object();
-                objectJson.AddPair("root", Config()->DocRoot());
-                objectJson.AddPair("listen", (int) Config()->Port());
+            auto& defaultSite = Sites.Default();
+            if (defaultSite.Name.IsEmpty()) {
+                defaultSite.Name = _T("*");
+                auto& configJson = defaultSite.Config.Object();
+                configJson.AddPair(_T("hosts"), CJSONArray("[\"*\"]"));
+                configJson.AddPair(_T("listen"), (int) Config()->Port());
+                configJson.AddPair(_T("root"), Config()->DocRoot());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -680,12 +684,27 @@ namespace Apostol {
         void CApplicationProcess::CreateHTTPServer() {
             auto LServer = new CHTTPServer((ushort) Config()->Port());
 
-            LoadSites(LServer->Sites());
-
             LServer->ServerName() = m_pApplication->Title();
 
             CSocketHandle* LBinding = LServer->Bindings()->Add();
             LBinding->IP(Config()->Listen().c_str());
+
+            LoadSites(LServer->Sites());
+
+            for (int i = 0; i < LServer->Sites().Count(); ++i) {
+                const auto& Site = LServer->Sites()[i];
+                const auto& listenPort = Site.Config["listen"];
+                if (Site.Name == "*") {
+                    if (!listenPort.IsEmpty())
+                        LBinding->Port(listenPort.AsInteger());
+                } else {
+                    if (!listenPort.IsEmpty() && listenPort.AsInteger() != Config()->Port()) {
+                        LBinding = LServer->Bindings()->Add();
+                        LBinding->IP(Config()->Listen().c_str());
+                        LBinding->Port(listenPort.AsInteger());
+                    }
+                }
+            }
 
             LServer->PollStack(m_PollStack);
 
@@ -1009,6 +1028,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::ServerStart() {
+            LoadSites(Server()->Sites());
             Server()->ActiveLevel(alActive);
         }
         //--------------------------------------------------------------------------------------------------------------
