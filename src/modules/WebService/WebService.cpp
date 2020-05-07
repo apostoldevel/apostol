@@ -123,8 +123,12 @@ namespace Apostol {
             auto LRequest = AConnection->Request();
             auto LReply = AConnection->Reply();
 
-            const CString& LFullPath = GetRoot(LRequest->Location.Host()) + Path;
-            const CString& LResource = LFullPath.back() == '/' ? LFullPath + "index.html" : LFullPath;
+            CString LResource(GetRoot(LRequest->Location.Host()));
+            LResource += Path;
+
+            if (LResource.back() == '/') {
+                LResource += "index.html";
+            }
 
             if (!FileExists(LResource.c_str())) {
                 AConnection->SendStockReply(CReply::not_found, SendNow);
