@@ -87,7 +87,7 @@ namespace Apostol {
 
             static void Redirect(CHTTPServerConnection *AConnection, const CString& Location, bool SendNow = false);
 
-            void SendResource(CHTTPServerConnection *AConnection, const CString &Path, bool SendNow = false);
+            void SendResource(CHTTPServerConnection *AConnection, const CString &Path, LPCTSTR AContentType = nullptr, bool SendNow = false);
 
         };
     }

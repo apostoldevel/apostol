@@ -32,7 +32,7 @@ Author:
 //----------------------------------------------------------------------------------------------------------------------
 
 static void CreateModules(CModuleManager *AManager) {
-    CWebService::CreateModule(AManager)->InitMethods();
+    CWebService::CreateModule(AManager);
 }
 
 #endif //APOSTOL_MODULES_HPP

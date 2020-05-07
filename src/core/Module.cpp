@@ -145,21 +145,27 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CApostolModule::CApostolModule(CModuleManager *AManager): CCollectionItem(AManager), CGlobalComponent() {
+            m_pMethods = CStringList::Create(true);
             m_Headers.Add("Content-Type");
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        CApostolModule::~CApostolModule() {
+            delete m_pMethods;
         }
         //--------------------------------------------------------------------------------------------------------------
 
         const CString &CApostolModule::GetAllowedMethods(CString &AllowedMethods) const {
             if (AllowedMethods.IsEmpty()) {
-                if (m_Methods.Count() > 0) {
+                if (m_pMethods->Count() > 0) {
                     CMethodHandler *Handler;
-                    for (int i = 0; i < m_Methods.Count(); ++i) {
-                        Handler = (CMethodHandler *) m_Methods.Objects(i);
+                    for (int i = 0; i < m_pMethods->Count(); ++i) {
+                        Handler = (CMethodHandler *) m_pMethods->Objects(i);
                         if (Handler->Allow()) {
                             if (AllowedMethods.IsEmpty())
-                                AllowedMethods = m_Methods.Strings(i);
+                                AllowedMethods = m_pMethods->Strings(i);
                             else
-                                AllowedMethods += _T(", ") + m_Methods.Strings(i);
+                                AllowedMethods += _T(", ") + m_pMethods->Strings(i);
                         }
                     }
                 }

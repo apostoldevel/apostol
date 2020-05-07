@@ -203,7 +203,7 @@ namespace Apostol {
 
         protected:
 
-            CStringList m_Methods;
+            CStringList *m_pMethods;
             CStringList m_Headers;
 
             virtual void CORS(CHTTPServerConnection *AConnection);
@@ -221,7 +221,7 @@ namespace Apostol {
 
             explicit CApostolModule(CModuleManager *AManager);
 
-            ~CApostolModule() override = default;
+            ~CApostolModule() override;
 
             virtual void InitMethods() abstract;
 
