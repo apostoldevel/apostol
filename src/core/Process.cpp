@@ -565,13 +565,7 @@ namespace Apostol {
 #ifdef WITH_POSTGRESQL
         void CServerProcess::SetPQServer(CPQServer *Value) {
             if (m_pPQServer != Value) {
-/*
-                if (Value != nullptr && m_pServer == nullptr)
-                    throw Delphi::Exception::Exception("Set, please, PQ Server after HTTP Server");
 
-                if (Value == nullptr && m_pServer != nullptr)
-                    throw Delphi::Exception::Exception("Unset, please, PQ Server after HTTP Server");
-*/
                 if (Value == nullptr) {
                     delete m_pPQServer;
                 }
@@ -634,11 +628,15 @@ namespace Apostol {
 
             if (PQServer()->Active()) {
                 LQuery = PQServer()->GetQuery();
-
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+                LQuery->OnSendQuery([this](auto && AQuery) { DoPQSendQuery(AQuery); });
+                LQuery->OnResultStatus([this](auto && AResult) { DoPQResultStatus(AResult); });
+                LQuery->OnResult([this](auto && AResult, auto && AExecStatus) { DoPQResult(AResult, AExecStatus); });
+#else
                 LQuery->OnSendQuery(std::bind(&CServerProcess::DoPQSendQuery, this, _1));
                 LQuery->OnResultStatus(std::bind(&CServerProcess::DoPQResultStatus, this, _1));
                 LQuery->OnResult(std::bind(&CServerProcess::DoPQResult, this, _1, _2));
-
+#endif
                 LQuery->PollConnection(AConnection);
             }
 
@@ -676,23 +674,23 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPQReceiver(CPQConnection *AConnection, const PGresult *AResult) {
-            CPQConnInfo &Info = AConnection->ConnInfo();
+            const auto& Info = AConnection->ConnInfo();
             if (Info.ConnInfo().IsEmpty()) {
                 Log()->Postgres(APP_LOG_INFO, _T("Receiver message: %s"), PQresultErrorMessage(AResult));
             } else {
-                Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Receiver message: %s", AConnection->Socket(), Info["user"].c_str(),
-                                Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), PQresultErrorMessage(AResult));
+                Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Receiver message: %s", AConnection->Socket(),
+                        Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), PQresultErrorMessage(AResult));
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoPQProcessor(CPQConnection *AConnection, LPCSTR AMessage) {
-            CPQConnInfo &Info = AConnection->ConnInfo();
+            const auto& Info = AConnection->ConnInfo();
             if (Info.ConnInfo().IsEmpty()) {
                 Log()->Postgres(APP_LOG_INFO, _T("Processor message: %s"), AMessage);
             } else {
-                Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Processor message: %s", AConnection->Socket(), Info["user"].c_str(),
-                                Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), AMessage);
+                Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Processor message: %s", AConnection->Socket(),
+                        Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), AMessage);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -787,11 +785,10 @@ namespace Apostol {
         void CServerProcess::DoPQConnect(CObject *Sender) {
             auto LConnection = dynamic_cast<CPQConnection *>(Sender);
             if (LConnection != nullptr) {
-                CPQConnInfo &Info = LConnection->ConnInfo();
+                const auto& Info = LConnection->ConnInfo();
                 if (!Info.ConnInfo().IsEmpty()) {
                     Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Connected.", LConnection->PID(),
-                                    Info["user"].c_str(),
-                                    Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
+                            Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
                 }
             }
         }
@@ -800,11 +797,10 @@ namespace Apostol {
         void CServerProcess::DoPQDisconnect(CObject *Sender) {
             auto LConnection = dynamic_cast<CPQConnection *>(Sender);
             if (LConnection != nullptr) {
-                CPQConnInfo &Info = LConnection->ConnInfo();
+                const auto& Info = LConnection->ConnInfo();
                 if (!Info.ConnInfo().IsEmpty()) {
                     Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Disconnected.", LConnection->PID(),
-                                    Info["user"].c_str(),
-                                    Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
+                            Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
                 }
             }
         }
