@@ -644,7 +644,7 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CServerProcess::ExecSQL(CPollConnection *AConnection, const CStringList &SQL,
+        bool CServerProcess::ExecSQL(const CStringList &SQL, CPollConnection *AConnection,
                                      COnPQPollQueryExecutedEvent &&OnExecuted,
                                      COnPQPollQueryExceptionEvent &&OnException) {
 
