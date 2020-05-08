@@ -152,9 +152,11 @@ namespace Apostol {
         public:
 
             CCustomProcess(): CCustomProcess(ptMain, nullptr) {
+
             };
 
             explicit CCustomProcess(CProcessType AType): CCustomProcess(AType, nullptr) {
+
             };
 
             explicit CCustomProcess(CProcessType AType, CCustomProcess *AParent);
@@ -170,11 +172,11 @@ namespace Apostol {
 
             virtual void Assign(CCustomProcess *AProcess);
 
-            void ExecuteProcess(CExecuteContext *AContext);
+            static void ExecuteProcess(CExecuteContext *AContext);
 
-            CProcessType Type() { return m_Type; };
+            CProcessType Type() const { return m_Type; };
 
-            pid_t Pid() { return m_Pid; };
+            pid_t Pid() const { return m_Pid; };
             void Pid(pid_t Value) { SetPid(Value); };
 
             pid_t ParentId();
@@ -185,33 +187,33 @@ namespace Apostol {
             const CString& ProcessName() const { return m_ProcessName; };
             void ProcessName(LPCTSTR Value) { SetProcessName(Value); };
 
-            LPCTSTR GetProcessName() { return m_ProcessName.c_str(); };
+            LPCTSTR GetProcessName() const { return m_ProcessName.c_str(); };
 
             Pointer Data() { return m_pData; };
             void Data(Pointer Value) { SetData(Value); };
 
-            pid_t NewBinary() { return m_NewBinary; };
+            pid_t NewBinary() const { return m_NewBinary; };
             void NewBinary(pid_t Value) { m_NewBinary = Value; };
 
-            bool Daemonized() { return m_fDaemonized; };
+            bool Daemonized() const { return m_fDaemonized; };
             void Daemonized(bool Value) { m_fDaemonized = Value; };
 
-            bool Respawn() { return m_respawn; };
+            bool Respawn() const { return m_respawn; };
             void Respawn(bool Value) { SetRespawn(Value); };
 
-            bool JustSpawn() { return m_just_spawn; };
+            bool JustSpawn() const { return m_just_spawn; };
             void JustSpawn(bool Value) { SetJustSpawn(Value); };
 
-            bool Detached() { return m_detached; };
+            bool Detached() const { return m_detached; };
             void Detached(bool Value) { SetDetached(Value); };
 
-            bool Exited() { return m_exited; };
+            bool Exited() const { return m_exited; };
             void Exited(bool Value) { SetExited(Value); };
 
-            bool Exiting() { return m_exiting; };
+            bool Exiting() const { return m_exiting; };
             void Exiting(bool Value) { SetExiting(Value); };
 
-            int Status() { return m_Status; };
+            int Status() const { return m_Status; };
             void Status(int Value) { SetStatus(Value); };
 
         }; // class CCustomProcess
@@ -243,12 +245,12 @@ namespace Apostol {
 
             CSignal(CCollection *ACollection, int ASigno);
 
-            int Signo() { return m_signo; };
+            int Signo() const { return m_signo; };
 
-            LPCTSTR Code() { return m_code; };
+            LPCTSTR Code() const { return m_code; };
             void Code(LPCTSTR Value) { SetCode(Value); };
 
-            LPCTSTR Name() { return m_name; };
+            LPCTSTR Name() const { return m_name; };
             void Name(LPCTSTR Value) { SetName(Value); };
 
             CSignalHandler Handler() { return m_handler; };
@@ -325,7 +327,7 @@ namespace Apostol {
             uint_t          sig_restart;
             uint_t          sig_noaccepting;
 
-            virtual void CreateSignals();
+            void CreateSignals();
 
             virtual void ChildProcessGetStatus() abstract;
 
@@ -394,6 +396,7 @@ namespace Apostol {
             virtual void DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException);
             virtual void DoPQConnectException(CPQConnection *AConnection, Delphi::Exception::Exception *AException);
 
+            virtual void DoPQError(CPQConnection *AConnection);
             virtual void DoPQStatus(CPQConnection *AConnection);
             virtual void DoPQPollingStatus(CPQConnection *AConnection);
 

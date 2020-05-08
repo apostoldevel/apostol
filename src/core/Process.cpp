@@ -679,7 +679,7 @@ namespace Apostol {
                 Log()->Postgres(APP_LOG_INFO, _T("Receiver message: %s"), PQresultErrorMessage(AResult));
             } else {
                 Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Receiver message: %s", AConnection->Socket(),
-                        Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), PQresultErrorMessage(AResult));
+                                Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), PQresultErrorMessage(AResult));
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -690,7 +690,7 @@ namespace Apostol {
                 Log()->Postgres(APP_LOG_INFO, _T("Processor message: %s"), AMessage);
             } else {
                 Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Processor message: %s", AConnection->Socket(),
-                        Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), AMessage);
+                                Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), AMessage);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -702,6 +702,11 @@ namespace Apostol {
 
         void CServerProcess::DoPQServerException(CPQServer *AServer, Delphi::Exception::Exception *AException) {
             Log()->Postgres(APP_LOG_EMERG, AException->what());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        void CServerProcess::DoPQError(CPQConnection *AConnection) {
+            Log()->Postgres(APP_LOG_EMERG, AConnection->GetErrorMessage());
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -788,7 +793,7 @@ namespace Apostol {
                 const auto& Info = LConnection->ConnInfo();
                 if (!Info.ConnInfo().IsEmpty()) {
                     Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Connected.", LConnection->PID(),
-                            Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
+                                    Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
                 }
             }
         }
@@ -800,7 +805,7 @@ namespace Apostol {
                 const auto& Info = LConnection->ConnInfo();
                 if (!Info.ConnInfo().IsEmpty()) {
                     Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Disconnected.", LConnection->PID(),
-                            Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
+                                    Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
                 }
             }
         }

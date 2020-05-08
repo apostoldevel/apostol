@@ -600,9 +600,15 @@ namespace Apostol {
         void CApplicationProcess::UpdateTimer() {
             if (Server() != nullptr) {
                 if (m_Timer == nullptr) {
-                    m_Timer = Server()->CreateTimer(CLOCK_MONOTONIC, 1000, m_TimerInterval, TFD_NONBLOCK);
+                    m_Timer = CEPollTimer::CreateTimer(CLOCK_MONOTONIC, TFD_NONBLOCK);
+                    m_Timer->AllocateTimer(Server()->EventHandlers(), m_TimerInterval, m_TimerInterval);
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+                    m_Timer->OnTimer([this](auto && AHandler) { DoTimer(AHandler); });
+#else
+                    m_Timer->OnTimer(std::bind(&CApplicationProcess::DoTimer, this, _1));
+#endif
                 } else {
-                    CEPoll::SetTimer(m_Timer, 1000, m_TimerInterval);
+                    m_Timer->SetTimer(m_TimerInterval, m_TimerInterval);
                 }
             }
         }
@@ -709,7 +715,6 @@ namespace Apostol {
             LServer->PollStack(m_PollStack);
 
 #if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
-            LServer->OnTimer([this](auto && AHandler) { DoTimer(AHandler); });
             LServer->OnExecute([this](auto && AConnection) { return DoExecute(AConnection); });
 
             LServer->OnVerbose([this](auto && Sender, auto && AConnection, auto && AFormat, auto && args) { DoVerbose(Sender, AConnection, AFormat, args); });
@@ -725,7 +730,6 @@ namespace Apostol {
 
             LServer->OnNoCommandHandler([this](auto && Sender, auto && AData, auto && AConnection) { DoNoCommandHandler(Sender, AData, AConnection); });
 #else
-            LServer->OnTimer(std::bind(&CApplicationProcess::DoTimer, this, _1));
             LServer->OnExecute(std::bind(&CApplicationProcess::DoExecute, this, _1));
 
             LServer->OnVerbose(std::bind(&CApplicationProcess::DoVerbose, this, _1, _2, _3, _4));
@@ -766,6 +770,7 @@ namespace Apostol {
 
             LPQServer->OnEventHandlerException([this](auto && AHandler, auto && AException) { DoServerEventHandlerException(AHandler, AException); });
 
+            LPQServer->OnError([this](auto && AConnection) { DoPQError(AConnection); });
             LPQServer->OnStatus([this](auto && AConnection) { DoPQStatus(AConnection); });
             LPQServer->OnPollingStatus([this](auto && AConnection) { DoPQPollingStatus(AConnection); });
 
@@ -782,6 +787,7 @@ namespace Apostol {
 
             LPQServer->OnEventHandlerException(std::bind(&CApplicationProcess::DoServerEventHandlerException, this, _1, _2));
 
+            LPQServer->OnError(std::bind(&CApplicationProcess::DoPQError, this, _1));
             LPQServer->OnStatus(std::bind(&CApplicationProcess::DoPQStatus, this, _1));
             LPQServer->OnPollingStatus(std::bind(&CApplicationProcess::DoPQPollingStatus, this, _1));
 
@@ -1028,7 +1034,6 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CApplicationProcess::ServerStart() {
-            LoadSites(Server()->Sites());
             Server()->ActiveLevel(alActive);
         }
         //--------------------------------------------------------------------------------------------------------------
