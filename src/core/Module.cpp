@@ -139,11 +139,6 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CApostolModule::CApostolModule(): CApostolModule(GApplication) {
-
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         CApostolModule::CApostolModule(CModuleManager *AManager): CCollectionItem(AManager), CGlobalComponent() {
             m_pMethods = CStringList::Create(true);
             m_Headers.Add("Content-Type");

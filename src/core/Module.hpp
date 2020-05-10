@@ -217,8 +217,6 @@ namespace Apostol {
 #endif
         public:
 
-            CApostolModule();
-
             explicit CApostolModule(CModuleManager *AManager);
 
             ~CApostolModule() override;

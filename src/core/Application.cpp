@@ -307,6 +307,7 @@ namespace Apostol {
 #ifdef WITH_POSTGRESQL
                 CreatePQServer();
 #endif
+                SetTimerInterval(1000);
             }
 
             if ( Config()->Daemon() ) {
@@ -1016,7 +1017,6 @@ namespace Apostol {
 #ifdef WITH_POSTGRESQL
             PQServerStart();
 #endif
-            SetTimerInterval(1000);
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -1476,8 +1476,6 @@ namespace Apostol {
             PQServerStart();
 #endif
             SigProcMask(SIG_UNBLOCK, SigAddSet(&set));
-
-            SetTimerInterval(1000);
         }
         //--------------------------------------------------------------------------------------------------------------
 

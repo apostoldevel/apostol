@@ -883,7 +883,8 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CModuleProcess::CModuleProcess(CProcessType AType, CCustomProcess *AParent): CModuleManager(),
-                                                                                     CServerProcess(AType, AParent) {
+            CServerProcess(AType, AParent) {
+
         }
         //--------------------------------------------------------------------------------------------------------------
 
