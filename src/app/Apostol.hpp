@@ -39,7 +39,7 @@ extern "C++" {
 
 namespace Apostol {
 
-    namespace Apostol {
+    namespace Application {
 
         class CApostol: public CApplication {
         protected:
@@ -66,8 +66,6 @@ namespace Apostol {
         };
     }
 }
-
-using namespace Apostol::Apostol;
 }
 
 #endif //APOSTOL_APOSTOL_HPP

@@ -32,33 +32,6 @@ Author:
 #define PROCESS_DETACHED      -5
 //----------------------------------------------------------------------------------------------------------------------
 
-//extern sig_atomic_t    sig_fatal;
-//----------------------------------------------------------------------------------------------------------------------
-
-#define INVALID_PID (-1)
-//----------------------------------------------------------------------------------------------------------------------
-
-#define signal_value_helper(n)      SIG##n
-#define signal_value(n)             signal_value_helper(n)
-
-#define sig_value_helper(n)             #n
-#define sig_value(n)                sig_value_helper(n)
-//----------------------------------------------------------------------------------------------------------------------
-
-#define SIG_SHUTDOWN_SIGNAL      QUIT
-#define SIG_TERMINATE_SIGNAL     TERM
-#define SIG_NOACCEPT_SIGNAL      WINCH
-#define SIG_RECONFIGURE_SIGNAL   HUP
-
-#if (LINUX_THREADS)
-#define SIG_REOPEN_SIGNAL        INFO
-#define SIG_CHANGEBIN_SIGNAL     XCPU
-#else
-#define SIG_REOPEN_SIGNAL        USR1
-#define SIG_CHANGEBIN_SIGNAL     USR2
-#endif
-//----------------------------------------------------------------------------------------------------------------------
-
 #define log_failure(msg) {                                  \
   if (GLog != nullptr)                                      \
     GLog->Error(APP_LOG_EMERG, 0, msg);                     \
@@ -66,9 +39,6 @@ Author:
     std::cerr << APP_NAME << ": " << (msg) << std::endl;    \
   exit(2);                                                  \
 }                                                           \
-//----------------------------------------------------------------------------------------------------------------------
-
-typedef void (* CSignalHandler) (int signo, siginfo_t *siginfo, void *ucontext);
 //----------------------------------------------------------------------------------------------------------------------
 
 void signal_handler(int signo, siginfo_t *siginfo, void *ucontext);
@@ -220,87 +190,6 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CSignal ---------------------------------------------------------------------------------------------------
-
-        //--------------------------------------------------------------------------------------------------------------
-
-        class CSignal: public CCollectionItem {
-        private:
-
-            int             m_signo;
-
-            LPCTSTR         m_code;
-            LPCTSTR         m_name;
-
-            CSignalHandler  m_handler;
-
-        protected:
-
-            void SetCode(LPCTSTR Value);
-            void SetName(LPCTSTR Value);
-
-            void SetHandler(CSignalHandler Value);
-
-        public:
-
-            CSignal(CCollection *ACollection, int ASigno);
-
-            int Signo() const { return m_signo; };
-
-            LPCTSTR Code() const { return m_code; };
-            void Code(LPCTSTR Value) { SetCode(Value); };
-
-            LPCTSTR Name() const { return m_name; };
-            void Name(LPCTSTR Value) { SetName(Value); };
-
-            CSignalHandler Handler() { return m_handler; };
-            void Handler(CSignalHandler Value) { SetHandler(Value); };
-
-        };
-
-        //--------------------------------------------------------------------------------------------------------------
-
-        //-- CSignals --------------------------------------------------------------------------------------------------
-
-        //--------------------------------------------------------------------------------------------------------------
-
-        class CSignals: public CCollection {
-            typedef CCollection inherited;
-
-        private:
-
-            CSignal *Get(int Index);
-            void Put(int Index, CSignal *Signal);
-
-        public:
-
-            CSignals(): CCollection(this) {};
-
-            void AddSignal(int ASigno, LPCTSTR ACode, LPCTSTR AName, CSignalHandler AHandler);
-
-            inline static class CSignals *Create() { return new CSignals(); };
-
-            ~CSignals() override = default;
-
-            int IndexOfSigno(int Signo);
-
-            void InitSignals();
-
-            sigset_t *SigAddSet(sigset_t *set);
-
-            void SigProcMask(int How, const sigset_t *set, sigset_t *oset = nullptr);
-
-            int SignalsCount() { return Count(); };
-
-            CSignal *Signals(int Index) { return Get(Index); };
-
-            void Strings(int Index, CSignal *Value) { return Put(Index, Value); };
-
-            CSignal *operator[] (int Index) override { return Signals(Index); }
-        };
-
-        //--------------------------------------------------------------------------------------------------------------
-
         //-- CSignalProcess --------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
@@ -339,9 +228,7 @@ namespace Apostol {
 
             virtual CSignalProcess *SignalProcess() { return m_pSignalProcess; };
 
-            virtual void SignalHandler(int signo, siginfo_t *siginfo, void *ucontext);
-
-            //virtual void Terminate();
+            void SignalHandler(int signo, siginfo_t *siginfo, void *ucontext) override;
 
             virtual void Quit();
 

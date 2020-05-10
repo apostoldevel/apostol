@@ -139,7 +139,7 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CApostolModule::CApostolModule(): CApostolModule(Application::Application) {
+        CApostolModule::CApostolModule(): CApostolModule(GApplication) {
 
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -211,7 +211,7 @@ namespace Apostol {
             AConnection->SendReply();
 #ifdef _DEBUG
             if (LRequest->URI == _T("/quit"))
-                Application::Application->SignalProcess()->Quit();
+                GApplication->SignalProcess()->Quit();
 #endif
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -272,7 +272,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CPQPollQuery *CApostolModule::GetQuery(CPollConnection *AConnection) {
-            CPQPollQuery *LQuery = Application::Application->GetQuery(AConnection);
+            CPQPollQuery *LQuery = GApplication->GetQuery(AConnection);
 
             if (Assigned(LQuery)) {
 #if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
@@ -317,7 +317,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 #endif
         CHTTPClient *CApostolModule::GetClient(const CString &Host, uint16_t Port) {
-            return Application::Application->GetClient(Host.c_str(), Port);
+            return GApplication->GetClient(Host.c_str(), Port);
         }
         //--------------------------------------------------------------------------------------------------------------
 

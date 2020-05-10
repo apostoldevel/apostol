@@ -26,7 +26,7 @@ Author:
 
 #define exit_failure(msg) {                                 \
   if (GLog != nullptr)                                      \
-    GLog->Error(APP_LOG_EMERG, 0, msg);                         \
+    GLog->Error(APP_LOG_EMERG, 0, msg);                     \
   else                                                      \
     std::cerr << APP_NAME << ": " << (msg) << std::endl;    \
   exitcode = EXIT_FAILURE;                                  \
@@ -37,7 +37,7 @@ extern "C++" {
 
 namespace Apostol {
 
-    namespace Apostol {
+    namespace Application {
 
         void CApostol::ShowVersionInfo() {
 
@@ -200,19 +200,19 @@ int main(int argc, char *argv[]) {
     int exitcode;
 
     DefaultLocale.SetLocale("");
+    
+    CApostol Apostol(argc, argv);
 
     try
     {
-        Application = CApostol::Create(argc, argv);
+        Apostol.Name() = APP_NAME;
+        Apostol.Description() = APP_DESCRIPTION;
+        Apostol.Version() = APP_VERSION;
+        Apostol.Title() = APP_VER;
 
-        Application->Name() = APP_NAME;
-        Application->Description() = APP_DESCRIPTION;
-        Application->Version() = APP_VERSION;
-        Application->Title() = APP_VER;
+        Apostol.Run();
 
-        Application->Run();
-
-        exitcode = Application->ExitCode();
+        exitcode = Apostol.ExitCode();
     }
     catch (std::exception& e)
     {
@@ -222,8 +222,6 @@ int main(int argc, char *argv[]) {
     {
         exit_failure("Unknown error...");
     }
-
-    Application->Destroy();
 
     exit(exitcode);
 }
