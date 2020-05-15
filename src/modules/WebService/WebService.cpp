@@ -151,15 +151,7 @@ namespace Apostol {
                 return;
             }
 
-            // If path ends in slash.
-            if (LPath.back() == '/') {
-                LPath += "index.html";
-            }
-
-            TCHAR szFileExt[PATH_MAX] = {0};
-            auto fileExt = ExtractFileExt(szFileExt, LPath.c_str());
-
-            SendResource(AConnection, LPath, Mapping::ExtToType(fileExt));
+            SendResource(AConnection, LPath);
         }
         //--------------------------------------------------------------------------------------------------------------
 

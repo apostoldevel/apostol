@@ -100,7 +100,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         CCustomProcess::CCustomProcess(CProcessType AType, CCustomProcess *AParent): CObject(), CGlobalComponent(),
-            m_Type(AType), m_pParent(AParent) {
+                m_Type(AType), m_pParent(AParent) {
 
             m_Pid = MainThreadID;
 
@@ -739,13 +739,13 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerException(CTCPConnection *AConnection,
-                                               Delphi::Exception::Exception *AException) {
+                Delphi::Exception::Exception *AException) {
             Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoServerEventHandlerException(CPollEventHandler *AHandler,
-                                                           Delphi::Exception::Exception *AException) {
+                Delphi::Exception::Exception *AException) {
             Log()->Error(APP_LOG_EMERG, 0, AException->what());
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -793,7 +793,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CServerProcess::DoVerbose(CSocketEvent *Sender, CTCPConnection *AConnection, LPCTSTR AFormat,
-                                       va_list args) {
+                va_list args) {
             Log()->Debug(0, AFormat, args);
         }
         //--------------------------------------------------------------------------------------------------------------
