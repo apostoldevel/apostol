@@ -32,7 +32,6 @@ Author:
 //----------------------------------------------------------------------------------------------------------------------
 
 #include "Core.hpp"
-#include "Modules.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C++" {
@@ -50,7 +49,7 @@ namespace Apostol {
         public:
 
             CApostol(int argc, char *const *argv): CApplication(argc, argv) {
-                CreateModules(this);
+
             };
 
             ~CApostol() override = default;

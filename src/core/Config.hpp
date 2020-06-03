@@ -278,6 +278,7 @@ namespace Apostol {
             uint32_t m_nLimitNoFile;
 
             bool m_fMaster;
+            bool m_fHelper;
             bool m_fDaemon;
 
             bool m_fPostgresConnect;
@@ -303,9 +304,6 @@ namespace Apostol {
             CString m_sErrorLog;
             CString m_sAccessLog;
             CString m_sPostgresLog;
-
-            CString m_sJoinUser;
-            CString m_sJoinPassword;
 
             CStringList m_LogFiles;
             CStringList m_PostgresConnInfo;
@@ -337,13 +335,10 @@ namespace Apostol {
             void SetAccessLog(LPCTSTR AValue);
             void SetPostgresLog(LPCTSTR AValue);
 
-            void SetJoinUser(LPCTSTR AValue);
-            void SetJoinPassword(LPCTSTR AValue);
-
             bool CheckLogFiles();
 
             void OnIniFileParseError(Pointer Sender, LPCTSTR lpszSectionName, LPCTSTR lpszKeyName, LPCTSTR lpszValue,
-                                     LPCTSTR lpszDefault, int Line);
+                    LPCTSTR lpszDefault, int Line);
 
         public:
 
@@ -363,28 +358,28 @@ namespace Apostol {
 
             config_flag_t &Flags() { return m_Flags; };
 
-            uint32_t ErrorCount() { return m_uErrorCount; };
+            uint32_t ErrorCount() const { return m_uErrorCount; };
 
-            uint32_t Workers() { return m_nWorkers; };
+            uint32_t Workers() const { return m_nWorkers; };
 
-            bool Master() { return m_fMaster; };
+            bool Master() const { return m_fMaster; };
+            bool Helper() const { return m_fHelper; };
+            bool Daemon() const { return m_fDaemon; };
 
-            bool Daemon() { return m_fDaemon; };
+            uint32_t Port() const { return m_nPort; };
 
-            uint32_t Port() { return m_nPort; };
+            uint32_t TimeOut() const { return m_nTimeOut; };
 
-            uint32_t TimeOut() { return m_nTimeOut; };
+            uint32_t ConnectTimeOut() const { return m_nConnectTimeOut; };
 
-            uint32_t ConnectTimeOut() { return m_nConnectTimeOut; };
+            uint32_t LimitNoFile() const { return m_nLimitNoFile; };
 
-            uint32_t LimitNoFile() { return m_nLimitNoFile; };
+            bool PostgresConnect() const { return m_fPostgresConnect; };
+            bool PostgresNotice() const { return m_fPostgresNotice; };
 
-            bool PostgresConnect() { return m_fPostgresConnect; };
-            bool PostgresNotice() { return m_fPostgresNotice; };
+            size_t PostgresPollMin() const { return (size_t) m_nPostgresPollMin; };
 
-            size_t PostgresPollMin() { return (size_t) m_nPostgresPollMin; };
-
-            size_t PostgresPollMax() { return (size_t) m_nPostgresPollMax; };
+            size_t PostgresPollMax() const { return (size_t) m_nPostgresPollMax; };
 
             const CString& User() const { return m_sUser; };
             void User(const CString& AValue) { SetUser(AValue.c_str()); };
@@ -449,14 +444,6 @@ namespace Apostol {
             const CString& DocRoot() const { return m_sDocRoot; };
             void DocRoot(const CString& AValue) { SetDocRoot(AValue.c_str()); };
             void DocRoot(LPCTSTR AValue) { SetDocRoot(AValue); };
-
-            const CString& JoinUser() const { return m_sJoinUser; };
-            void JoinUser(const CString& AValue) { SetJoinUser(AValue.c_str()); };
-            void JoinUser(LPCTSTR AValue) { SetJoinUser(AValue); };
-
-            const CString& JoinPassword() const { return m_sJoinPassword; };
-            void JoinPassword(const CString& AValue) { SetJoinPassword(AValue.c_str()); };
-            void JoinPassword(LPCTSTR AValue) { SetJoinPassword(AValue); };
 
             CStringList& LogFiles() { return m_LogFiles; };
             const CStringList& LogFiles() const { return m_LogFiles; };

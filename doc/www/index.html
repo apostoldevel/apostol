@@ -1,605 +1,431 @@
 <!DOCTYPE html>
-<html lang="en">
-<meta charset="utf-8">
+<html lang="ru">
 <head>
-    <title>Welcome to apostol!</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="description" content="Apostol Web Service.">
+    <meta name="keywords" content="Apostol Web Service, HTTP, REST, RESTful, REST API, web-сервер, веб-сервер, сервер приложений, application server">
 
-        body {
-            background-color: #fff;
-            color: #24292e;
-            min-width: 1012px;
-            word-wrap: break-word;
-            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
-            font-size: 14px;
-            line-height: 1.5;
-        }
+    <!-- Required meta tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-        code, pre, tt {
-            font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace;
-            font-size: 12px;
-        }
+    <title>Apostol Web Service (AWS) - это программная платформа (framework), написанная на C++, для быстрого создания WEB-сервисов (RESTful) под операционную систему Linux, со встроенной поддержкой СУБД PostgreSQL.</title>
 
-        h3, h4 {
-            font-weight: 600;
-        }
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
-        h1, h2, h3, h4, h5, h6 {
-            margin-bottom: 0;
-            margin-top: 0;
-        }
+    <link rel="stylesheet" type="text/css" href="/css/fonts.css">
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/css/docs.css">
+    <link rel="stylesheet" type="text/css" href="/css/prettify.css">
 
-        a {
-            color: #0366d6;
-            text-decoration: none;
-            background-color: transparent;
-        }
+    <link rel="icon" href="/favicon.ico">
 
-        p {
-            display: block;
-            margin-block-start: 1em;
-            margin-block-end: 1em;
-            margin-inline-start: 0px;
-            margin-inline-end: 0px;
-        }
-
-        .container {
-            margin-left: auto;
-            margin-right: auto;
-            width: 980px;
-        }
-
-        .Box--condensed {
-            line-height: 1.25;
-        }
-
-        .Box {
-            background-color: #fff;
-            border: 1px solid #d1d5da;
-            border-radius: 3px;
-        }
-
-        .Box-header {
-            padding: 8px 16px;
-        }
-
-        .d-flex {
-            display: flex !important;
-        }
-
-        .px-2 {
-            padding-right: 8px !important;
-        }
-
-        .flex-items-center {
-            align-items: center !important;
-        }
-
-        .flex-justify-between {
-            justify-content: space-between !important;
-        }
-
-        .Box-header {
-            background-color: #f6f8fa;
-            border: 1px solid #d1d5da;
-            border-top-left-radius: 3px;
-            border-top-right-radius: 3px;
-            margin: -1px -1px 0;
-            padding: 16px;
-        }
-
-        .Box-body:last-of-type {
-            border-bottom-left-radius: 2px;
-            border-bottom-right-radius: 2px;
-            margin-bottom: -1px;
-        }
-
-        .Box--condensed .Box-body, .Box--condensed .Box-footer, .Box--condensed .Box-header {
-            padding: 8px 16px;
-        }
-
-        .Box-body {
-            border-bottom: 1px solid #e1e4e8;
-            padding: 16px;
-        }
-
-        .markdown-body {
-            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
-            font-size: 16px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-
-        .markdown-body pre {
-            background-color: #f6f8fa;
-            border-radius: 3px;
-            font-size: 85%;
-            line-height: 1.45;
-            overflow: auto;
-            padding: 16px;
-        }
-
-        .markdown-body pre {
-            word-wrap: normal;
-        }
-
-        .markdown-body pre code, .markdown-body pre tt {
-            background-color: transparent;
-            border: 0;
-            display: inline;
-            line-height: inherit;
-            margin: 0;
-            max-width: auto;
-            overflow: visible;
-            padding: 0;
-            word-wrap: normal;
-        }
-
-        .markdown-body pre > code {
-            background: transparent;
-            border: 0;
-            font-size: 100%;
-            margin: 0;
-            padding: 0;
-            white-space: pre;
-            word-break: normal;
-        }
-
-        .markdown-body code, .markdown-body tt {
-            background-color: rgba(27, 31, 35, .05);
-            border-radius: 3px;
-            font-size: 85%;
-            margin: 0;
-            padding: .2em .4em;
-        }
-
-        .p-5 {
-            padding: 32px !important;
-        }
-
-        .markdown-body > :first-child {
-            margin-top: 0 !important;
-        }
-
-        .markdown-body h1, .markdown-body h2 {
-            border-bottom: 1px solid #eaecef;
-            padding-bottom: .3em;
-        }
-
-        .markdown-body h1 {
-            font-size: 2em;
-        }
-
-        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
-            font-weight: 600;
-            line-height: 1.25;
-            margin-bottom: 16px;
-            margin-top: 24px;
-        }
-
-        .markdown-body h2 {
-            font-size: 1.5em;
-        }
-
-        .markdown-body h1, .markdown-body h2 {
-            border-bottom: 1px solid #eaecef;
-            padding-bottom: .3em;
-        }
-
-        .pr-3 {
-            padding-right: 16px !important;
-        }
-
-        .Box-title {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .markdown-body h6 {
-            color: #6a737d;
-            font-size: .85em;
-        }
-
-        .markdown-body blockquote, .markdown-body details, .markdown-body dl, .markdown-body ol, .markdown-body p, .markdown-body pre, .markdown-body table, .markdown-body ul {
-            margin-bottom: 16px;
-            margin-top: 0;
-        }
-
-        tbody {
-            display: table-row-group;
-            vertical-align: middle;
-            border-color: inherit;
-        }
-
-        table {
-            border-collapse: collapse;
-            border-spacing: 0;
-        }
-
-        .markdown-body table tr {
-            background-color: #fff;
-            border-top: 1px solid #c6cbd1;
-        }
-
-        tr {
-            display: table-row;
-            vertical-align: inherit;
-            border-color: inherit;
-        }
-
-        .markdown-body table {
-            display: block;
-            overflow: auto;
-            width: 100%;
-        }
-
-        .markdown-body table tr {
-            background-color: #fff;
-            border-top: 1px solid #c6cbd1;
-        }
-
-        .markdown-body table th {
-            border: 1px solid #dfe2e5;
-            padding: 6px 13px;
-        }
-
-        .markdown-body table th {
-            font-weight: 600;
-        }
-
-        .markdown-body table td, .markdown-body table th {
-            border: 1px solid #dfe2e5;
-            padding: 6px 13px;
-        }
-
-    </style>
+    <!-- iPhone(first generation or 2G), iPhone 3G, iPhone 3GS -->
+    <link rel="apple-touch-icon" sizes="57x57" href="../files/touch-icon-iphone.png">
+    <!-- iPad and iPad mini @1x -->
+    <link rel="apple-touch-icon" sizes="76x76" href="../files/touch-icon-ipad.png">
+    <!-- iPhone 4, iPhone 4s, iPhone 5, iPhone 5c, iPhone 5s, iPhone 6, iPhone 6s, iPhone 7, iPhone 7s, iPhone8 -->
+    <link rel="apple-touch-icon" sizes="120x120" href="../files/touch-icon-iphone-retina.png">
+    <!-- iPad and iPad mini @2x -->
+    <link rel="apple-touch-icon" sizes="152x152" href="../files/touch-icon-ipad-retina.png">
+    <!-- iPad Pro -->
+    <link rel="apple-touch-icon" sizes="167x167" href="../files/touch-icon-ipad-pro.png">
+    <!-- iPhone X, iPhone 8 Plus, iPhone 7 Plus, iPhone 6s Plus, iPhone 6 Plus -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../files/touch-icon-iphone-6-plus.png">
+    <!-- Android Devices High Resolution -->
+    <link rel="icon" sizes="192x192" href="../files/icon-hd.png">
+    <!-- Android Devices Normal Resolution -->
+    <link rel="icon" sizes="128x128" href="../files/icon.png">
 </head>
+
 <body>
-<div class="container">
-    <div class="Box Box--condensed instapaper_body md js-code-block-container" id="readme">
-        <div class="Box-header d-flex flex-items-center flex-justify-between px-2">
-            <h3 class="Box-title pr-3">
-                Welcome to Apostol Web Service
-            </h3>
-        </div>
-        <div class="Box-body">
-            <article class="markdown-body entry-content p-5" itemprop="text">
-                <h1><a aria-hidden="true" class="anchor" href="#apostol-web-service"
-                       id="user-content-apostol-web-service">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>Apostol Web Service
-                </h1>
-                <p>Поздравляем, если Вы видите эту страницу значит Веб-сервис <strong>Апостол</strong>, установлен и работает!</p>
-                <h2><a id="user-content-описание" class="anchor" aria-hidden="true" href="#описание"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ОПИСАНИЕ</h2>
-                <p><strong>Apostol Web Service</strong> (AWS) - платформа, написанная на C++, для быстрого создания
-                    <strong>RESTful API</strong>
-                    сервисов под Linux, со встроенной поддержкой СУБД <a href="https://www.postgresql.org/"
-                                                                         rel="nofollow">PostgreSQL</a>.</p>
-                <p>Платформа <strong>AWS</strong> построена на базе библиотеки <strong><code>libdelphi</code></strong> с
-                    применением <strong>асинхронной</strong> модели программирования.</p>
-                <p>Бинарный файл <strong><code>apostol</code></strong> - системная служба Linux (демон) в задачу
-                    которого входит запуск и поддержка
-                    работоспособности двух внутренних служб:</p>
+<header class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="/" title="В начало"><svg class="bi bi-house" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M2 13.5V7h1v6.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V7h1v6.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 13.5zm11-11V6l-2-2V2.5a.5.5 0 01.5-.5h1a.5.5 0 01.5.5z" clip-rule="evenodd"/>
+        <path fill-rule="evenodd" d="M7.293 1.5a1 1 0 011.414 0l6.647 6.646a.5.5 0 01-.708.708L8 2.207 1.354 8.854a.5.5 0 11-.708-.708L7.293 1.5z" clip-rule="evenodd"/>
+    </svg></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="/">В начало<span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/docs/">Документация</a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="dropdown-github" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">GitHub</a>
+                <div class="dropdown-menu" aria-labelledby="dropdown-github">
+                    <a class="dropdown-item" href="https://github.com/ufocomp/apostol">apostol</a>
+                    <a class="dropdown-item" href="https://github.com/ufocomp/libdelphi">libdelphi</a>
+                </div>
+            </li>
+        </ul>
+    </div>
+</header>
+
+<main role="main">
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="container-md">
+        <div class="row">
+            <div class="col-md-auto">
+
+                <h1 class="title" id="Ref1" style="margin-top: 0"><strong class="text-number">1.</strong> Введение</h1>
+
+                <p class="indent"><a href="https://github.com/ufocomp/apostol" target="_blank"> <strong>Apostol Web Service</strong></a> (AWS) - это программная платформа (<a href="https://ru.wikipedia.org/wiki/%D0%A4%D1%80%D0%B5%D0%B9%D0%BC%D0%B2%D0%BE%D1%80%D0%BA" target="_blank">framework</a>) для быстрого создания WEB-сервисов (RESTful) и серверов приложений под операционную систему Linux, со встроенной поддержкой СУБД <a href="https://www.postgresql.org/" target="_blank" rel="nofollow">PostgreSQL</a>.</p>
+
+                <p><strong>Платформа</strong> состоит из библиотек и классов написанных на C++ с помощью которых можно создавать приложения следующих типов:</p>
+                <ul>
+                    <li>
+                        <p>Системную службу (<strong>daemon</strong>);</p>
+                    </li>
+                    <li>
+                        <p>Клиент серверное приложение для передачи данных по Интернет протоколом (<strong>TCP/IP, UDP/IP, HTTP, WebSocket</strong>);</p>
+                    </li>
+                    <li>
+                        <p>WEB-сервер (<strong>HTTP-сервер</strong>);</p>
+                    </li>
+                    <li>
+                        <p>WEB-сервис (<strong>RESTful</strong>);</p>
+                    </li>
+                    <li>
+                        <p>Сервер приложений (<strong>application server</strong>) для эффективной работы с СУБД (<strong>PostgreSQL</strong>) и создания <a href="https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%D1%83%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F_%D0%B2%D0%B7%D0%B0%D0%B8%D0%BC%D0%BE%D0%BE%D1%82%D0%BD%D0%BE%D1%88%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8_%D1%81_%D0%BA%D0%BB%D0%B8%D0%B5%D0%BD%D1%82%D0%B0%D0%BC%D0%B8" target="_blank" rel="nofollow">CRM-систем</a>.</p>
+                    </li>
+                </ul>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 8px">
+                    <p><strong>Сервер приложений</strong> — это неотъемлемая часть программного комплекса, построенного на базе <a href="https://ru.wikipedia.org/wiki/%D0%A2%D1%80%D1%91%D1%85%D1%83%D1%80%D0%BE%D0%B2%D0%BD%D0%B5%D0%B2%D0%B0%D1%8F_%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0" target="_blank" rel="nofollow">трехзвенной архитектуры</a>, в котором сосредоточена бо́льшая часть бизнес-логики.</p>
+                    <p>Разработка сервера приложений задача не из лёгких. Очевидным решением для многих программистов является создание сервера приложений на <a href="https://ru.wikipedia.org/wiki/%D0%94%D0%B8%D0%BD%D0%B0%D0%BC%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9_%D1%8F%D0%B7%D1%8B%D0%BA_%D0%BF%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F" target="_blank">динамическом</a> языке программирования (Perl, Python, Ruby, PHP, JavaScript), но такие решения не адаптированы для работы с СУБД при высоких нагрузках и большом количестве данных.</p>
+                    <p>Apostol Web Service написан на <strong>C++</strong> с применением асинхронной модели программирования специально для <strong>высоконагруженных</strong> систем.</p>
+                </div>
+
+                <h1 class="title" id="Ref2"><strong class="text-number">2.</strong> Описание</h1>
+
+                <p class="indent">Платформа <strong>AWS</strong> построена на базе библиотеки <a href="https://github.com/ufocomp/libdelphi" target="_blank">libdelphi</a> с применением <strong>асинхронной</strong> модели программирования.</p>
+
+                <p class="indent">Бинарный файл <strong><code>apostol</code></strong> - системная служба Linux (демон) в задачу которого входит запуск и поддержка
+                    работоспособности двух внутренних серверов:</p>
                 <ol>
-                    <li>Server (HTTP-сервер);</li>
-                    <li>PQServer (PostgreSQL-сервер).</li>
+                    <li>HTTP-сервера;</li>
+                    <li>PQ-сервера (PostgreSQL).</li>
                 </ol>
-                <h6><a aria-hidden="true" class="anchor"
-                       href="#при-реализации-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx"
-                       id="user-content-при-реализации-apostol-вдохновение-черпалось-из-исходных-кодов-nginx-поэтому-управление-apostol-схоже-с-управлением-nginx-как-следствие-производительность-и-отказоустойчивость-apostol-на-уровне-nginx">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>При реализации <strong>apostol</strong>, вдохновение черпалось из исходных кодов <a
-                        href="http://nginx.org" rel="nofollow">nginx</a>. Поэтому управление <strong>apostol</strong>
-                    схоже с <a href="http://nginx.org/ru/docs/control.html#reconfiguration" rel="nofollow">управлением
-                        nginx</a>, как следствие производительность и отказоустойчивость <strong>apostol</strong> на
-                    уровне <a href="http://nginx.org" rel="nofollow">nginx</a>.
-                </h6>
-                <h3><a aria-hidden="true" class="anchor" href="#server" id="user-content-server">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>Server
-                </h3>
-                <h4><a aria-hidden="true" class="anchor" href="#асинхронный-http-сервер"
-                       id="user-content-асинхронный-http-сервер">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a><strong>Асинхронный HTTP сервер</strong>.
-                </h4>
-                <p>Принимает HTTP запросы от клиентов и в зависимости от значения в заголовке <code>User-Agent</code>
-                    распределяет их между модулями
-                    (модификациями). При отсутствии заголовка <code>User-Agent</code> или должного, в нём, значения
-                    направляет запрос в модуль
-                    <strong><code>Web-Server</code></strong> превращая AWS в <strong>Веб-сервер</strong>.</p>
-                <h6><a aria-hidden="true" class="anchor"
-                       href="#асинхронная-работа-сервера-реализована-с-помощью-epoll-api"
-                       id="user-content-асинхронная-работа-сервера-реализована-с-помощью-epoll-api">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>Асинхронная работа сервера реализована с помощью <code>epoll API</code>.
-                </h6>
-                <h3><a aria-hidden="true" class="anchor" href="#pqserver" id="user-content-pqserver">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>PQServer
-                </h3>
-                <h4><a aria-hidden="true" class="anchor" href="#асинхронный-postgresql-сервер"
-                       id="user-content-асинхронный-postgresql-сервер">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a><strong>Асинхронный PostgreSQL сервер</strong>.
-                </h4>
-                <p>Сервер создаёт пул подключений к СУБД PostgreSQL и позволяет отправлять SQL запросы в <strong>асинхронном</strong>
-                    режиме.
-                    Указать диапазон минимального и максимального количества подключений к СУБД можно в файле
-                    конфигурации в секции <code>[postgres]</code></p>
-                <h6><a aria-hidden="true" class="anchor" href="#по-умолчанию-поддержка-postgresql-отключена"
-                       id="user-content-по-умолчанию-поддержка-postgresql-отключена">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>По умолчанию поддержка PostgreSQL отключена.
-                </h6>
-                <h2><a aria-hidden="true" class="anchor" href="#модули" id="user-content-модули">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>МОДУЛИ
-                </h2>
-                <p>Апостол спроектирован таким образом, что основной код отвечает:</p>
+
+                <p class="indent"><small style="color: #5e5e5e"><strong>При реализации Apostol Web Service, вдохновение черпалось из исходных кодов <a href="http://nginx.org" rel="nofollow">nginx</a>.</strong></small></p>
+
+                <h1 class="title" id="Ref21"><strong class="text-number">2.1.</strong> HTTP-сервер</h1>
+
+                <p class="indent">Сервер реализован на базе <code class="gray"><strong>epoll API</strong></code>. Сервер работает в асинхронном режиме и имеет модульную конструкцию.</p>
+                <p class="indent">Каждый модуль это независимый друг от друга участок кода со своим алгоритмом обработки поступающих запросов.</p>
+                <p class="indent">Сервер принимает HTTP запросы и в зависимости от значения в заголовке <code>User-Agent</code> распределяет их между модулями.</p>
+
+                <h1 class="title" id="Ref22"><strong class="text-number">2.2.</strong> PQ-сервер</h1>
+
+                <p class="indent">Сервер реализован на базе библиотеки <code class="gray"><strong>libpq</strong></code> с применением асинхронных команд.</p>
+
+                <p class="indent">Подключение к СУБД затратная по времени процедура, поэтому при старте создаетсь пул подключений. Для выполнения SQL запроса из пула берется уже готовое подключение. При отсутствии свободных подключений запрос ставится в очередь и забирается на выполнение первым же освободившимся подключением.</p>
+                <p class="indent"><small style="color: #5e5e5e"><strong>Указать диапазон минимального и максимального количества подключений к СУБД можно в файле конфигурации в секции <code>[postgres]</code>.</strong></small></p>
+
+                <h1 class="title" id="Ref23"><strong class="text-number">2.3.</strong> Модуль</h1>
+
+                <p class="indent">Платформа спроектирована таким образом, что основной код отвечает:</p>
                 <ul>
                     <li>за работу приложения в качестве системной службы;</li>
                     <li>реализацию протоколов TCP/IP, HTTP;</li>
-                    <li>взаимодействие с СУБД PostgreSQL.</li>
+                    <li>взаимодействие с СУБД Postgres.</li>
                 </ul>
-                <p>Код реализующий логику того или иного сервиса находится отдельно от основного кода в расширениях
-                    (модулях).</p>
-                <h2><a aria-hidden="true" class="anchor" href="#настройка" id="user-content-настройка">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>НАСТРОЙКА
-                </h2>
-                <h6><a aria-hidden="true" class="anchor" href="#параметры-конфигурации-cmake"
-                       id="user-content-параметры-конфигурации-cmake">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>Параметры конфигурации CMake
-                </h6>
-                <p>В файле <code>CMakeLists.txt</code> укажите фаги:</p>
-                <p>Логический флаг <strong>WITH_POSTGRESQL</strong> можно использовать, чтобы включить поддержку
-                    PostgreSQL. По умолчанию установлено в OFF.</p>
-                <p>Логический флаг <strong>WITH_SQLITE3</strong> можно использовать, чтобы включить поддержку sqlite3. По
-                    умолчанию установлено в OFF.</p>
-                <h2><a aria-hidden="true" class="anchor" href="#сборка" id="user-content-сборка">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>СБОРКА
-                </h2>
-                <p>Для сборки проекта Вам потребуется:</p>
+                <p class="indent">Код реализующий логику того или иного сервиса находится отдельно от основного кода в модуле.</p>
+                <p class="indent">Модуль - это класс C++ принимающий данные от HTTP-сервера и PQ-сервера. Программисту,
+                    который реализует логику Веб-сервиса, не придётся вникать в особенности работы мультиплексированного ввода-вывода,
+                    функций обработки сигналов Linux (для построения демона) и в тонкости реализации асинхронной работы с PostgreSQL.
+                    AWS всё это возьмёт на себя, позволив разработчику сконцентрировать своё внимание только на реализации бизнес-логики
+                    самого проекта (веб-сервиса).
+                </p>
+
+                <p class="indent">В зависимости от реализации модулем, как по отдельности так и единым целым, может быть:</p>
+
+                <ul>
+                    <li>
+                        <p>HTTP-сервер (<code class="gray"><strong>WEB-сервер</strong></code>);</p>
+                    </li>
+                    <li>
+                        <p>WEB-сервис (<code class="gray"><strong>RESTful</strong></code>);</p>
+                    </li>
+                    <li>
+                        <p>Сервер приложений (<code class="gray"><strong>application server</strong></code>).</p>
+                    </li>
+                </ul>
+
+                <h1 class="title" id="Ref3"><strong class="text-number">3.</strong> Установка</h1>
+
+                <p>Для установки Вам потребуется:</p>
                 <ol>
                     <li>Компилятор C++;</li>
-                    <li><a href="https://cmake.org" rel="nofollow">CMake</a> или интегрированная среда разработки (IDE)
-                        с поддержкой <a href="https://cmake.org" rel="nofollow">CMake</a>;
-                    </li>
-                    <li>Библиотека <a href="https://github.com/ufocomp/libdelphi/">libdelphi</a> (Delphi classes
-                        for C++);
-                    </li>
+                    <li><a href="https://cmake.org" rel="nofollow">CMake</a> или интегрированная среда разработки (IDE) с поддержкой <a href="https://cmake.org" rel="nofollow">CMake</a>;</li>
+                    <li>Библиотека <a href="https://github.com/ufocomp/libdelphi" rel="nofollow">libdelphi</a> (Delphi classes for C++).</li>
+                    <li>Библиотека <a href="https://www.postgresql.org/download/" rel="nofollow">libpq-dev</a> (libraries and headers for C language frontend development).</li>
+                    <li>Библиотека <a href="https://www.postgresql.org/download/" rel="nofollow">postgresql-server-dev-10</a> (libraries and headers for C language backend development)</li>
                 </ol>
-                <h6><a aria-hidden="true" class="anchor"
-                       href="#внимание-устанавливать-libdelphi-не-нужно-достаточно-скачать-и-разместить-в-каталоге-srclib-проекта"
-                       id="user-content-внимание-устанавливать-libdelphi-не-нужно-достаточно-скачать-и-разместить-в-каталоге-srclib-проекта">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a><strong>ВНИМАНИЕ</strong>: Устанавливать <code>libdelphi</code> не нужно, достаточно скачать и
-                    разместить в каталоге <code>src/lib</code> проекта.
-                </h6>
-                <p>Если включена поддержка PostgreSQL то Вам потребуется:</p>
+
+                <p class="indent"><small style="color: #5e5e5e"><strong>Описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство.</strong></small></p>
+
+                <h1 class="title" id="Ref31"><strong class="text-number">3.1.</strong> Компилятор C++</h1>
+
+                <p>Для того чтобы установить компилятор C++ и необходимые библиотеки на Linux (Debian/Ubuntu) выполните:</p>
+
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">$ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++</span></li></ol></pre>
+
+                <h1 class="title" id="Ref32"><strong class="text-number">3.2.</strong> PostgreSQL</h1>
+
+                <p>Для того чтобы установить PostgreSQL воспользуйтесь инструкцией по <a href="https://www.postgresql.org/download/" target="_blank" rel="nofollow">этой</a> ссылке.</p>
+
+                <h1 class="title" id="Ref33"><strong class="text-number">3.3.</strong> Apostol Web Service</h1>
+
+                <p>Для того чтобы получить исходный код с помощью Git необходимо выполнить:</p>
+
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">$ git clone git@github.com:ufocomp/apostol.git</span></li></ol></pre>
+
+                <p>Далее:</p>
                 <ol>
-                    <li>Библиотека <a href="https://www.postgresql.org/download/" rel="nofollow">libpq-dev</a>
-                        (libraries and headers for C language frontend development);
-                    </li>
-                    <li>Библиотека <a href="https://www.postgresql.org/download/" rel="nofollow">postgresql-server-dev-10</a>
-                        (libraries and headers for C language backend development).
-                    </li>
+                    <li>Настроить <code class="gray">CMakeLists.txt</code> (по необходимости);</li>
+                    <li>Собрать и скомпилировать (см. ниже).</li>
                 </ol>
-                <p>Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:</p>
-                <pre><code>sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
-</code></pre>
-                <p>Для того чтобы установить PostgreSQL воспользуйтесь инструкцией по <a
-                        href="https://www.postgresql.org/download/" rel="nofollow">этой</a> ссылке.</p>
-                <h6><a aria-hidden="true" class="anchor"
-                       href="#подробное-описание-установки-c-cmake-ide-и-иных-компонентов-необходимых-для-сборки-проекта-не-входит-в-данное-руководство"
-                       id="user-content-подробное-описание-установки-c-cmake-ide-и-иных-компонентов-необходимых-для-сборки-проекта-не-входит-в-данное-руководство">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не
-                    входит в данное руководство.
-                </h6>
-                <p>Для сборки <strong>Апостол</strong>, необходимо:</p>
+
+                <p>Для того чтобы получить исходный код (без Git) необходимо:</p>
                 <ol>
-                    <li>Скачать <strong>Апостол</strong> по <a
-                            href="https://github.com/ufocomp/apostol/archive/master.zip">ссылке</a>;
-                    </li>
+                    <li>Скачать <code class="gray"><strong>Apostol Web Service</strong></code> по <a href="https://github.com/ufocomp/apostol/archive/master.zip">ссылке</a>;</li>
                     <li>Распаковать;</li>
-                    <li>Скачать <strong>libdelphi</strong> по <a
-                            href="https://github.com/ufocomp/libdelphi/archive/master.zip">ссылке</a>;
-                    </li>
-                    <li>Распаковать в <code>src/lib/delphi</code>;</li>
-                    <li>Настроить <code>CMakeLists.txt</code> (по необходимости);</li>
-                    <li>Скомпилировать <strong>Апостол</strong> (см. ниже).</li>
+                    <li>Скачать <code class="gray"><strong>libdelphi</strong></code> по <a href="https://github.com/ufocomp/libdelphi/archive/master.zip">ссылке</a>;</li>
+                    <li>Распаковать в <code class="gray">src/lib/delphi</code>;</li>
+                    <li>Настроить <code class="gray">CMakeLists.txt</code> (по необходимости);</li>
+                    <li>Собрать и скомпилировать (см. ниже).</li>
                 </ol>
-                <p>Для сборки <strong>Апостол</strong>, с помощью Git выполните:</p>
-                <pre><code>git clone https://github.com/ufocomp/apostol.git
-</code></pre>
-                <p>Чтобы добавить <strong>libdelphi</strong> в проект, с помощью Git выполните:</p>
-                <pre><code>cd apostol/src/lib
-git clone https://github.com/ufocomp/libdelphi.git delphi
-cd ../../../
-</code></pre>
-                <h6><a aria-hidden="true" class="anchor" href="#сборка-1" id="user-content-сборка-1">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>Сборка:
-                </h6>
-                <pre><code>cd apostol
-cmake -DCMAKE_BUILD_TYPE=Release . -B cmake-build-release
-</code></pre>
-                <h6><a aria-hidden="true" class="anchor" href="#компиляция-и-установка"
-                       id="user-content-компиляция-и-установка">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>Компиляция и установка:
-                </h6>
-                <pre><code>cd cmake-build-release
-make
-sudo make install
-</code></pre>
-                <p>По умолчанию <strong>Апостол</strong> будет установлен в:</p>
-                <pre><code>/usr/sbin
-</code></pre>
+
+                <h1 class="title" id="Ref34"><strong class="text-number">3.4.</strong> libdelphi</h1>
+
+                <p class="indent"><small style="color: #5e5e5e"><strong>Библиотеку <code>libdelphi</code> можно не устанавливать, достаточно скачать и разместить в каталоге <code>src/lib</code> проекта.</strong></small></p>
+
+                <p>Для того чтобы добавить <strong>libdelphi</strong> в проект с помощью Git выполните:</p>
+
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">$ cd apostol/src/lib</span></li><li class="L1"><span class="com">$ git clone https://github.com/ufocomp/libdelphi.git delphi</span></li><li class="L2"><span class="com">$ cd ../../../</span></li></ol></pre>
+
+                <h1 class="title" id="Ref35"><strong class="text-number">3.5.</strong> Сборка</h1>
+
+                <p>Для того чтобы собрать <code class="gray"><strong>Apostol Web Service</strong></code> (подготовить к компиляции) выполните:</p>
+
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">$ cd apostol</span></li><li class="L1"><span class="com">$ cmake -DCMAKE_BUILD_TYPE=Release . -B cmake-build-release</span></li></ol></pre>
+
+                <h1 class="title" id="Ref36"><strong class="text-number">3.6.</strong> Компиляция и установка</h1>
+
+                <p>Для того чтобы скомпилировать и установить <code class="gray"><strong>Apostol Web Service</strong></code> выполните:</p>
+
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">$ cd cmake-build-release</span></li><li class="L1"><span class="com">$ make</span></li><li class="L2"><span class="com">$ sudo make install</span></li></ol></pre>
+                <p>По умолчанию <code class="gray"><strong>Apostol Web Service</strong></code> будет установлен в:</p>
+
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">/usr/sbin</span></li></ol></pre>
+
                 <p>Файл конфигурации и необходимые для работы файлы будут расположены в:</p>
-                <pre><code>/etc/apostol
-</code></pre>
-                <h2><a aria-hidden="true" class="anchor" href="#запуск" id="user-content-запуск">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a>ЗАПУСК
-                </h2>
-                <p>Апостол - системная служба (демон) Linux.
-                    Для управления Апостол используйте стандартные команды управления службами.</p>
-                <p>Для запуска Апостол выполните:</p>
-                <pre><code>sudo service apostol start
-</code></pre>
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">/etc/apostol</span></li></ol></pre>
+
+                <h1 class="title" id="Ref37"><strong class="text-number">3.7.</strong> Запуск</h1>
+
+                <p class="indent">Бинарный файл <code class="gray"><strong>apostol</strong></code> - системная служба (демон) Linux. Используйте стандартные команды управления службами.</p>
+
+                <p>Для запуска выполните:</p>
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">$ sudo service apostol start</span></li></ol></pre>
+
                 <p>Для проверки статуса выполните:</p>
-                <pre><code>sudo service apostol status
-</code></pre>
-                <p>Результат должен быть <strong>примерно</strong> таким:</p>
-                <pre><code>● apostol.service - LSB: starts the Apostol Web Service
-   Loaded: loaded (/etc/init.d/apostol)
-   Active: active (running) since Wed 2019-01-02 03:04:05 MSK; 21h ago
-   CGroup: /system.slice/apostol.service
-           ├─26772 apostol: master process /usr/sbin/apostol
-           └─26773 apostol: worker process (apostol)
-</code></pre>
-                <h3><a aria-hidden="true" class="anchor" href="#управление-apostol"
-                       id="user-content-управление-apostol">
-                    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewBox="0 0 16 16"
-                         width="16">
-                        <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"
-                              fill-rule="evenodd"></path>
-                    </svg>
-                </a><strong>Управление apostol</strong>.
-                </h3>
-                <p>Управлять <strong><code>apostol</code></strong> можно с помощью сигналов.
-                    Номер главного процесса по умолчанию записывается в файл
-                    <code>/usr/local/apostol/logs/apostol.pid</code>.
-                    Изменить имя этого файла можно при конфигурации сборки или же в <code>apostol.conf</code> секция
-                    <code>[daemon]</code> ключ <code>pid</code>.</p>
-                <p>Главный процесс поддерживает следующие сигналы:</p>
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Сигнал</th>
-                        <th>Действие</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>TERM, INT</td>
-                        <td>быстрое завершение</td>
-                    </tr>
-                    <tr>
-                        <td>QUIT</td>
-                        <td>плавное завершение</td>
-                    </tr>
-                    <tr>
-                        <td>HUP</td>
-                        <td>изменение конфигурации, запуск новых рабочих процессов с новой конфигурацией, плавное
-                            завершение старых рабочих процессов
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>WINCH</td>
-                        <td>плавное завершение рабочих процессов</td>
-                    </tr>
-                    </tbody>
-                </table>
-                <p>Управлять рабочими процессами по отдельности не нужно. Тем не менее, они тоже поддерживают некоторые
-                    сигналы:</p>
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Сигнал</th>
-                        <th>Действие</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>TERM, INT</td>
-                        <td>быстрое завершение</td>
-                    </tr>
-                    <tr>
-                        <td>QUIT</td>
-                        <td>плавное завершение</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </article>
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">$ sudo service apostol status</span></li></ol></pre>
+
+                <p>Результат должен быть примерно таким:</p>
+                <pre class="prettyprint linenums highlight prettyprinted"><ol class="linenums"><li class="L0"><span class="com">● apostol.service - LSB: starts the apostol web service</span></li><li class="L1"><span class="com">   Loaded: loaded (/etc/init.d/apostol)</span></li><li class="L2"><span class="com">   Active: active (running) since Sun 2019-04-07 01:42:54 MSK; 21h ago</span></li><li class="L3"><span class="com">   CGroup: /system.slice/apostol.service</span></li><li class="L4"><span class="com">           ├─26772 apostol: master process /usr/sbin/apostol</span></li><li class="L5"><span class="com">           └─26773 apostol: worker process (apostol)</span></li></ol></pre>
+
+                <h1 class="title" id="Ref4"><strong class="text-number">4.</strong> Лицензия</h1>
+
+                <p class="indent"><strong>Apostol Web Service</strong> распространяется бесплатно по лицензии GNU General Public License v3.0, что обязывает программное обеспечение, разработанное на базе AWS, распространять на тех же условиях и не позволяет включать AWS в проприетарное программное обеспечение. Для тех, кого не устраивает лицензия GPL-3.0, предусмотрен вариант на платной основе с иным лицензионным соглашением.</p>
+                <p class="indent">Техническая поддержка по лицензии GPL-3.0 возможна только по e-mail, также возможна платная консультация (на русском языке) по цифровым каналам связи с демонстрацией видео изображения рабочего стола.</p>
+                <p class="indent">Иные формы приобретения и технической поддержки Apostol Web Service предоставляются в рамках договорных соглашений.</p>
+
+                <h1 class="title" id="Ref5"><strong class="text-number">5.</strong> Апостол Бэкенд</h1>
+
+                <p class="indent"><strong>Апостол Бэкенд</strong> - платформа написанная на процедурном языке программирования <strong>PL/pgSQL</strong> под <strong>СУБД PosrgeSQL</strong> для создания back-end решений автоматизированных систем.</p>
+
+                <p class="indent">Платформа адаптирована для работы с Web приложениями и имеет встроенный API (<strong>REST JSON API</strong>).</p>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 16px">
+                    <p>Апостол Бэкенд позволяет программисту не знакомому с C++ реализовать бизнес-логику веб-сервиса на PL/pgSQL используя AWS в качестве транспорта (доставки REST JSON API запросов в СУБД).</p>
+                </div>
+
+                <p class="indent">Платформа условно разделена на следующие модули:</p>
+                <ul>
+                    <li>Ядро (документооборот);</li>
+                    <li>Модуль безопасности;</li>
+                    <li>Реестр;</li>
+                    <li>Календарь (рабочих дней);</li>
+                </ul>
+
+                <h1 class="title" id="Ref51"><strong class="text-number">5.1.</strong> Ядро</h1>
+
+                <p class="indent"><strong>Ядро</strong> имеет свою логическую модель смысл которой заключается в том, что данные представлены в виде сущностей. Данные сущности могут быть распределены по нескольким таблицам. Сущность обладает свойствами и методами. Свойства это поля в базе данных, а методы это действия которые можно совершить (создать, открыть, закрыть, удалить).</p>
+
+                <p class="indent">Прежде чем понять, как устроено ядро, нужно дать определение двум понятиям это - <b><i>«Объект»</i></b> и <b><i>«Документооборот»</i></b>.</p>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 16px">
+                    <h4>Объект</h4>
+                    <p>Это физическая или логическая сущность, которую можно представить в виде единого целого. Клиент - это объект, договор - это объект, Лицевой счёт, на котором отражается финансовая информация клиента это тоже объект и даже адрес клиента также можно представить в виде объекта.</p>
+                </div>
+
+                <p class="indent">Объект обладает рядом характеристик, таких как: <b><i>«класс»</i></b>, <b><i>«тип»</i></b>, <b><i>«свойство»</i></b> и <b><i>«состояние»</i></b>. <mark>Объект в системе разделён на два класса <b>документ</b> и <b>справочник</b></mark>.</p>
+                <p class="indent">Документ обладает свойством <b><i>«подразделение»</i></b>. <b>Подразделение</b> ограничивает область видимости документа. Справочник не обладает таким свойством следовательно, доступен всем подразделениям.</p>
+                <p class="indent">Над объектом можно совершать <b><i>«действия»</i></b>, которые вызывают в системе <b><i>«события»</i></b>, которые, в свою очередь, могут привести к изменению <b><i>«состояния»</i></b> объекта. Всё это и является механизмом работы документооборота системы.</p>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 8px">
+                    <h4>Документооборот системы</h4>
+                    <p>Это последовательность совершаемых над объектом действий, приводящих к возникновению событий, способных повлиять на состояние объекта. Последовательность переходов из одного состояния объекта в другое называется «жизненным циклом».</p>
+                </div>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 16px">
+                    <h4>Сущность</h4>
+                    <p>Сущность это набор данных характеризующий физический или логический элемент.</p>
+                </div>
+
+                <p class="indent"><strong>Сущность</strong> задаётся разработчиком системы и в отличие от других характеристик объекта не может быть изменена пользователем системы. На данный момент системе определены следующие сущности:</p>
+                <ul>
+                    <li><code>object</code> Объект;</li>
+                    <li><code>document</code> Документ;</li>
+                    <li><code>reference</code> Справочник;</li>
+                    <li><code>client</code> Клиент;</li>
+                    <li><code>contract</code> Договор;</li>
+                    <li><code>calendar</code> Календарь;</li>
+                    <li><code>address</code> Адрес;</li>
+                </ul>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 16px">
+                    <h4>Класс объекта</h4>
+                    <p>Это условное разделение объекта по тем или иным признакам.</p>
+                </div>
+
+                <p class="indent"><strong>Класс объекта</strong> характеризует сам объект. Класс объекта в отличие от сущности может быть создан пользователем системы по его собственному усмотрению.</p>
+                <p class="indent">Классы объекта создаются в виде дерева, т.е. имеют иерархическую структуру. Для каждого класса объекта настраиваются своя собственная схема документооборота, т.е. формируется список, в каких именно состояниях может находиться объект. Для каждого состояния создается список доступных действий, для каждого действия создается список событий и настраивается таблица переходов из одного состояния в другое т.е. «жизненный цикл».</p>
+                <p class="indent">Класс объекта может быть <i>абстрактным</i>, создать документ с абстрактным классом объекта невозможно.</p>
+                <p class="indent">После создания базы данных в системе будут доступны следующие классы объектов:</p>
+
+                <ul>
+                    <li>
+                        <code>object</code> Объект <code class="gray">(абстрактный)</code>
+                        <ul>
+                            <li>
+                                <code>document</code> Документ <code class="gray">(абстрактный)</code>
+                                <ul>
+                                    <li><code>client</code> Клиент;</li>
+                                    <li><code>contract</code> Договор;</li>
+                                    <li><code>address</code> Адрес;</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <ul>
+                            <li>
+                                <code>reference</code> Справочник <code class="gray">(абстрактный)</code>
+                                <ul>
+                                    <li><code>calendar</code> Календарь рабочих дней;</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <p class="indent">Каждый объект в системе находиться в том или ином состоянии. Состояние объекта привязывается к классу объекта. Список состояний для каждого класса объектов индивидуален и может быть настроен пользователем по своему собственному усмотрению.</p>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 16px">
+                    <h4>Тип состояния объекта</h4>
+                    <p>Тип для состояний объекта.</p>
+                </div>
+
+                <p class="indent">В системе всего четыре типа состояния объекта:</p>
+
+                <ul>
+                    <li><code>created</code> Создан;</li>
+                    <li><code>enabled</code> Включен;</li>
+                    <li><code>disabled</code> Отключен;</li>
+                    <li><code>deleted</code> Удалён.</li>
+                </ul>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 16px">
+                    <h4>Состояние объекта</h4>
+                    <p>Это промежуточное звено в цепи документооборота системы.</p>
+                </div>
+
+                <p class="indent">Каждому из типов состояния должно соответствовать как минимум одно состояние объекта из чего следует, что каждый объект может находиться как минимум в четырех состояниях. Типы состояний объекта недоступны для изменения пользователю системы, но на базе этих типов пользователь может создать сколько угодно собственных состояний объекта. Первоначальное состояние любого нового объекта в системе это – «Создан». Для каждого состояния объекта задается определенный список действий. Переход из одного состояния объекта в другое происходить только при совершении над ним определенного действия.</p>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 16px">
+                    <h4>Действия</h4>
+                    <p>Это визуальная часть в цепи документооборота системы. Именно действия отображаются в интерфейсе пользователя в виде кнопок и элементов меню.</p>
+                </div>
+
+                <p class="indent"><strong>Действие</strong>, совершаемое над объектом также, как и состояния объекта задается для каждого класса объекта и формируется из заданного разработчиком системы списка.</p>
+                <p class="indent">На данный момент список действий выглядит следующим образом:</p>
+
+                <ul>
+                    <li><code>anything</code> Ничто;</li>
+                    <li><code>create</code> Создать;</li>
+                    <li><code>open</code> Открыть;</li>
+                    <li><code>edit</code> Изменить;</li>
+                    <li><code>save</code> Сохранить;</li>
+                    <li><code>enable</code> Включить;</li>
+                    <li><code>disable</code> Отключить;</li>
+                    <li><code>delete</code> Удалить;</li>
+                    <li><code>restore</code> Восстановить;</li>
+                    <li><code>drop</code> Уничтожить;</li>
+                    <li><code>start</code> Запустить;</li>
+                    <li><code>stop</code> Остановить;</li>
+                    <li><code>check</code> Проверить;</li>
+                    <li><code>cancel</code> Отменить;</li>
+                </ul>
+
+                <p class="indent">На основе заданных действий путем добавления новых или переопределения уже имеющихся действий, для каждого класса объектов, пользователь системы формирует свой собственный список действий, совершаемых над этим объектом. Для каждого действия создается список <b>событий</b>.</p>
+
+                <div class="bs-callout bs-callout-info" style="margin-bottom: 16px">
+                    <h4>Событие объекта</h4>
+                    <p>Это реакция на совершаемое над объектом действие.</p>
+                </div>
+
+                <p class="indent">К каждому событию объекта привязывается написанные на языке PL/pgSQL процедуры. При возникновении события ядро системы начинает поочередно выполнять код в привязанных к событию процедурах. Выполняемый код может быть абсолютно любым, и иметь разную смысловую нагрузку будь то проверка объекта на переход из одного состояния в другое или информирование пользователя о неправильно заполненных полях.</p>
+                <p class="indent">Переход объекта из одного состояния в другое, согласно настроенного документооборота, происходит при вызове функции <code class="gray">ChangeObjectState()</code>.</p>
+
+                <p class="indent">Для того, чтобы совершить действие над объектом (включить, выключить, удалить, уничтожить) необходимо вызвать функцию <code class="gray">ExecuteObjectAction(pObject, pAction)</code>.</p>
+
+                <h1 class="title" id="Ref52"><strong class="text-number">5.2.</strong> Модуль безопасности</h1>
+
+                <p class="indent">PostgreSQL обладает обширным набором инструментов для настройки прав доступа но все это не применимо в Web-решениях по одной простой причине Web-пользователь не имеет и не должен иметь прямого доступа (подключения) к СУБД. Взаимодействие с СУБД происходит посредством сервера приложений, а подключение к СУБД происходит от имени одного и того же пользователя СУБД для разных Web-пользователей. Поэтому для разграничения прав доступа Web-пользователей в СУБД создают «виртуальных» пользователей и весь механизм контроля и учёта прав доступа возлагается полностью на саму систему, а не на СУБД.</p>
+
+                <p class="indent">Встроенный в систему модуль безопасности обладает достаточно обширным набором функций и позволяет:</p>
+                <ul>
+                    <li>Создавать «виртуального» пользователя/группу;</li>
+                    <li>Управлять данными «виртуального» пользователя/группы;</li>
+                    <li>Включать/исключать пользователя в/из группу/группы;</li>
+                    <li>Входить в систему по логину и паролю с созданием ключа сессии;</li>
+                    <li>Входить в систему по ключу сессии;</li>
+                    <li>Блокировать пользователя;</li>
+                    <li>Ограничивать вход в систему по IP-адресу (IP-tables);</li>
+                    <li>Отслеживать состояния и статусы пользователя (в сети/не в сети, активен/заблокирован);</li>
+                </ul>
+            </div>
         </div>
-    </div>
-</div>
+    </div> <!-- /container -->
+</main>
+
+<footer class="container">
+    <hr>
+    <p class="text-center">© Apostol Web Service 2020</p>
+</footer>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
 </body>
 </html>

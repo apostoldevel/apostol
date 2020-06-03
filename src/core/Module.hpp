@@ -47,74 +47,6 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CAuthorization --------------------------------------------------------------------------------------------
-
-        //--------------------------------------------------------------------------------------------------------------
-
-        enum CAuthorizationSchemes { asUnknown, asBasic, asToken };
-        //--------------------------------------------------------------------------------------------------------------
-
-        typedef struct CAuthorization {
-
-            CAuthorizationSchemes Schema;
-
-            CString Username;
-            CString Password;
-
-            CAuthorization(): Schema(asUnknown) {
-
-            }
-
-            explicit CAuthorization(const CString& String): CAuthorization() {
-                Parse(String);
-            }
-
-            void Parse(const CString& String) {
-                if (String.IsEmpty())
-                    throw Delphi::Exception::Exception("Authorization error: Data not found.");
-
-                if (String.SubString(0, 5) == "Basic") {
-                    const CString LPassphrase(base64_decode(String.SubString(6)));
-
-                    const size_t LPos = LPassphrase.Find(':');
-                    if (LPos == CString::npos)
-                        throw Delphi::Exception::Exception("Authorization error: Incorrect passphrase.");
-
-                    Schema = asBasic;
-                    Username = LPassphrase.SubString(0, LPos);
-                    Password = LPassphrase.SubString(LPos + 1);
-
-                    if (Username.IsEmpty() || Password.IsEmpty())
-                        throw Delphi::Exception::Exception("Authorization error: Username and password has not be empty.");
-
-                } else if (String.SubString(0, 5) == "Token") {
-                    const CString LPassphrase(String.SubString(6));
-
-                    const size_t LPos = LPassphrase.Find(':');
-                    if (LPos == CString::npos)
-                        throw Delphi::Exception::Exception("Authorization error: Incorrect token.");
-
-                    Schema = asToken;
-                    Username = LPassphrase.SubString(0, LPos);
-                    Password = LPassphrase.SubString(LPos + 1);
-
-                    if (Username.Length() != 40 || Password.Length() != 40)
-                        throw Delphi::Exception::Exception("Authorization error: Incorrect token.");
-
-                } else {
-                    throw Delphi::Exception::Exception("Authorization error: Unknown schema.");
-                }
-            }
-
-            CAuthorization &operator << (const CString& String) {
-                Parse(String);
-                return *this;
-            }
-
-        } CAuthorization;
-
-        //--------------------------------------------------------------------------------------------------------------
-
         //-- CMethodHandler --------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
@@ -144,13 +76,15 @@ namespace Apostol {
         class CJob: CCollectionItem {
         private:
 
-            CString m_JobId;
-
-            CString m_Result;
+            CString m_Identity;
 
             CString m_CacheFile;
 
-            CPQPollQuery *m_PollQuery;
+            CReply m_Reply;
+
+            CPQPollQuery *m_pPollQuery;
+
+            CStringList m_Data;
 
         public:
 
@@ -158,17 +92,20 @@ namespace Apostol {
 
             ~CJob() override = default;
 
-            CString& JobId() { return m_JobId; };
-            const CString& JobId() const { return m_JobId; };
+            CString &Identity() { return m_Identity; };
+            const CString &Identity() const { return m_Identity; };
 
-            CString& CacheFile() { return m_CacheFile; };
-            const CString& CacheFile() const { return m_CacheFile; };
+            CString &CacheFile() { return m_CacheFile; };
+            const CString &CacheFile() const { return m_CacheFile; };
 
-            CString& Result() { return m_Result; }
-            const CString& Result() const { return m_Result; }
+            CPQPollQuery *PollQuery() { return m_pPollQuery; };
+            void PollQuery(CPQPollQuery *Value) { m_pPollQuery = Value; };
 
-            CPQPollQuery *PollQuery() { return m_PollQuery; };
-            void PollQuery(CPQPollQuery *Value) { m_PollQuery = Value; };
+            CReply &Reply() { return m_Reply; };
+            const CReply &Reply() const { return m_Reply; };
+
+            CStringList &Data() { return m_Data; }
+            const CStringList& Data() const { return m_Data; }
         };
         //--------------------------------------------------------------------------------------------------------------
 
@@ -247,6 +184,12 @@ namespace Apostol {
 
             ~CApostolModule() override;
 
+            static CHTTPServer *Server();
+#ifdef WITH_POSTGRESQL
+            static CPQServer *PQServer();
+#endif
+            static CHTTPClient *GetClient(const CString &Host, uint16_t Port);
+
             virtual bool CheckUserAgent(const CString& Value) abstract;
 
             virtual void BeforeExecute(Pointer Data);
@@ -257,11 +200,12 @@ namespace Apostol {
 
             static void ContentToJson(CRequest *ARequest, CJSON& Json);
 
+            static CString GetUserAgent(CHTTPServerConnection *AConnection);
+            static CString GetOrigin(CHTTPServerConnection *AConnection);
             static CString GetHost(CHTTPServerConnection *AConnection);
 
             const CString& GetRoot(const CString &Host) const;
 
-            static CHTTPClient * GetClient(const CString &Host, uint16_t Port);
 #ifdef WITH_POSTGRESQL
             CPQPollQuery *GetQuery(CPollConnection *AConnection);
 
@@ -274,7 +218,7 @@ namespace Apostol {
                          COnPQPollQueryExecutedEvent && OnExecuted = nullptr,
                          COnPQPollQueryExceptionEvent && OnException = nullptr);
 #endif
-            static void ExceptionToJson(int ErrorCode, const std::exception &AException, CString& Json);
+            static void ExceptionToJson(int ErrorCode, const std::exception &e, CString& Json);
 
             static void DebugRequest(CRequest *ARequest);
             static void DebugReply(CReply *AReply);

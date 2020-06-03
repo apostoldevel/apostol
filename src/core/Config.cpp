@@ -173,6 +173,7 @@ namespace Apostol {
             m_nLimitNoFile = static_cast<uint32_t>(-1);
 
             m_fMaster = false;
+            m_fHelper = false;
             m_fDaemon = false;
 
             m_Flags = {false, false, false, false};
@@ -365,20 +366,6 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CConfig::SetJoinUser(LPCTSTR AValue) {
-            if (m_sJoinUser != AValue) {
-                m_sJoinUser = AValue;
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
-        void CConfig::SetJoinPassword(LPCTSTR AValue) {
-            if (m_sJoinPassword != AValue) {
-                m_sJoinPassword = AValue;
-            }
-        }
-        //--------------------------------------------------------------------------------------------------------------
-
         void CConfig::SetDefault() {
             m_uErrorCount = 0;
 
@@ -389,6 +376,7 @@ namespace Apostol {
             m_nConnectTimeOut = 5;
 
             m_fMaster = true;
+            m_fHelper = true;
             m_fDaemon = true;
 
             m_fPostgresConnect = false;
@@ -430,6 +418,7 @@ namespace Apostol {
 
             Add(new CConfigCommand(_T("main"), _T("workers"), &m_nWorkers));
             Add(new CConfigCommand(_T("main"), _T("master"), &m_fMaster));
+            Add(new CConfigCommand(_T("main"), _T("helper"), &m_fHelper));
             Add(new CConfigCommand(_T("main"), _T("locale"), m_sLocale.c_str(), std::bind(&CConfig::SetLocale, this, _1)));
 
             Add(new CConfigCommand(_T("daemon"), _T("daemon"), &m_fDaemon));
@@ -452,9 +441,6 @@ namespace Apostol {
 
             Add(new CConfigCommand(_T("postgres/poll"), _T("min"), &m_nPostgresPollMin));
             Add(new CConfigCommand(_T("postgres/poll"), _T("max"), &m_nPostgresPollMax));
-
-            Add(new CConfigCommand(_T("join"), _T("user"), m_sJoinUser.c_str(), std::bind(&CConfig::SetJoinUser, this, _1)));
-            Add(new CConfigCommand(_T("join"), _T("password"), m_sJoinPassword.c_str(), std::bind(&CConfig::SetJoinPassword, this, _1)));
         }
         //--------------------------------------------------------------------------------------------------------------
 
@@ -556,7 +542,7 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         void CConfig::OnIniFileParseError(Pointer Sender, LPCTSTR lpszSectionName, LPCTSTR lpszKeyName,
-                                          LPCTSTR lpszValue, LPCTSTR lpszDefault, int Line) {
+                LPCTSTR lpszValue, LPCTSTR lpszDefault, int Line) {
 
             m_uErrorCount++;
             if ((lpszValue == nullptr) || (lpszValue[0] == '\0')) {
@@ -564,14 +550,14 @@ namespace Apostol {
                     Log()->Error(APP_LOG_EMERG, 0, ConfMsgEmpty, lpszSectionName, lpszKeyName, m_sConfFile.c_str(), Line);
                 else
                     Log()->Error(APP_LOG_EMERG, 0, ConfMsgEmpty _T(" - ignored and set by default: \"%s\""), lpszSectionName,
-                                 lpszKeyName, m_sConfFile.c_str(), Line, lpszDefault);
+                                lpszKeyName, m_sConfFile.c_str(), Line, lpszDefault);
             } else {
                 if (Flags().test_config || (lpszDefault == nullptr) || (lpszDefault[0] == '\0'))
                     Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue, lpszSectionName, lpszKeyName, lpszValue,
-                                 m_sConfFile.c_str(), Line);
+                                m_sConfFile.c_str(), Line);
                 else
                     Log()->Error(APP_LOG_EMERG, 0, ConfMsgInvalidValue _T(" - ignored and set by default: \"%s\""), lpszSectionName, lpszKeyName, lpszValue,
-                                 m_sConfFile.c_str(), Line, lpszDefault);
+                                m_sConfFile.c_str(), Line, lpszDefault);
             }
         }
 

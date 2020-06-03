@@ -28,15 +28,16 @@ Author:
 #define BT_BUF_SIZE 255
 //----------------------------------------------------------------------------------------------------------------------
 
-void signal_error(int signo, siginfo_t *siginfo, void *ucontext)
-{
+void signal_error(int signo, siginfo_t *siginfo, void *ucontext) {
     void*       addr;
     void*       trace[BT_BUF_SIZE];
     int         i;
-    int         size;
+    int         count;
     char      **msg;
 
-    GLog->Error(APP_LOG_CRIT, 0, "signal: %d (%s), addr: 0x%xL", signo, sys_siglist[signo], siginfo->si_addr);
+    GLog->Error(APP_LOG_CRIT, 0, "-----BEGIN BACKTRACE LOG-----");
+    GLog->Error(APP_LOG_CRIT, 0, "Signal: %d (%s)", signo, sys_siglist[signo]);
+    GLog->Error(APP_LOG_CRIT, 0, "Addr  : %p", siginfo->si_addr);
 
 #ifdef __x86_64__
 
@@ -45,26 +46,21 @@ void signal_error(int signo, siginfo_t *siginfo, void *ucontext)
 #else
     addr = (void*)((ucontext_t*)ucontext)->uc_mcontext.gregs[REG_EIP];
 #endif
+    GLog->Error(APP_LOG_CRIT, 0, "addr  : %p", addr);
 
-    size = backtrace(trace, BT_BUF_SIZE);
+    count = backtrace(trace, BT_BUF_SIZE);
 
-    GLog->Error(APP_LOG_CRIT, 0, "backtrace() returned %d addresses", size);
+    GLog->Error(APP_LOG_CRIT, 0, "Count : %d", count);
 
-    //trace[0] = addr;
-
-    msg = backtrace_symbols(trace, size);
-    if (msg)
-    {
-        GLog->Error(APP_LOG_DEBUG, 0, "-= backtrace log =-");
-
-        for (i = 0; i < size; ++i)
-        {
-            GLog->Error(APP_LOG_DEBUG, 0, "%s", msg[i]);
+    msg = backtrace_symbols(trace, count);
+    if (msg) {
+        for (i = 0; i < count; ++i) {
+            GLog->Error(APP_LOG_CRIT, 0, "%s", msg[i]);
         }
 
-        GLog->Error(APP_LOG_DEBUG, 0, "-= backtrace log =-");
         free(msg);
     }
+    GLog->Error(APP_LOG_CRIT, 0, "-----END BACKTRACE LOG-----");
 #endif
     exit(3);
 }
@@ -434,6 +430,8 @@ namespace Apostol {
                 }
 
                 m_pServer = Value;
+
+                InitializeServerHandlers();
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -446,11 +444,14 @@ namespace Apostol {
                 }
 
                 m_pPQServer = Value;
+
+                InitializePQServerHandlers();
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 #endif
-        void CServerProcess::InitializeHandlers(CCommandHandlers *AHandlers, bool ADisconnect) {
+        void CServerProcess::InitializeCommandHandlers(CCommandHandlers *AHandlers,
+                bool ADisconnect) {
 
             if (Assigned(AHandlers)) {
 
@@ -458,7 +459,43 @@ namespace Apostol {
 
                 AHandlers->ParseParamsDefault(false);
                 AHandlers->DisconnectDefault(ADisconnect);
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+                LCommand =AHandlers->Add();
+                LCommand->Command(_T("GET"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoGet(ACommand); });
 
+                LCommand = AHandlers->Add();
+                LCommand->Command(_T("POST"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoPost(ACommand); });
+
+                LCommand = AHandlers->Add();
+                LCommand->Command(_T("OPTIONS"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoOptions(ACommand); });
+
+                LCommand = AHandlers->Add();
+                LCommand->Command(_T("PUT"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoPut(ACommand); });
+
+                LCommand = AHandlers->Add();
+                LCommand->Command(_T("DELETE"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoDelete(ACommand); });
+
+                LCommand = AHandlers->Add();
+                LCommand->Command(_T("HEAD"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoHead(ACommand); });
+
+                LCommand = AHandlers->Add();
+                LCommand->Command(_T("PATCH"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoPatch(ACommand); });
+
+                LCommand = AHandlers->Add();
+                LCommand->Command(_T("TRACE"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoTrace(ACommand); });
+
+                LCommand = AHandlers->Add();
+                LCommand->Command(_T("CONNECT"));
+                LCommand->OnCommand([this](auto && ACommand) { this->DoConnect(ACommand); });
+#else
                 LCommand =AHandlers->Add();
                 LCommand->Command(_T("GET"));
                 LCommand->OnCommand(std::bind(&CServerProcess::DoGet, this, _1));
@@ -494,15 +531,94 @@ namespace Apostol {
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("CONNECT"));
                 LCommand->OnCommand(std::bind(&CServerProcess::DoConnect, this, _1));
+#endif
             }
         }
         //--------------------------------------------------------------------------------------------------------------
+
+        void CServerProcess::InitializeServerHandlers() {
+            if (m_pServer == nullptr)
+                return;
+
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+            m_pServer->OnExecute([this](auto && AConnection) { return DoExecute(AConnection); });
+
+            m_pServer->OnVerbose([this](auto && Sender, auto && AConnection, auto && AFormat, auto && args) { DoVerbose(Sender, AConnection, AFormat, args); });
+            m_pServer->OnAccessLog([this](auto && AConnection) { DoAccessLog(AConnection); });
+
+            m_pServer->OnException([this](auto && AConnection, auto && AException) { DoServerException(AConnection, AException); });
+            m_pServer->OnListenException([this](auto && AConnection, auto && AException) { DoServerListenException(AConnection, AException); });
+
+            m_pServer->OnEventHandlerException([this](auto && AHandler, auto && AException) { DoServerEventHandlerException(AHandler, AException); });
+
+            m_pServer->OnConnected([this](auto && Sender) { DoServerConnected(Sender); });
+            m_pServer->OnDisconnected([this](auto && Sender) { DoServerDisconnected(Sender); });
+
+            m_pServer->OnNoCommandHandler([this](auto && Sender, auto && AData, auto && AConnection) { DoNoCommandHandler(Sender, AData, AConnection); });
+#else
+            m_pServer->OnExecute(std::bind(&CApplicationProcess::DoExecute, this, _1));
+
+            m_pServer->OnVerbose(std::bind(&CApplicationProcess::DoVerbose, this, _1, _2, _3, _4));
+            m_pServer->OnAccessLog(std::bind(&CApplicationProcess::DoAccessLog, this, _1));
+
+            m_pServer->OnException(std::bind(&CApplicationProcess::DoServerException, this, _1, _2));
+            m_pServer->OnListenException(std::bind(&CApplicationProcess::DoServerListenException, this, _1, _2));
+
+            m_pServer->OnEventHandlerException(std::bind(&CApplicationProcess::DoServerEventHandlerException, this, _1, _2));
+
+            m_pServer->OnConnected(std::bind(&CApplicationProcess::DoServerConnected, this, _1));
+            m_pServer->OnDisconnected(std::bind(&CApplicationProcess::DoServerDisconnected, this, _1));
+
+            m_pServer->OnNoCommandHandler(std::bind(&CApplicationProcess::DoNoCommandHandler, this, _1, _2, _3));
+#endif
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
 #ifdef WITH_POSTGRESQL
+        void CServerProcess::InitializePQServerHandlers() {
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
+            if (Config()->PostgresNotice()) {
+                //m_pPQServer->OnReceiver([this](auto && AConnection, auto && AResult) { DoPQReceiver(AConnection, AResult); });
+                m_pPQServer->OnProcessor([this](auto && AConnection, auto && AMessage) { DoPQProcessor(AConnection, AMessage); });
+            }
+
+            m_pPQServer->OnConnectException([this](auto && AConnection, auto && AException) { DoPQConnectException(AConnection, AException); });
+            m_pPQServer->OnServerException([this](auto && AServer, auto && AException) { DoPQServerException(AServer, AException); });
+
+            m_pPQServer->OnEventHandlerException([this](auto && AHandler, auto && AException) { DoServerEventHandlerException(AHandler, AException); });
+
+            m_pPQServer->OnError([this](auto && AConnection) { DoPQError(AConnection); });
+            m_pPQServer->OnStatus([this](auto && AConnection) { DoPQStatus(AConnection); });
+            m_pPQServer->OnPollingStatus([this](auto && AConnection) { DoPQPollingStatus(AConnection); });
+
+            m_pPQServer->OnConnected([this](auto && Sender) { DoPQConnect(Sender); });
+            m_pPQServer->OnDisconnected([this](auto && Sender) { DoPQDisconnect(Sender); });
+#else
+            if (Config()->PostgresNotice()) {
+                //m_pPQServer->OnReceiver(std::bind(&CApplicationProcess::DoPQReceiver, this, _1, _2));
+                m_pPQServer->OnProcessor(std::bind(&CApplicationProcess::DoPQProcessor, this, _1, _2));
+            }
+
+            m_pPQServer->OnConnectException(std::bind(&CApplicationProcess::DoPQConnectException, this, _1, _2));
+            m_pPQServer->OnServerException(std::bind(&CApplicationProcess::DoPQServerException, this, _1, _2));
+
+            m_pPQServer->OnEventHandlerException(std::bind(&CApplicationProcess::DoServerEventHandlerException, this, _1, _2));
+
+            m_pPQServer->OnError(std::bind(&CApplicationProcess::DoPQError, this, _1));
+            m_pPQServer->OnStatus(std::bind(&CApplicationProcess::DoPQStatus, this, _1));
+            m_pPQServer->OnPollingStatus(std::bind(&CApplicationProcess::DoPQPollingStatus, this, _1));
+
+            m_pPQServer->OnConnected(std::bind(&CApplicationProcess::DoPQConnect, this, _1));
+            m_pPQServer->OnDisconnected(std::bind(&CApplicationProcess::DoPQDisconnect, this, _1));
+#endif
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         CPQPollQuery *CServerProcess::GetQuery(CPollConnection *AConnection) {
             CPQPollQuery *LQuery = nullptr;
 
-            if (PQServer()->Active()) {
-                LQuery = PQServer()->GetQuery();
+            if (m_pPQServer->Active()) {
+                LQuery = m_pPQServer->GetQuery();
 #if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
                 LQuery->OnSendQuery([this](auto && AQuery) { DoPQSendQuery(AQuery); });
                 LQuery->OnResultStatus([this](auto && AResult) { DoPQResultStatus(AResult); });
@@ -542,7 +658,7 @@ namespace Apostol {
                 delete LQuery;
             }
 
-            Log()->Error(APP_LOG_ALERT, 0, "ExecSQL: StartQuery() failed!");
+            Log()->Error(APP_LOG_ALERT, 0, "ExecSQL: Start() failed!");
 
             return false;
         }
@@ -551,9 +667,9 @@ namespace Apostol {
         void CServerProcess::DoPQReceiver(CPQConnection *AConnection, const PGresult *AResult) {
             const auto& Info = AConnection->ConnInfo();
             if (Info.ConnInfo().IsEmpty()) {
-                Log()->Postgres(APP_LOG_INFO, _T("Receiver message: %s"), PQresultErrorMessage(AResult));
+                Log()->Postgres(APP_LOG_NOTICE, _T("Receiver message: %s"), PQresultErrorMessage(AResult));
             } else {
-                Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Receiver message: %s", AConnection->Socket(),
+                Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Receiver message: %s", AConnection->Socket(),
                                 Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), PQresultErrorMessage(AResult));
             }
         }
@@ -562,9 +678,9 @@ namespace Apostol {
         void CServerProcess::DoPQProcessor(CPQConnection *AConnection, LPCSTR AMessage) {
             const auto& Info = AConnection->ConnInfo();
             if (Info.ConnInfo().IsEmpty()) {
-                Log()->Postgres(APP_LOG_INFO, _T("Processor message: %s"), AMessage);
+                Log()->Postgres(APP_LOG_NOTICE, _T("Processor message: %s"), AMessage);
             } else {
-                Log()->Postgres(APP_LOG_INFO, "[%d] [postgresql://%s@%s:%s/%s] Processor message: %s", AConnection->Socket(),
+                Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Processor message: %s", AConnection->Socket(),
                                 Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str(), AMessage);
             }
         }
@@ -657,7 +773,7 @@ namespace Apostol {
             }
 */
             if (!(AExecStatus == PGRES_TUPLES_OK || AExecStatus == PGRES_SINGLE_TUPLE)) {
-                Log()->Postgres(APP_LOG_EMERG, AResult->GetErrorMessage());
+                Log()->Postgres(APP_LOG_ERR, AResult->GetErrorMessage());
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -667,7 +783,7 @@ namespace Apostol {
             if (LConnection != nullptr) {
                 const auto& Info = LConnection->ConnInfo();
                 if (!Info.ConnInfo().IsEmpty()) {
-                    Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Connected.", LConnection->PID(),
+                    Log()->Postgres(APP_LOG_EMERG, "[%d] [postgresql://%s@%s:%s/%s] Connected.", LConnection->PID(),
                                     Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
                 }
             }
@@ -679,7 +795,7 @@ namespace Apostol {
             if (LConnection != nullptr) {
                 const auto& Info = LConnection->ConnInfo();
                 if (!Info.ConnInfo().IsEmpty()) {
-                    Log()->Postgres(APP_LOG_NOTICE, "[%d] [postgresql://%s@%s:%s/%s] Disconnected.", LConnection->PID(),
+                    Log()->Postgres(APP_LOG_EMERG, "[%d] [postgresql://%s@%s:%s/%s] Disconnected.", LConnection->PID(),
                                     Info["user"].c_str(), Info["host"].c_str(), Info["port"].c_str(), Info["dbname"].c_str());
                 }
             }
@@ -690,7 +806,7 @@ namespace Apostol {
             DebugMessage("[%p] Request:\n%s %s HTTP/%d.%d\n", ARequest, ARequest->Method.c_str(), ARequest->URI.c_str(), ARequest->VMajor, ARequest->VMinor);
 
             for (int i = 0; i < ARequest->Headers.Count(); i++)
-                DebugMessage("%s: %s\n", ARequest->Headers[i].Name.c_str(), ARequest->Headers[i].Value.c_str());
+                DebugMessage("%s: %s\n", ARequest->Headers[i].Name().c_str(), ARequest->Headers[i].Value().c_str());
 
             if (!ARequest->Content.IsEmpty())
                 DebugMessage("\n%s\n", ARequest->Content.c_str());
@@ -701,7 +817,7 @@ namespace Apostol {
             DebugMessage("[%p] Reply:\nHTTP/%d.%d %d %s\n", AReply, AReply->VMajor, AReply->VMinor, AReply->Status, AReply->StatusText.c_str());
 
             for (int i = 0; i < AReply->Headers.Count(); i++)
-                DebugMessage("%s: %s\n", AReply->Headers[i].Name.c_str(), AReply->Headers[i].Value.c_str());
+                DebugMessage("%s: %s\n", AReply->Headers[i].Name().c_str(), AReply->Headers[i].Value().c_str());
 
             if (!AReply->Content.IsEmpty())
                 DebugMessage("\n%s\n", AReply->Content.c_str());
@@ -763,7 +879,7 @@ namespace Apostol {
             auto LConnection = dynamic_cast<CHTTPServerConnection *>(Sender);
             if (LConnection != nullptr) {
 #ifdef WITH_POSTGRESQL
-                auto LPollQuery = PQServer()->FindQueryByConnection(LConnection);
+                auto LPollQuery = m_pPQServer->FindQueryByConnection(LConnection);
                 if (LPollQuery != nullptr) {
                     LPollQuery->PollConnection(nullptr);
                 }
@@ -800,6 +916,10 @@ namespace Apostol {
 
         void CServerProcess::DoAccessLog(CTCPConnection *AConnection) {
             auto LConnection = dynamic_cast<CHTTPServerConnection *> (AConnection);
+
+            if (LConnection == nullptr || LConnection->Protocol() == pWebSocket)
+                return;
+
             auto LRequest = LConnection->Request();
             auto LReply = LConnection->Reply();
 
@@ -810,8 +930,8 @@ namespace Apostol {
 
             if ((wtm != nullptr) && (strftime(szTime, sizeof(szTime), "%d/%b/%Y:%T %z", wtm) != 0)) {
 
-                const CString &LReferer = LRequest->Headers.Values(_T("referer"));
-                const CString &LUserAgent = LRequest->Headers.Values(_T("user-agent"));
+                const CString &LReferer = LRequest->Headers.Values(_T("Referer"));
+                const CString &LUserAgent = LRequest->Headers.Values(_T("User-Agent"));
 
                 auto LBinding = LConnection->Socket()->Binding();
                 if (LBinding != nullptr) {

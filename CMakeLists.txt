@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 project(apostol)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -rdynamic")
 
 set(PROJECT_NAME "apostol")
 set(PROJECT_DESCRIPTION "Apostol Web Service")
@@ -12,9 +12,10 @@ message(STATUS "Project description: ${PROJECT_DESCRIPTION}")
 
 # Settings
 # ----------------------------------------------------------------------------------------------------------------------
-set(INSTALL_AS_ROOT  ON  CACHE BOOL "Install as root")
-set(WITH_POSTGRESQL  OFF CACHE BOOL "Build with PostgreSQL")
-set(WITH_SQLITE      OFF CACHE BOOL "Build with Sqlite")
+set(INSTALL_AS_ROOT  OFF  CACHE BOOL "Install as root")
+set(WITH_POSTGRESQL  OFF  CACHE BOOL "Build with PostgreSQL")
+set(WITH_CURL        OFF  CACHE BOOL "Build with cURL")
+set(WITH_SQLITE3     OFF  CACHE BOOL "Build with Sqlite3")
 # ----------------------------------------------------------------------------------------------------------------------
 
 if (INSTALL_AS_ROOT)
@@ -24,6 +25,8 @@ else()
     set(INSTALL_BIN_PATH "/usr/bin")
     set(PROJECT_PREFIX "$ENV{HOME}/.${PROJECT_NAME}")
 endif()
+
+list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules" )
 
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
@@ -37,28 +40,56 @@ add_custom_target(
         -P ${CMAKE_SOURCE_DIR}/AutoVersion.cmake
 )
 
+set(PROJECT_LIB_DIR "src/lib")
+
 # Delphi classes for C++
 # ----------------------------------------------------------------------------------------------------------------------
+set(DELPHI_LIB_NAME delphi)
+set(DELPHI_LIB_DIR "${PROJECT_LIB_DIR}/${DELPHI_LIB_NAME}")
+
+# -Iinclude
+include_directories(${DELPHI_LIB_DIR}/include)
+include_directories(${DELPHI_LIB_DIR}/src)
+
 add_compile_options("-DDELPHI_LIB_EXPORTS")
-add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
+#add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
 if (WITH_POSTGRESQL)
     set(PQ_LIB_NAME "pq")
     add_compile_options("-DWITH_POSTGRESQL")
 endif()
 
-if (WITH_SQLITE)
+if (WITH_SQLITE3)
     set(SQLITE3_LIB_NAME "sqlite3")
-    add_compile_options("-DWITH_SQLITE")
+    add_compile_options("-DWITH_SQLITE3")
 endif()
 
-set(DELPHI_LIB_DIR "src/lib/delphi")
+if (WITH_CURL)
+    set(CURL_LIB_NAME "curl")
+    add_compile_options("-DWITH_CURL")
+endif()
 
 add_subdirectory(${DELPHI_LIB_DIR})
 
-# -Iinclude
-include_directories(${DELPHI_LIB_DIR}/include)
-include_directories(${DELPHI_LIB_DIR}/src)
+# Find PkgConfig
+#------------------------------------------------------------------------------
+find_package( PkgConfig REQUIRED )
+
+set( prefix "${CMAKE_PREFIX_PATH}" )
+set( exec_prefix "\${prefix}" )
+set( libdir "\${exec_prefix}/lib" )
+set( includedir "\${exec_prefix}/include" )
+
+set( pkgconfigdir "${libdir}/pkgconfig" CACHE PATH "Path to pkgconfig directory." )
+
+# Find dl
+#------------------------------------------------------------------------------
+if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+    find_package( Dl REQUIRED )
+
+    message(STATUS "Dl libs: ${dl_LIBS}")
+    message(STATUS "Dl libraries: ${dl_LIBRARIES}")
+endif()
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
@@ -76,6 +107,7 @@ add_library(${CORE_LIB_NAME} STATIC
         )
 
 target_compile_definitions(${CORE_LIB_NAME} PUBLIC
+        WWWServerName="${PROJECT_DESCRIPTION}"
         APP_NAME="${PROJECT_NAME}"
         APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
         APP_DEFAULT_LOCALE="en_US.UTF-8"
@@ -94,10 +126,10 @@ target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_ERROR_LOG_FILE="logs/error.log"
         APP_ACCESS_LOG_FILE="logs/access.log"
         APP_POSTGRES_LOG_FILE="logs/postgres.log"
-        APP_DOC_ROOT="www/"
+        APP_DOC_ROOT="www"
         )
 
-target_link_libraries(${CORE_LIB_NAME} dl pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME})
+target_link_libraries(${CORE_LIB_NAME} pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME} ${CURL_LIB_NAME} crypto)
 
 # Apostol modules
 # ----------------------------------------------------------------------------------------------------------------------
@@ -106,7 +138,7 @@ target_link_libraries(${MODULES_LIB_NAME} ${CORE_LIB_NAME})
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
-add_executable(${PROJECT_NAME} ${app_files})
+add_executable(${PROJECT_NAME} ${lib_files} ${app_files})
 target_link_libraries(${PROJECT_NAME} ${MODULES_LIB_NAME})
 
 add_dependencies(${PROJECT_NAME} auto_increment_version)

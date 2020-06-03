@@ -82,8 +82,14 @@ public:
 };
 //----------------------------------------------------------------------------------------------------------------------
 
+#ifdef WITH_CURL
+#include "CURL.hpp"
+#endif
+
 #include "Module.hpp"
+#include "WSProtocol.hpp"
 #include "Process.hpp"
+#include "Modules.hpp"
 #include "Application.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 

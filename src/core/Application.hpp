@@ -29,6 +29,9 @@ Author:
 #define MSG_PROCESS_STOP _T("stop process: (%s)")
 //----------------------------------------------------------------------------------------------------------------------
 
+#define APP_FILE_NOT_FOUND "File not found: %s"
+//----------------------------------------------------------------------------------------------------------------------
+
 #define ExitRun(Status) {   \
   ExitCode(Status);         \
   return;                   \
@@ -78,8 +81,6 @@ namespace Apostol {
 
             CEPollTimer *m_pTimer;
 
-            CPollStack *m_pPollStack;
-
             int m_TimerInterval;
 
             void CreateHTTPServer();
@@ -123,6 +124,7 @@ namespace Apostol {
 
             static void SetLimitNoFile(uint32_t value);
 
+            static void LoadAuthParams(CAuthParams &AuthParams);
             static void LoadSites(CSites &Sites);
 
             int TimerInterval() const { return m_TimerInterval; }
@@ -230,6 +232,8 @@ namespace Apostol {
 
         protected:
 
+            CPollStack m_PollStack;
+
             void BeforeRun() override;
             void AfterRun() override;
 
@@ -241,6 +245,7 @@ namespace Apostol {
 
             CProcessSingle(CCustomProcess *AParent, CApplication *AApplication):
                     inherited(AParent, AApplication, ptSingle) {
+                CreateModules(this);
             };
 
             ~CProcessSingle() override = default;
@@ -322,6 +327,8 @@ namespace Apostol {
 
         private:
 
+            CPollStack m_PollStack;
+
             void BeforeRun() override;
             void AfterRun() override;
 
@@ -333,6 +340,7 @@ namespace Apostol {
 
             CProcessWorker(CCustomProcess *AParent, CApplication *AApplication):
                     inherited(AParent, AApplication, ptWorker) {
+                CreateModules(this);
             }
 
             ~CProcessWorker() override = default;
@@ -347,16 +355,25 @@ namespace Apostol {
 
         private:
 
+            CPollStack m_PollStack;
+
             void BeforeRun() override;
             void AfterRun() override;
 
+            void UpdateTimer() override;
+
+        protected:
+
             void DoExit();
 
+            void DoHeartbeat(CPollEventHandler *AHandler);
+#ifdef WITH_POSTGRESQL
+            void DoPostgresQueryExecuted(CPQPollQuery *APollQuery);
+            void DoPostgresQueryException(CPQPollQuery *APollQuery, Delphi::Exception::Exception *AException);
+#endif
         public:
 
-            CProcessHelper(CCustomProcess* AParent, CApplication *AApplication):
-                    inherited(AParent, AApplication, ptHelper) {
-            };
+            CProcessHelper(CCustomProcess* AParent, CApplication *AApplication);
 
             ~CProcessHelper() override = default;
 

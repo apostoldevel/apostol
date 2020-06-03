@@ -244,10 +244,14 @@ namespace Apostol {
         private:
 
             CHTTPServer *m_pServer;
+            void InitializeServerHandlers();
 #ifdef WITH_POSTGRESQL
             CPQServer *m_pPQServer;
+            void InitializePQServerHandlers();
 #endif
         protected:
+
+            void InitializeCommandHandlers(CCommandHandlers *AHandlers, bool ADisconnect = false);
 
             virtual void DoOptions(CCommand *ACommand);
             virtual void DoGet(CCommand *ACommand);
@@ -302,8 +306,6 @@ namespace Apostol {
         public:
 
             CServerProcess(CProcessType AType, CCustomProcess *AParent);
-
-            void InitializeHandlers(CCommandHandlers *AHandlers, bool ADisconnect = false);
 
             CHTTPServer *Server() { return m_pServer; };
             void Server(CHTTPServer *Value) { SetServer(Value); };

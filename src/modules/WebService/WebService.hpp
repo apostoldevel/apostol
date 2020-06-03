@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Module WebService
+  Module WebService 
 
 Author:
 
@@ -38,6 +38,10 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         class CWebService: public CApostolModule {
+        private:
+
+            void InitMethods() override;
+
         protected:
 
             void DoAPI(CHTTPServerConnection *AConnection);
@@ -54,8 +58,6 @@ namespace Apostol {
             static class CWebService *CreateModule(CModuleManager *AManager) {
                 return new CWebService(AManager);
             }
-
-            void InitMethods() override;
 
             bool CheckUserAgent(const CString& Value) override;
 

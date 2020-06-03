@@ -1,1 +1,1 @@
-#define AUTO_VERSION _T("1.0.dfa52d3-b2")
+#define AUTO_VERSION _T("1.0.e5296aa-b14")
