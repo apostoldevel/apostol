@@ -243,6 +243,8 @@ namespace Apostol {
         class CServerProcess: public CSignalProcess {
         private:
 
+            CPollStack m_PollStack;
+
             CHTTPServer *m_pServer;
             void InitializeServerHandlers();
 #ifdef WITH_POSTGRESQL
@@ -320,6 +322,8 @@ namespace Apostol {
                          COnPQPollQueryExceptionEvent && OnException = nullptr);
 #endif
             CHTTPClient * GetClient(const CString &Host, uint16_t Port);
+
+            CPollStack PollStack() { return m_PollStack; }
 
             static void DebugRequest(CRequest *ARequest);
             static void DebugReply(CReply *AReply);

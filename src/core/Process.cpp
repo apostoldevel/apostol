@@ -424,28 +424,28 @@ namespace Apostol {
 
         void CServerProcess::SetServer(CHTTPServer *Value) {
             if (m_pServer != Value) {
-
                 if (Value == nullptr) {
-                    delete m_pServer;
+                    FreeAndNil(m_pServer);
+                } else {
+                    m_pServer = Value;
+                    m_pServer->PollStack(&m_PollStack);
+
+                    InitializeServerHandlers();
                 }
-
-                m_pServer = Value;
-
-                InitializeServerHandlers();
             }
         }
         //--------------------------------------------------------------------------------------------------------------
 #ifdef WITH_POSTGRESQL
         void CServerProcess::SetPQServer(CPQServer *Value) {
             if (m_pPQServer != Value) {
-
                 if (Value == nullptr) {
-                    delete m_pPQServer;
+                    FreeAndNil(m_pPQServer);
+                } else {
+                    m_pPQServer = Value;
+                    m_pPQServer->PollStack(&m_PollStack);
+
+                    InitializePQServerHandlers();
                 }
-
-                m_pPQServer = Value;
-
-                InitializePQServerHandlers();
             }
         }
         //--------------------------------------------------------------------------------------------------------------

@@ -967,6 +967,10 @@ namespace Apostol {
 
             Config()->Reload();
 
+            SetLimitNoFile(Config()->LimitNoFile());
+
+            PollStack().TimeOut(Config()->TimeOut());
+
             ServerStart();
 #ifdef WITH_POSTGRESQL
             PQServerStart();
@@ -983,13 +987,10 @@ namespace Apostol {
 
             SetLimitNoFile(Config()->LimitNoFile());
 
-            m_PollStack.TimeOut(Config()->TimeOut());
-
-            Server()->PollStack(&m_PollStack);
+            PollStack().TimeOut(Config()->TimeOut());
 
             ServerStart();
 #ifdef WITH_POSTGRESQL
-            PQServer()->PollStack(&m_PollStack);
             PQServerStart();
 #endif
             SetTimerInterval(1000);
@@ -1453,6 +1454,8 @@ namespace Apostol {
 
             Config()->Reload();
 
+            PollStack().TimeOut(Config()->TimeOut());
+
             SetLimitNoFile(Config()->LimitNoFile());
 
             SetUser(Config()->User(), Config()->Group());
@@ -1591,16 +1594,14 @@ namespace Apostol {
 
             Config()->Reload();
 
+            PollStack().TimeOut(Config()->TimeOut());
+
             SetLimitNoFile(Config()->LimitNoFile());
 
             SetUser(Config()->User(), Config()->Group());
 
-            m_PollStack.TimeOut(Config()->TimeOut());
-
-            Server()->PollStack(&m_PollStack);
             ServerStart();
 #ifdef WITH_POSTGRESQL
-            PQServer()->PollStack(&m_PollStack);
             PQServerStart();
 #endif
             SigProcMask(SIG_UNBLOCK, SigAddSet(&set));

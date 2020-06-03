@@ -232,8 +232,6 @@ namespace Apostol {
 
         protected:
 
-            CPollStack m_PollStack;
-
             void BeforeRun() override;
             void AfterRun() override;
 
@@ -327,8 +325,6 @@ namespace Apostol {
 
         private:
 
-            CPollStack m_PollStack;
-
             void BeforeRun() override;
             void AfterRun() override;
 
@@ -354,8 +350,6 @@ namespace Apostol {
             typedef CApplicationProcess inherited;
 
         private:
-
-            CPollStack m_PollStack;
 
             void BeforeRun() override;
             void AfterRun() override;
