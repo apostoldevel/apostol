@@ -539,7 +539,6 @@ namespace Apostol {
         void CServerProcess::InitializeServerHandlers() {
             if (m_pServer == nullptr)
                 return;
-
 #if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
             m_pServer->OnExecute([this](auto && AConnection) { return DoExecute(AConnection); });
 
@@ -573,9 +572,10 @@ namespace Apostol {
 #endif
         }
         //--------------------------------------------------------------------------------------------------------------
-
 #ifdef WITH_POSTGRESQL
         void CServerProcess::InitializePQServerHandlers() {
+            if (m_pPQServer == nullptr)
+                return;
 #if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
             if (Config()->PostgresNotice()) {
                 //m_pPQServer->OnReceiver([this](auto && AConnection, auto && AResult) { DoPQReceiver(AConnection, AResult); });
