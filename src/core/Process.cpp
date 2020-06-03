@@ -462,39 +462,39 @@ namespace Apostol {
 #if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE >= 9)
                 LCommand =AHandlers->Add();
                 LCommand->Command(_T("GET"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoGet(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoGet(ACommand); });
 
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("POST"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoPost(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoPost(ACommand); });
 
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("OPTIONS"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoOptions(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoOptions(ACommand); });
 
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("PUT"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoPut(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoPut(ACommand); });
 
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("DELETE"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoDelete(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoDelete(ACommand); });
 
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("HEAD"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoHead(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoHead(ACommand); });
 
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("PATCH"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoPatch(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoPatch(ACommand); });
 
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("TRACE"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoTrace(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoTrace(ACommand); });
 
                 LCommand = AHandlers->Add();
                 LCommand->Command(_T("CONNECT"));
-                LCommand->OnCommand([this](auto && ACommand) { this->DoConnect(ACommand); });
+                LCommand->OnCommand([this](auto && ACommand) { DoConnect(ACommand); });
 #else
                 LCommand =AHandlers->Add();
                 LCommand->Command(_T("GET"));
