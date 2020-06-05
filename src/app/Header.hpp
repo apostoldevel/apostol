@@ -2,15 +2,15 @@
 
 Program name:
 
-  apostol
+  ship-safety
 
 Module Name:
 
-  Modules.hpp
+  Header.hpp
 
 Notices:
 
-  Apostol Web Service
+  Ship Safety Service
 
 Author:
 
@@ -21,18 +21,21 @@ Author:
 
 --*/
 
-#ifndef APOSTOL_MODULES_HPP
-#define APOSTOL_MODULES_HPP
+#ifndef APOSTOL_HEADER_HPP
+#define APOSTOL_HEADER_HPP
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "Module.hpp"
+#include <wait.h>
+#include <execinfo.h>
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "WebService/WebService.hpp"
+//using namespace std;
 //----------------------------------------------------------------------------------------------------------------------
 
-static void CreateModules(CModuleManager *AManager) {
-    CWebService::CreateModule(AManager);
-}
+#include "delphi.hpp"
+//----------------------------------------------------------------------------------------------------------------------
 
-#endif //APOSTOL_MODULES_HPP
+#include "Core.hpp"
+//----------------------------------------------------------------------------------------------------------------------
+
+#endif //APOSTOL_HEADER_HPP

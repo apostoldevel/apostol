@@ -51,14 +51,15 @@ namespace Apostol {
 
         public:
 
-            explicit CWebService(CModuleManager *AManager);
+            explicit CWebService(CModuleProcess *AProcess);
 
             ~CWebService() override = default;
 
-            static class CWebService *CreateModule(CModuleManager *AManager) {
-                return new CWebService(AManager);
+            static class CWebService *CreateModule(CModuleProcess *AProcess) {
+                return new CWebService(AProcess);
             }
 
+            bool IsEnabled() override;
             bool CheckUserAgent(const CString& Value) override;
 
         };

@@ -45,7 +45,7 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CWebService::CWebService(CModuleManager *AManager) : CApostolModule(AManager) {
+        CWebService::CWebService(CModuleProcess *AProcess) : CApostolModule(AProcess, "web service") {
             m_Headers.Add("Authorization");
 
             CWebService::InitMethods();
@@ -237,8 +237,15 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        bool CWebService::CheckUserAgent(const CString& Value) {
-            return true;
+        bool CWebService::IsEnabled() {
+            if (m_ModuleStatus == msUnknown)
+                m_ModuleStatus = msEnabled;
+            return m_ModuleStatus == msEnabled;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
+        bool CWebService::CheckUserAgent(const CString &Value) {
+            return IsEnabled();
         }
 
     }

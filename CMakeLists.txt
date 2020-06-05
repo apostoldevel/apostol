@@ -22,8 +22,8 @@ if (INSTALL_AS_ROOT)
     set(INSTALL_BIN_PATH "/usr/sbin")
     set(PROJECT_PREFIX "/etc/${PROJECT_NAME}")
 else()
-    set(INSTALL_BIN_PATH "/usr/bin")
-    set(PROJECT_PREFIX "$ENV{HOME}/.${PROJECT_NAME}")
+    set(INSTALL_BIN_PATH "/usr/local/sbin")
+    set(PROJECT_PREFIX "$ENV{HOME}/.config/${PROJECT_NAME}")
 endif()
 
 list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules" )
@@ -52,7 +52,7 @@ include_directories(${DELPHI_LIB_DIR}/include)
 include_directories(${DELPHI_LIB_DIR}/src)
 
 add_compile_options("-DDELPHI_LIB_EXPORTS")
-#add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
+add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
 
 if (WITH_POSTGRESQL)
     set(PQ_LIB_NAME "pq")
@@ -93,11 +93,12 @@ endif()
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
-include_directories(src/app src/core src/modules)
+include_directories(src/app src/core src/workers src/helpers)
 
 file(GLOB app_files version.h src/app/*.hpp src/app/*.cpp)
 file(GLOB core_files src/core/*.hpp src/core/*.cpp)
-file(GLOB modules_files src/modules/Modules.hpp src/modules/*/*.hpp src/modules/*/*.cpp)
+file(GLOB modules_files ${modules_files} src/workers/Workers.hpp src/workers/*/*.hpp src/workers/*/*.cpp)
+file(GLOB modules_files ${modules_files} src/helpers/Helpers.hpp src/helpers/*/*.hpp src/helpers/*/*.cpp)
 
 # Apostol Core
 # ----------------------------------------------------------------------------------------------------------------------
@@ -107,7 +108,6 @@ add_library(${CORE_LIB_NAME} STATIC
         )
 
 target_compile_definitions(${CORE_LIB_NAME} PUBLIC
-        WWWServerName="${PROJECT_DESCRIPTION}"
         APP_NAME="${PROJECT_NAME}"
         APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
         APP_DEFAULT_LOCALE="en_US.UTF-8"
