@@ -1,8 +1,8 @@
 /*++
 
-Program name:
+Library name:
 
-  Apostol WebService
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Module WebService
+  Worker: Web Service
 
 Author:
 
@@ -31,7 +31,7 @@ extern "C++" {
 
 namespace Apostol {
 
-    namespace WebService {
+    namespace Workers {
 
         CString to_string(unsigned long Value) {
             TCHAR szString[_INT_T_LEN + 1] = {0};

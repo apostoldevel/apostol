@@ -1,8 +1,8 @@
 /*++
 
-Program name:
+Library name:
 
-  Apostol Web Service
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Module Certificate Downloader
+  Helper: Certificate Downloader
 
 Author:
 

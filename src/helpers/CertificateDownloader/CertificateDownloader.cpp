@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Apostol application
+  Helper: Certificate Downloader
 
 Author:
 

@@ -1,8 +1,8 @@
 /*++
 
-Program name:
+Library name:
 
-  Apostol
+  apostol-core
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Module WebService 
+  Worker: Web Service
 
 Author:
 
@@ -29,7 +29,7 @@ extern "C++" {
 
 namespace Apostol {
 
-    namespace WebService {
+    namespace Workers {
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -66,6 +66,6 @@ namespace Apostol {
     }
 }
 
-using namespace Apostol::WebService;
+using namespace Apostol::Workers;
 }
 #endif //APOSTOL_WEBSERVICE_HPP

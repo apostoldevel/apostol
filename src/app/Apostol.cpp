@@ -2,7 +2,7 @@
 
 Program name:
 
-  Apostol
+  apostol
 
 Module Name:
 

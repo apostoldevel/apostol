@@ -2,7 +2,7 @@
 
 Program name:
 
-  ship-safety
+  apostol
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Ship Safety Service
+  Apostol Web Service
 
 Author:
 

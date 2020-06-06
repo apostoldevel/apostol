@@ -6,7 +6,7 @@ Program name:
 
 Module Name:
 
-  Modules.hpp
+  Workers.hpp
 
 Notices:
 
