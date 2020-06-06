@@ -1,8 +1,8 @@
 /*++
 
-Library name:
+Program name:
 
-  apostol-core
+  apostol
 
 Module Name:
 
