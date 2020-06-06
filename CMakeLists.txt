@@ -31,7 +31,7 @@ list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules" )
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
 set(CORE_LIB_NAME apostol-core)
-set(MODULES_LIB_NAME apostol-modules)
+#set(MODULES_LIB_NAME apostol-modules)
 
 add_custom_target(
         auto_increment_version
@@ -104,7 +104,9 @@ file(GLOB modules_files ${modules_files} src/helpers/Helpers.hpp src/helpers/*/*
 # ----------------------------------------------------------------------------------------------------------------------
 add_library(${CORE_LIB_NAME} STATIC
         $<TARGET_OBJECTS:delphi>
+        ${lib_files}
         ${core_files}
+        ${modules_files}
         )
 
 target_compile_definitions(${CORE_LIB_NAME} PUBLIC
@@ -133,13 +135,13 @@ target_link_libraries(${CORE_LIB_NAME} pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME
 
 # Apostol modules
 # ----------------------------------------------------------------------------------------------------------------------
-add_library(${MODULES_LIB_NAME} STATIC ${modules_files})
-target_link_libraries(${MODULES_LIB_NAME} ${CORE_LIB_NAME})
+#add_library(${MODULES_LIB_NAME} STATIC ${modules_files})
+#target_link_libraries(${MODULES_LIB_NAME} ${CORE_LIB_NAME})
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
-add_executable(${PROJECT_NAME} ${lib_files} ${app_files})
-target_link_libraries(${PROJECT_NAME} ${MODULES_LIB_NAME})
+add_executable(${PROJECT_NAME} ${app_files})
+target_link_libraries(${PROJECT_NAME} ${CORE_LIB_NAME})
 
 add_dependencies(${PROJECT_NAME} auto_increment_version)
 
