@@ -5,17 +5,19 @@ Apostol Web Service
 
 Structure
 -
-
-    auto/             contains script files
-    conf/             contains settings files
-    doc/              contains documentation files
-    ├─www/            contains html documentation files
-    src/              contains source files
-    ├─app/            contains source files: Apostol Web Service
-    ├─core/           contains source files: Apostol Core
-    ├─lib/            contains library source files
-    └─modules/        contains files with source code of modules (add-ons)
-      └─WebService/   contains add-on source files: Web-Service
+    auto/                       contains script files
+    cmake-modules/              contains CMake modules
+    conf/                       contains settings files
+    doc/                        contains documentation files
+    ├─www/                      contains html documentation files
+    src/                        contains source files
+    ├─app/                      contains source files: Application
+    ├─core/                     contains source files: Apostol Core
+    ├─helpers/                  contains files with source code of helper process
+    | └─CertificateDownloader/  contains add-on source files: Certificate Downloader
+    ├─lib/                      contains source files: Librarys
+    └─workers/                  contains files with source code of worker process
+      └─WebService/             contains add-on source files: Web Service
 
 Overview
 -
