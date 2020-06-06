@@ -21,18 +21,15 @@ Author:
 
 --*/
 
-#ifndef APOSTOL_MODULES_HPP
-#define APOSTOL_MODULES_HPP
-//----------------------------------------------------------------------------------------------------------------------
-
-#include "Module.hpp"
+#ifndef APOSTOL_WORKERS_HPP
+#define APOSTOL_WORKERS_HPP
 //----------------------------------------------------------------------------------------------------------------------
 
 #include "WebService/WebService.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-static void CreateWorkers(CModuleProcess *AProcess) {
+static inline void CreateWorkers(CModuleProcess *AProcess) {
     CWebService::CreateModule(AProcess);
 }
 
-#endif //APOSTOL_MODULES_HPP
+#endif //APOSTOL_WORKERS_HPP

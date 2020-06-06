@@ -25,13 +25,10 @@ Author:
 #define APOSTOL_HELPERS_HPP
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "Module.hpp"
-//----------------------------------------------------------------------------------------------------------------------
-
 #include "CertificateDownloader/CertificateDownloader.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
-static void CreateHelpers(CModuleProcess *AProcess) {
+static inline void CreateHelpers(CModuleProcess *AProcess) {
     CCertificateDownloader::CreateModule(AProcess);
 }
 
