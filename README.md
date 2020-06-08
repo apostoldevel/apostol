@@ -1,187 +1,175 @@
-Apostol Web Service
-=
+# Apostol Web Service
 
-**[Apostol Web Service](https://www.apostol-web-service.ru/)**, C++ source codes.
+**Apostol Web Service** - RESTful API Service, исходные коды на C++.
 
-Structure
+СТРУКТУРА КАТАЛОГОВ
 -
-    auto/                       contains script files
-    cmake-modules/              contains CMake modules
-    conf/                       contains settings files
-    doc/                        contains documentation files
-    ├─www/                      contains html documentation files
-    src/                        contains source files
-    ├─app/                      contains source files: Application
-    ├─core/                     contains source files: Apostol Core
-    ├─helpers/                  contains files with source code of helper process
-    | └─CertificateDownloader/  contains add-on source files: Certificate Downloader
-    ├─lib/                      contains source files: Librarys
-    └─workers/                  contains files with source code of worker process
-      └─WebService/             contains add-on source files: Web Service
+    auto/                       содержит файлы со скриптами
+    cmake-modules/              содержит файлы с модулями CMake
+    conf/                       содержит файлы с настройками
+    db/                         содержит файлы со скриптами базы данных
+    ├─bin/                      содержит исполняемые файлы для автоматизации установки базы данных
+    ├─scripts/                  содержит файлы со скриптами для автоматизации установки базы данных
+    ├─sql/                      содержит файлы со скриптами базы данных
+    | └─kernel/                 содержит файлы со скриптами базы данных: Ядро
+    doc/                        содержит файлы с документацией
+    src/                        содержит файлы с исходным кодом
+    ├─app/                      содержит файлы с исходным кодом: Apostol Web Service
+    ├─core/                     содержит файлы с исходным кодом: Apostol Core
+    ├─lib/                      содержит файлы с исходным кодом библиотек
+    | └─delphi/                 содержит файлы с исходным кодом библиотеки*: Delphi classes for C++
+    ├─workers/                  содержит файлы с исходным кодом дополнений (модулей)
+    | └─WebService/             содержит файлы с исходным кодом дополнения: Веб-сервис
+    ├─helpers/                  содержит файлы с исходным кодом дополнений (модулей)
+    | └─CertificateDownloader/  содержит файлы с исходным кодом дополнения: Загрузчик сертификатов
+    www/                        содержит файлы с Веб-сайтом
 
-Overview
--
-
-**Apostol Web Service** (AWS) - C++ Framework for quick creation **RESTful API**
-services for Linux, with integrated [PostgreSQL](https://www.postgresql.org/) DBMS support.
-
-**AWS** is built on the basis of the library **`libdelphi`** using the **asynchronous** programming model.
-
-Binary file **`apostol`** - Linux system service (daemon), whose task is to start two internal services:
-
-1. HTTP server (Server);
-1. PostgreSQL server (PQServer).
-
-###### When implementing **Apostol**, inspiration was taken from the source code [nginx](http://nginx.org). Therefore, managing the **Apostol** is like [managing nginx](http://nginx.org/en/docs/control.html#reconfiguration), which leads to the performance and fault tolerance of the **Apostol** no worse than [nginx](http://nginx.org).
-
-#### **HTTP Server**.
-
-The HTTP server accepts requests from clients and, depending on the value in the `User-Agent` header, distributes them between the modules (add-ons). If the header or value of the `User-Agent` is missing, sends a request to the module **`WebService`** turns AWS into **Web Server**.
-
-###### Asynchronous server operation is performed using `epoll API`. 
-
-#### **PostgreSQL server**.
-	
-The server creates a connection pool with the PostgreSQL DBMS and allows sending SQL queries in **asynchronous** mode. You can specify the range of minimum and maximum number of connections to the DBMS in the configuration file in the section `[postgres]`.
-
-###### PostgreSQL support is disabled by default.
-	
-Modules
+ОПИСАНИЕ
 -
 
-The apostle is arranged so that the main code answers:
-- for use as a system service;
-- implementation of the TCP / IP, HTTP protocols;
-- interaction with the PostgreSQL DBMS.
+**Apostol Web Service** (apostol) - Построен на базе [Апостол](https://github.com/ufocomp/apostol).
 
-The code that implements the service logic is located separately from the main code in modules (add-ons).
-
-Settings
+REST API
 -
 
-###### CMake configuration options
+[Документация по REST API](./doc/REST-API-ru.md)
 
-In the file `CMakeLists.txt`, specify the phages:
+Протестировать API **Apostol Web Service** можно с помощью встроенного Web-сервера доступного по адресу: [localhost:8080](http://localhost:8080)
 
-Boolean flag **WITH_POSTGRESQL** can be used to enable PostgreSQL support. The default value is **OFF**.
-
-Boolean flag **WITH_SQLITE3** can be used to enable sqlite3 support. The default value is **OFF**.
-
-Build and installing
+СБОРКА И УСТАНОВКА
 -
+Для установки **Apostol Web Service** Вам потребуется:
 
-To build you need:
+Для сборки проекта Вам потребуется:
 
-1. The compiler C++;
-1. [CMake](https://cmake.org);
-1. The library [libdelphi](https://github.com/ufocomp/libdelphi/) (Delphi classes for C++);
+1. Компилятор C++;
+1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
+1. Библиотека [libpq-dev](https://www.postgresql.org/download) (libraries and headers for C language frontend development);
+1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download) (libraries and headers for C language backend development).
+1. Библиотека [libdelphi](https://github.com/ufocomp/libdelphi) (Delphi classes for C++);
+1. Библиотека [apostol-core](https://github.com/ufocomp/apostol-core) (Apostol Core C++);
 
-###### **ATTENTION**: You do not need to install `libdelphi`, just download and put it in the `src/lib` directory of the project.
+###### **ВНИМАНИЕ**: Устанавливать `libdelphi` не нужно, достаточно скачать и разместить в каталоге `src/lib` проекта.
 
-If PostgreSQL support is enabled, you will need:
+### Linux (Debian/Ubuntu)
 
-1. The library [libpq-dev](https://www.postgresql.org/download/) (libraries and headers for C language frontend development);
-1. The library [postgresql-server-dev-10](https://www.postgresql.org/download/) (libraries and headers for C language backend development).
-
-To install the C++ compiler and necessary libraries in Ubuntu, run:
+Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
 ~~~
 $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
 ~~~
 
-To install PostgreSQL, use the instructions for [this](https://www.postgresql.org/download/) link.
+###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство. 
 
-###### A detailed description of the installation of C++, CMake, IDE, and other components necessary for building the project is not included in this guide. 
+#### PostgreSQL
 
-To install (without Git) you need:
+Для того чтобы установить PostgreSQL воспользуйтесь инструкцией по [этой](https://www.postgresql.org/download/) ссылке.
 
-1. Download [Apostol](https://github.com/ufocomp/apostol/archive/master.zip);
-1. Unpack;
-1. Download [libdelphi](https://github.com/ufocomp/libdelphi/archive/master.zip);
-1. Unpack in `src/lib/delphi`;
-1. Configure `CMakeLists.txt` (if necessary);
-1. Build and compile (see below).
+###### Параметр `--make` необходим для установки базы данных в первый раз. Далее установочный скрипт можно запускать или без параметров или с параметром `--install`.
 
-To install (with Git) you need:
+Для установки **Apostol Web Service** (без Git) необходимо:
+
+1. Скачать **Apostol Web Service** по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
+1. Распаковать;
+1. Скачать **libdelphi** по [ссылке](https://github.com/ufocomp/libdelphi/archive/master.zip);
+1. Распаковать в `src/lib/delphi`;
+1. Скачать **apostol-core** по [ссылке](https://github.com/ufocomp/apostol-core/archive/master.zip);
+1. Распаковать в `src/core`;
+1. Настроить `CMakeLists.txt` (по необходимости);
+1. Собрать и скомпилировать (см. ниже).
+
+Для установки **Apostol Web Service** с помощью Git выполните:
 ~~~
 $ git clone https://github.com/ufocomp/apostol.git
 ~~~
 
-To add **libdelphi** to the project, using Git, do:
+Чтобы добавить **libdelphi** в проект с помощью Git выполните:
 ~~~
 $ cd apostol/src/lib
 $ git clone https://github.com/ufocomp/libdelphi.git delphi
 $ cd ../../../
 ~~~
 
-###### Build:
+Чтобы добавить **apostol-core** в проект с помощью Git выполните:
+~~~
+$ cd apostol/src
+$ git clone https://github.com/ufocomp/apostol-core.git core
+$ cd ../../
+~~~
+
+###### Сборка:
 ~~~
 $ cd apostol
 $ cmake -DCMAKE_BUILD_TYPE=Release . -B cmake-build-release
 ~~~
 
-###### Make and install:
+###### Компиляция и установка:
 ~~~
 $ cd cmake-build-release
 $ make
 $ sudo make install
 ~~~
 
-By default **apostle** will be set to:
+По умолчанию бинарный файл `apostol` будет установлен в:
 ~~~
 /usr/sbin
 ~~~
 
-The configuration file and the necessary files will be located in: 
+Файл конфигурации и необходимые для работы файлы, в зависимости от варианта установки, будут расположены в: 
 ~~~
 /etc/apostol
+или
+~/apostol
 ~~~
 
-Run
+ЗАПУСК 
 -
+###### Если `INSTALL_AS_ROOT` установлено в `ON`.
 
-**`apostol`** - Linux system service (daemon).
+**`apostol`** - это системная служба (демон) Linux. 
+Для управления **`apostol`** используйте стандартные команды управления службами.
 
-To manage **Apostol**, use the standard service management commands.
-
-To start **Apostol**, run:
+Для запуска `apostol` выполните:
 ~~~
 $ sudo service apostol start
 ~~~
 
-To check the status, run:
+Для проверки статуса выполните:
 ~~~
 $ sudo service apostol status
 ~~~
 
-The result should be something like this:
+Результат должен быть **примерно** таким:
 ~~~
-● apostol.service - LSB: starts the Apostol Web Service
-   Loaded: loaded (/etc/init.d/apostol)
-   Active: active (running) since Wed 2019-01-02 03:04:05 MSK; 21h ago
+● apostol.service - LSB: starts the apostol web servcie
+   Loaded: loaded (/etc/init.d/apostol; generated; vendor preset: enabled)
+   Active: active (running) since Thu 2019-08-15 14:11:34 BST; 1h 1min ago
+     Docs: man:systemd-sysv-generator(8)
+  Process: 16465 ExecStop=/etc/init.d/apostol stop (code=exited, status=0/SUCCESS)
+  Process: 16509 ExecStart=/etc/init.d/apostol start (code=exited, status=0/SUCCESS)
+    Tasks: 3 (limit: 4915)
    CGroup: /system.slice/apostol.service
-           ├─26772 apostol: master process /usr/sbin/apostol
-           └─26773 apostol: worker process (apostol)
+           ├─16520 apostol: master process /usr/sbin/abc
+           └─16521 apostol: worker process
 ~~~
 
-### Controlling **Apostol**.
+### **Управление**.
 
-**`apostol`** can be controlled with signals.
+Управлять **`apostol`** можно с помощью сигналов.
+Номер главного процесса по умолчанию записывается в файл `/run/apostol.pid`. 
+Изменить имя этого файла можно при конфигурации сборки или же в `apostol.conf` секция `[daemon]` ключ `pid`. 
 
-The process ID of the master process is written to the file `/usr/local/apostol/logs/apostol.pid` by default.
-This name may be changed at configuration time, or in the section `apostol.conf` of the key `[daemon]` key `pid`.
+Главный процесс поддерживает следующие сигналы:
 
-The master process supports the following signals:
+|Сигнал   |Действие          |
+|---------|------------------|
+|TERM, INT|быстрое завершение|
+|QUIT     |плавное завершение|
+|HUP	  |изменение конфигурации, запуск новых рабочих процессов с новой конфигурацией, плавное завершение старых рабочих процессов|
+|WINCH    |плавное завершение рабочих процессов|	
 
-| Signal | Action |
-| --------- | ------------------ |
-| TERM, INT | fast shutdown |
-| QUIT | graceful shutdown |
-| HUP | changing configuration, starting new worker processes with a new configuration, graceful shutdown of old worker processes |
-| WINCH | graceful shutdown of worker processes |
+Управлять рабочими процессами по отдельности не нужно. Тем не менее, они тоже поддерживают некоторые сигналы:
 
-Individual worker processes can be controlled with signals as well, though it is not required. The supported signals are:
-
-| Signal | Action |
-| --------- | ------------------ |
-| TERM, INT | fast shutdown |
-| QUIT | graceful shutdown |
+|Сигнал   |Действие          |
+|---------|------------------|
+|TERM, INT|быстрое завершение|
+|QUIT	  |плавное завершение|

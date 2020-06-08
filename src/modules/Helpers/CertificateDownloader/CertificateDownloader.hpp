@@ -2,7 +2,7 @@
 
 Program name:
 
-  apostol
+  Apostol Web Service
 
 Module Name:
 
@@ -10,7 +10,7 @@ Module Name:
 
 Notices:
 
-  Helper: Certificate Downloader
+  Module Certificate Downloader
 
 Author:
 
