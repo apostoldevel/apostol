@@ -46,6 +46,8 @@ namespace Apostol {
             void ParseCmdLine() override;
             void ShowVersionInfo() override;
 
+            void StartProcess() override;
+
         public:
 
             CApostol(int argc, char *const *argv): CApplication(argc, argv) {

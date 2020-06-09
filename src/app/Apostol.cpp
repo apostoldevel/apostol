@@ -185,6 +185,15 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        void CApostol::StartProcess() {
+            if (Config()->Helper()) {
+                m_ProcessType = ptHelper;
+            }
+
+            CApplication::StartProcess();
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         void CApostol::Run() {
             CApplication::Run();
         }

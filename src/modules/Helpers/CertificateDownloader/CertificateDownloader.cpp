@@ -170,7 +170,9 @@ namespace Apostol {
         //--------------------------------------------------------------------------------------------------------------
 
         bool CCertificateDownloader::IsEnabled() {
-            return true;
+            if (m_ModuleStatus == msUnknown)
+                m_ModuleStatus = msEnabled;
+            return m_ModuleStatus == msEnabled;
         }
         //--------------------------------------------------------------------------------------------------------------
 
