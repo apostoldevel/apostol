@@ -2,7 +2,7 @@
 
 Program name:
 
-  Apostol Web Service
+  Apostol
 
 Module Name:
 
@@ -44,12 +44,12 @@ namespace Apostol {
 #endif
             CDateTime m_SyncPeriod;
 
-            void FetchCerts(CAuthParam &Key);
+            void FetchCerts(CProvider &Key);
 
             void FetchProviders();
             void CheckProviders();
 
-            static void SaveKeys(const CAuthParam &Key);
+            static void SaveKeys(const CProvider &Key);
 
             void InitMethods() override;
 

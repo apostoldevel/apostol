@@ -1,6 +1,6 @@
-# Apostol Web Service
+# Апостол (Apostol)
 
-**Apostol Web Service** - RESTful API Service, исходные коды на C++.
+**Апостол** - это платформа для создания системного программного обеспечения, исходные коды на C++.
 
 СТРУКТУРА КАТАЛОГОВ
 -
@@ -12,9 +12,8 @@
     ├─scripts/                  содержит файлы со скриптами для автоматизации установки базы данных
     ├─sql/                      содержит файлы со скриптами базы данных
     | └─kernel/                 содержит файлы со скриптами базы данных: Ядро
-    doc/                        содержит файлы с документацией
     src/                        содержит файлы с исходным кодом
-    ├─app/                      содержит файлы с исходным кодом: Apostol Web Service
+    ├─app/                      содержит файлы с исходным кодом: Apostol
     ├─core/                     содержит файлы с исходным кодом: Apostol Core
     ├─lib/                      содержит файлы с исходным кодом библиотек
     | └─delphi/                 содержит файлы с исходным кодом библиотеки*: Delphi classes for C++
@@ -27,20 +26,11 @@
 ОПИСАНИЕ
 -
 
-**Apostol Web Service** (apostol) - Построен на базе [Апостол](https://github.com/ufocomp/apostol).
-
-REST API
--
-
-[Документация по REST API](./doc/REST-API-ru.md)
-
-Протестировать API **Apostol Web Service** можно с помощью встроенного Web-сервера доступного по адресу: [localhost:8080](http://localhost:8080)
+Платформа написана на языке программирования C++, имеет модульную конструкцию и включает в себя встроенную поддержку СУБД [PostgreSQL](https://www.postgresql.org/).
 
 СБОРКА И УСТАНОВКА
 -
-Для установки **Apostol Web Service** Вам потребуется:
-
-Для сборки проекта Вам потребуется:
+Для установки **Апостол** Вам потребуется:
 
 1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
@@ -66,9 +56,9 @@ $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmak
 
 ###### Параметр `--make` необходим для установки базы данных в первый раз. Далее установочный скрипт можно запускать или без параметров или с параметром `--install`.
 
-Для установки **Apostol Web Service** (без Git) необходимо:
+Для установки **Апостол** (без Git) необходимо:
 
-1. Скачать **Apostol Web Service** по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
+1. Скачать **Апостол** по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
 1. Распаковать;
 1. Скачать **libdelphi** по [ссылке](https://github.com/ufocomp/libdelphi/archive/master.zip);
 1. Распаковать в `src/lib/delphi`;
@@ -77,7 +67,7 @@ $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmak
 1. Настроить `CMakeLists.txt` (по необходимости);
 1. Собрать и скомпилировать (см. ниже).
 
-Для установки **Apostol Web Service** с помощью Git выполните:
+Для установки **Апостол** с помощью Git выполните:
 ~~~
 $ git clone https://github.com/ufocomp/apostol.git
 ~~~
