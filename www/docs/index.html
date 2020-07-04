@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="description" content="Apostol.">
-    <meta name="keywords" content="Apostol, HTTP, REST, RESTful, REST API, web-сервер, веб-сервер, сервер приложений, application server">
+    <meta name="description" content="Apostol Web Service.">
+    <meta name="keywords" content="Apostol Web Service, HTTP, REST, RESTful, REST API, web-сервер, веб-сервер, сервер приложений, application server">
 
     <!-- Required meta tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <title>Apostol (AWS) - это программная платформа (framework), написанная на C++, для быстрого создания WEB-сервисов (RESTful) под операционную систему Linux, со встроенной поддержкой СУБД PostgreSQL.</title>
+    <title>Apostol Web Service (AWS) - это программная платформа (framework), написанная на C++, для быстрого создания WEB-сервисов (RESTful) под операционную систему Linux, со встроенной поддержкой СУБД PostgreSQL.</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -248,7 +248,43 @@
                 <p class="indent">Техническая поддержка по лицензии GPL-3.0 возможна только по e-mail, также возможна платная консультация (на русском языке) по цифровым каналам связи с демонстрацией видео изображения рабочего стола.</p>
                 <p class="indent">Иные формы приобретения и технической поддержки Apostol Web Service предоставляются в рамках договорных соглашений.</p>
 
-                <h1 class="title" id="Ref5"><strong class="text-number">5.</strong> Апостол Бэкэнд</h1>
+                <h1 class="title" id="Ref5"><strong class="text-number">5.</strong> Сервер авторизации</h1>
+
+                <p>Встроенный сервер авторизации разработан на основе спецификации <strong>OAuth 2.0</strong> <a href="https://tools.ietf.org/html/rfc6749" rel="nofollow">RFC 6749</a> и расширении <strong>OpenID Connect</strong>.</p>
+                <p><b>Сервер авторизации</b> позволяет упростить доступ пользователей к приложениям, разрешив для этого использование существующей учетной записи социальной сети или, например, учетной записи пользователя в Google или в ЕСИА (Госуслуги).</p>
+
+                <h1 class="title" id="Ref51"><strong class="text-number">5.1.</strong> Аутентификация и авторизация</h1>
+
+                <h1 class="title" id="Ref511"><strong class="text-number">5.1.1.</strong> Использование протокола OAuth 2.0 для авторизации пользователя</h1>
+
+                <p>Протокол определяет четыре роли:</p>
+                <ul>
+                    <li>Владелец ресурса (<code>resource owner</code>) – Пользователь системы (физическое лицо);</li>
+                    <li>Клиент (<code>client</code>) – Приложение, которое запрашивает доступ к защищаемому ресурсу от имени его владельца;</li>
+                    <li>Сервер авторизации (<code>authorization server</code>) – сервер, который выпускает для клиента маркеры идентификации с разрешениями от владельца ресурса, а также маркеры доступа, позволяющие получать доступ к данным;</li>
+                    <li>Поставщик ресурса (<code>resource server</code>) – сервер, обеспечивающий доступ к защищаемому ресурсу на основе проверки маркеров идентификации и маркеров доступа (например, к идентификационным данным пользователя).</li>
+                </ul>
+                <p>В рамках данной системы <code>authorization server</code> и <code>resource server</code> - это один и тот же сервер.</p>
+                <p>Для взаимодействия <code>Клиента</code> с <code>Сервером</code> необходимо получить идентификатор (<code>client_id</code>) и секрет (<code>client_secret</code>).</p>
+                <p>Взаимодействие происходит через <code>RESTful</code> API описанное в спецификации <a href="https://tools.ietf.org/html/rfc6749" rel="nofollow">RFC 6749</a>.</p>
+
+                <h1 class="title" id="Ref512"><strong class="text-number">5.1.2.</strong> Использование OpenID Connect для аутентификации пользователя</h1>
+
+                <p>В общем виде схема аутентификация с использованием OpenID Connect выглядит следующим образом:</p>
+                <ul>
+                    <li><strong>Клиент</strong> (<code>client</code>) готовит запрос на аутентификацию пользователя с необходимыми параметрами;</li>
+                    <li><strong>Клиент</strong> (<code>client</code>) отправляет <code>GET</code> запрос на аутентификацию в адрес сервера авторизации;</li>
+                    <li><strong>Сервер авторизации</strong> (<code>authorization server</code>) аутентифицирует пользователя (пользователь вводит логин и пароль);</li>
+                    <li><strong>Сервер авторизации</strong> (<code>authorization server</code>) получает согласие пользователя на проведение аутентификации в данной системе;</li>
+                    <li><strong>Сервер авторизации</strong> (<code>authorization server</code>) перенаправляет пользователя обратно <strong>Клиенту</strong> и передает код авторизации;</li>
+                    <li><strong>Клиент</strong> (<code>client</code>) отправляет <code>POST</code> запрос с использованием кода авторизации на получения маркера идентификации;</li>
+                    <li><strong>Клиент</strong> (<code>client</code>) получает ответ, содержащий необходимый маркер идентификации (меняет код авторизации на маркер доступа);</li>
+                    <li><strong>Клиент</strong> (<code>client</code>) проводит проверку маркера идентификации и извлекает из маркера идентификатор пользователя.</li>
+                </ul>
+
+                <p>Более детально будет рассмотрены в документации к API проекта (<a href="https://github.com/ufocomp/apostol-aws/blob/master/doc/REST-API-ru.md#%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80-%D0%B0%D0%B2%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8">пример</a>).</p>
+
+                <h1 class="title" id="Ref6"><strong class="text-number">6.</strong> Апостол Бэкэнд (Бэкэнд модуль)</h1>
 
                 <p class="indent"><strong>Апостол Бэкэнд</strong> - платформа написанная на процедурном языке программирования <strong>PL/pgSQL</strong> под <strong>СУБД PosrgeSQL</strong> для создания back-end решений автоматизированных систем.</p>
 
@@ -266,7 +302,7 @@
                     <li>Календарь (рабочих дней);</li>
                 </ul>
 
-                <h1 class="title" id="Ref51"><strong class="text-number">5.1.</strong> Ядро</h1>
+                <h1 class="title" id="Ref61"><strong class="text-number">6.1.</strong> Ядро</h1>
 
                 <p class="indent"><strong>Ядро</strong> имеет свою логическую модель смысл которой заключается в том, что данные представлены в виде сущностей. Данные сущности могут быть распределены по нескольким таблицам. Сущность обладает свойствами и методами. Свойства это поля в базе данных, а методы это действия которые можно совершить (создать, открыть, закрыть, удалить).</p>
 
@@ -396,7 +432,7 @@
 
                 <p class="indent">Для того, чтобы совершить действие над объектом (включить, выключить, удалить, уничтожить) необходимо вызвать функцию <code class="gray">ExecuteObjectAction(pObject, pAction)</code>.</p>
 
-                <h1 class="title" id="Ref52"><strong class="text-number">5.2.</strong> Модуль безопасности</h1>
+                <h1 class="title" id="Ref62"><strong class="text-number">6.2.</strong> Модуль безопасности</h1>
 
                 <p class="indent">PostgreSQL обладает обширным набором инструментов для настройки прав доступа но все это не применимо в Web-решениях по одной простой причине Web-пользователь не имеет и не должен иметь прямого доступа (подключения) к СУБД. Взаимодействие с СУБД происходит посредством сервера приложений, а подключение к СУБД происходит от имени одного и того же пользователя СУБД для разных Web-пользователей. Поэтому для разграничения прав доступа Web-пользователей в СУБД создают «виртуальных» пользователей и весь механизм контроля и учёта прав доступа возлагается полностью на саму систему, а не на СУБД.</p>
 

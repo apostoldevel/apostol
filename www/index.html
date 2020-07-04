@@ -8,7 +8,7 @@
     <!-- Required meta tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <title>Apostol Web Service (AWS) и Апостол Бэкэнд - это комплекс технических решений собранных воедино для создания бэкэнд (англ. backend) части веб-приложений.</title>
+    <title>Апостол Веб Сервис (Apostol Web Service) - это комплекс технических решений собранных воедино для создания бэкэнд (backend) части веб-приложений.</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -58,7 +58,7 @@
                 <a class="nav-link dropdown-toggle" href="#" id="dropdown-github" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">GitHub</a>
                 <div class="dropdown-menu" aria-labelledby="dropdown-github">
                     <a class="dropdown-item" href="https://github.com/ufocomp/apostol">apostol</a>
-                    <a class="dropdown-item" href="https://github.com/ufocomp/apostol-backend">apostol-backend</a>
+                    <a class="dropdown-item" href="https://github.com/ufocomp/apostol-aws">apostol-aws</a>
                     <a class="dropdown-item" href="https://github.com/ufocomp/libdelphi">libdelphi</a>
                 </div>
             </li>
@@ -74,24 +74,27 @@
             <div class="jumbotron bg-light shadow-sm">
                 <h4 class="display-4">Апостол Веб Сервис</h4>
                 <hr class="my-4">
-                <p class="lead"><a href="https://github.com/ufocomp/apostol" target="_blank"> <strong>Апостол Веб Сервис</strong></a> (Apostol Web Service) в сочетании с <a href="https://github.com/ufocomp/apostol-backend" target="_blank"> <strong>Апостол Бэкэнд</strong></a> (Apostol Backend) - это комплекс технических решений собранных воедино для создания бэкэнд (англ. backend) части веб-приложений.</p>
+                <p class="lead"><a href="https://github.com/ufocomp/apostol-aws" target="_blank"> <strong>Апостол Веб Сервис</strong></a> (Apostol Web Service) - это комплекс технических решений собранных воедино для создания бэкэнд (англ. backend) части веб-приложений.</p>
 
                 <hr class="my-4">
 
-                <p><strong>Апостол Веб Сервис</strong> — это сервер приложений (веб-сервер) для удалённого вызова процедур с использованием архитектурного стиля <a href="https://ru.wikipedia.org/wiki/REST"><strong>REST</strong></a> (от англ. Representational State Transfer — «передача состояния представления») разработанный на программной платформе <a href="https://github.com/ufocomp/apostol">Апостол</a>.</p>
-                <p><strong>Апостол Бэкэнд</strong> - это дополнение к AWS в виде инструмента для создания автоматизированных систем (<a href="https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%D1%83%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F_%D0%B2%D0%B7%D0%B0%D0%B8%D0%BC%D0%BE%D0%BE%D1%82%D0%BD%D0%BE%D1%88%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8_%D1%81_%D0%BA%D0%BB%D0%B8%D0%B5%D0%BD%D1%82%D0%B0%D0%BC%D0%B8" target="_blank" rel="nofollow">CRM-систем</a>) со встроенной поддержкой <strong>RESTful веб-API</strong>.</p>
-
-                <p>После <a href="docs/#Ref3" role="button">установки</a><sup class="reference"><a href="#install">[1]</a></sup> <strong>Апостол Бэкэнд</strong> Вы получите «<strong>из коробки</strong>»:</p>
+                <p>Апостол Веб Сервис состоит из сервера приложений и бэкэнд модуля:</p>
 
                 <ul>
+                    <li><p><strong>Сервер приложений</strong> (HTTP-сервер) используется для удалённого вызова процедур с использованием архитектурного стиля <a href="https://ru.wikipedia.org/wiki/REST"><strong>REST</strong></a> (от англ. Representational State Transfer — &quot;передача состояния представления&quot;).</p></li>
+                    <li><p><strong>Бэкэнд модуль</strong> используется для разработки бизнес-логики и <strong>RESTful веб-API</strong> созданного на базе AWS проекта. Адаптирован под разработку документо-ориентированных автоматизированных систем (<a href="https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%D1%83%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F_%D0%B2%D0%B7%D0%B0%D0%B8%D0%BC%D0%BE%D0%BE%D1%82%D0%BD%D0%BE%D1%88%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8_%D1%81_%D0%BA%D0%BB%D0%B8%D0%B5%D0%BD%D1%82%D0%B0%D0%BC%D0%B8" target="_blank" rel="nofollow">CRM-систем</a>).</p></li>
+                </ul>
+
+                <p>После <a href="docs/#Ref3" role="button">установки</a><sup class="reference"><a href="#install">[1]</a></sup> <strong>Апостол Веб Сервис</strong> Вы получите &quot;<strong>из коробки</strong>&quot;:</p>
+                <ul>
                     <li>
-                        <p><strong>Сервер приложений</strong> (HTTP-сервер, RESTful);</p>
+                        <p><strong>Сервер приложений</strong> (RESTful) разработанный на программной платформе <a href="https://github.com/ufocomp/apostol">Апостол</a>;</p>
                     </li>
                     <li>
                         <p><strong>Сервер авторизации</strong> разработанный на основе <a href="https://ru.wikipedia.org/wiki/OAuth#OAuth_2.0"><strong>OAuth 2.0</strong></a> и <a href="https://ru.wikipedia.org/wiki/OpenID"><b>OpenID Connect</b></a>;</p>
                     </li>
                     <li>
-                        <p><strong>Бэкэнд</strong> часть под СУБД <a href="https://www.postgresql.org/" target="_blank" rel="nofollow">PostgreSQL</a>;</p>
+                        <p><strong>Бэкэнд модуль</strong> разработанный под СУБД <a href="https://www.postgresql.org/" target="_blank" rel="nofollow">PostgreSQL</a>;</p>
                     </li>
                     <li>
                         <p><strong>API</strong> для взаимодействия с бэкэнд (с возможностью подключения по <b>WebSocket</b>);</p>
@@ -100,11 +103,11 @@
                         <p><strong>Веб-сервер</strong> с минимальными функциями (аутентификация и авторизация пользователей);</p>
                     </li>
                     <li>
-                        <p><strong>Документацию</strong> к API для фронтэнд (англ. frontend) разработчиков (пример).</p>
+                        <p><strong>Документацию</strong> к API для фронтэнд (англ. frontend) разработчиков (<a href="https://github.com/ufocomp/apostol-aws/blob/master/doc/REST-API-ru.md">пример</a>).</p>
                     </li>
                 </ul>
 
-                <p class="text-muted">Останется лишь приступить к разработке фронтэнд части проекта на любом удобном для веб-разработчика языке программирования (PHP, JavaScript, Python и д.р) и бизнес логики на языке программирования PL/pgSQL (на котором разработан Апостол Бэкэнд).</p>
+                <p class="text-muted">Останется лишь приступить к разработке фронтэнд части проекта на любом удобном для веб-разработчика языке программирования (PHP, JavaScript, Python и д.р) и бизнес логики на языке программирования PL/pgSQL (на котором написан бэкэнд модуль).</p>
 
                 <hr class="my-4">
                 <p id="install"><small><b>1.</b> Поставляется и устанавливается на компьютер (сервер) в виде системной службы под операционную систему <b>Linux</b>.</small></p>
