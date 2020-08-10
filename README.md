@@ -7,20 +7,14 @@
     auto/                       содержит файлы со скриптами
     cmake-modules/              содержит файлы с модулями CMake
     conf/                       содержит файлы с настройками
-    db/                         содержит файлы со скриптами базы данных
-    ├─bin/                      содержит исполняемые файлы для автоматизации установки базы данных
-    ├─scripts/                  содержит файлы со скриптами для автоматизации установки базы данных
-    ├─sql/                      содержит файлы со скриптами базы данных
-    | └─kernel/                 содержит файлы со скриптами базы данных: Ядро
     src/                        содержит файлы с исходным кодом
     ├─app/                      содержит файлы с исходным кодом: Apostol
     ├─core/                     содержит файлы с исходным кодом: Apostol Core
     ├─lib/                      содержит файлы с исходным кодом библиотек
     | └─delphi/                 содержит файлы с исходным кодом библиотеки*: Delphi classes for C++
     ├─workers/                  содержит файлы с исходным кодом дополнений (модулей)
-    | └─WebService/             содержит файлы с исходным кодом дополнения: Веб-сервис
+    | └─WebServer/              содержит файлы с исходным кодом дополнения: Веб-сервер
     ├─helpers/                  содержит файлы с исходным кодом дополнений (модулей)
-    | └─CertificateDownloader/  содержит файлы с исходным кодом дополнения: Загрузчик сертификатов
     www/                        содержит файлы с Веб-сайтом
 
 ОПИСАНИЕ
@@ -35,7 +29,7 @@
 1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
 1. Библиотека [libpq-dev](https://www.postgresql.org/download) (libraries and headers for C language frontend development);
-1. Библиотека [postgresql-server-dev-10](https://www.postgresql.org/download) (libraries and headers for C language backend development).
+1. Библиотека [postgresql-server-dev-12](https://www.postgresql.org/download) (libraries and headers for C language backend development).
 1. Библиотека [libdelphi](https://github.com/ufocomp/libdelphi) (Delphi classes for C++);
 1. Библиотека [apostol-core](https://github.com/ufocomp/apostol-core) (Apostol Core C++);
 
