@@ -25,11 +25,11 @@ Author:
 #define APOSTOL_WORKERS_HPP
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "WebService/WebService.hpp"
+#include "WebServer/WebServer.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 static inline void CreateWorkers(CModuleProcess *AProcess) {
-    CWebService::CreateModule(AProcess);
+    CWebServer::CreateModule(AProcess);
 }
 
 #endif //APOSTOL_WORKERS_HPP

@@ -2,15 +2,15 @@
 
 Program name:
 
-  apostol
+  Apostol Web Service
 
 Module Name:
 
-  WebService.hpp
+  WebServer.hpp
 
 Notices:
 
-  Worker: Web Service
+  Module: Web Server
 
 Author:
 
@@ -21,8 +21,8 @@ Author:
 
 --*/
 
-#ifndef APOSTOL_WEBSERVICE_HPP
-#define APOSTOL_WEBSERVICE_HPP
+#ifndef APOSTOL_WEBSERVER_HPP
+#define APOSTOL_WEBSERVER_HPP
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C++" {
@@ -33,34 +33,30 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CWebService -----------------------------------------------------------------------------------------------
+        //-- CWebServer -----------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
-        class CWebService: public CApostolModule {
+        class CWebServer: public CApostolModule {
         private:
 
             void InitMethods() override;
 
         protected:
 
-            void DoAPI(CHTTPServerConnection *AConnection);
-
             void DoGet(CHTTPServerConnection *AConnection) override;
-            void DoPost(CHTTPServerConnection *AConnection);
 
         public:
 
-            explicit CWebService(CModuleProcess *AProcess);
+            explicit CWebServer(CModuleProcess *AProcess);
 
-            ~CWebService() override = default;
+            ~CWebServer() override = default;
 
-            static class CWebService *CreateModule(CModuleProcess *AProcess) {
-                return new CWebService(AProcess);
+            static class CWebServer *CreateModule(CModuleProcess *AProcess) {
+                return new CWebServer(AProcess);
             }
 
-            bool IsEnabled() override;
-            bool CheckUserAgent(const CString& Value) override;
+            bool Enabled() override;
 
         };
     }
@@ -68,4 +64,4 @@ namespace Apostol {
 
 using namespace Apostol::Workers;
 }
-#endif //APOSTOL_WEBSERVICE_HPP
+#endif //APOSTOL_WEBSERVER_HPP
