@@ -52,13 +52,18 @@
                 <a class="nav-link" href="/">В начало<span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/docs/">Документация</a>
+                <a class="nav-link" href="https://github.com/ufocomp/apostol-aws/blob/master/doc/REST-API-ru.md">Документация</a>
             </li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="dropdown-github" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">GitHub</a>
                 <div class="dropdown-menu" aria-labelledby="dropdown-github">
                     <a class="dropdown-item" href="https://github.com/ufocomp/apostol">apostol</a>
                     <a class="dropdown-item" href="https://github.com/ufocomp/apostol-aws">apostol-aws</a>
+                    <a class="dropdown-item" href="https://github.com/ufocomp/module-AuthServer">module-AuthServer</a>
+                    <a class="dropdown-item" href="https://github.com/ufocomp/module-AppServer">module-AppServer</a>
+                    <a class="dropdown-item" href="https://github.com/ufocomp/module-WebServer">module-WebServer</a>
+                    <a class="dropdown-item" href="https://github.com/ufocomp/module-WebSocketAPI">module-WebSocketAPI</a>
+                    <a class="dropdown-item" href="https://github.com/ufocomp/module-Sberbank">module-Sberbank</a>
                     <a class="dropdown-item" href="https://github.com/ufocomp/libdelphi">libdelphi</a>
                 </div>
             </li>
@@ -72,49 +77,48 @@
     <div class="container">
         <div class="row">
             <div class="jumbotron bg-light shadow-sm">
-                <h4 class="display-4">Апостол Веб Сервис</h4>
+                <h4 class="display-4">Apostol Web Service</h4>
                 <hr class="my-4">
-                <p class="lead"><a href="https://github.com/ufocomp/apostol-aws" target="_blank"> <strong>Апостол Веб Сервис</strong></a> (Apostol Web Service) - это комплекс технических решений собранных воедино для создания бэкэнд (англ. backend) части веб-приложений.</p>
+                <p class="lead"><a href="https://github.com/ufocomp/apostol-aws" target="_blank"> <strong>Апостол Веб Сервис</strong></a> - это фреймворк для создания бэкэнд части автоматизированных систем, веб и мобильных приложений.</p>
 
                 <hr class="my-4">
 
-                <p>Апостол Веб Сервис состоит из сервера приложений и бэкэнд модуля:</p>
+                <p><strong>Апостол Веб Сервис</strong> состоит из двух абстрактных частей - <b>платформы</b> и <b>конфигурации</b>.</p>
 
                 <ul>
-                    <li><p><strong>Сервер приложений</strong> (HTTP-сервер) используется для удалённого вызова процедур с использованием архитектурного стиля <a href="https://ru.wikipedia.org/wiki/REST"><strong>REST</strong></a> (от англ. Representational State Transfer — &quot;передача состояния представления&quot;).</p></li>
-                    <li><p><strong>Бэкэнд модуль</strong> используется для разработки бизнес-логики и <strong>RESTful веб-API</strong> созданного на базе AWS проекта. Адаптирован под разработку документо-ориентированных автоматизированных систем (<a href="https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%D1%83%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F_%D0%B2%D0%B7%D0%B0%D0%B8%D0%BC%D0%BE%D0%BE%D1%82%D0%BD%D0%BE%D1%88%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8_%D1%81_%D0%BA%D0%BB%D0%B8%D0%B5%D0%BD%D1%82%D0%B0%D0%BC%D0%B8" target="_blank" rel="nofollow">CRM-систем</a>).</p></li>
+                    <li><p>Платформа - это технологии и протоколы, встроенные службы и модули.</p></li>
+                    <li><p>Конфигурация - это бизнес логика конкретного проекта.</p></li>
                 </ul>
 
-                <p>После <a href="docs/#Ref3" role="button">установки</a><sup class="reference"><a href="#install">[1]</a></sup> <strong>Апостол Веб Сервис</strong> Вы получите &quot;<strong>из коробки</strong>&quot;:</p>
+                <hr class="my-4">
+
+                <p><strong>Платформа</strong> построена на базе фреймворка <a href="https://github.com/ufocomp/apostol">Апостол</a>, имеет модульную конструкцию и включает в себя встроенную поддержку СУБД <a href="https://www.postgresql.org/" target="_blank" rel="nofollow">PostgreSQL</a>.</p>
+
+                <p><a href="https://github.com/ufocomp/db-platform">База данных</a> платформы написана на языке программирования PL/pgSQL.</p>
+
+                <p>Платформа состоит из следующих <em>модулей</em> (частей):</p>
+
                 <ul>
-                    <li>
-                        <p><strong>Сервер приложений</strong> (RESTful) разработанный на программной платформе <a href="https://github.com/ufocomp/apostol">Апостол</a>;</p>
-                    </li>
-                    <li>
-                        <p><strong>Сервер авторизации</strong> разработанный на основе <a href="https://ru.wikipedia.org/wiki/OAuth#OAuth_2.0"><strong>OAuth 2.0</strong></a> и <a href="https://ru.wikipedia.org/wiki/OpenID"><b>OpenID Connect</b></a>;</p>
-                    </li>
-                    <li>
-                        <p><strong>Бэкэнд модуль</strong> разработанный под СУБД <a href="https://www.postgresql.org/" target="_blank" rel="nofollow">PostgreSQL</a>;</p>
-                    </li>
-                    <li>
-                        <p><strong>API</strong> для взаимодействия с бэкэнд (с возможностью подключения по <b>WebSocket</b>);</p>
-                    </li>
-                    <li>
-                        <p><strong>Веб-сервер</strong> с минимальными функциями (аутентификация и авторизация пользователей);</p>
-                    </li>
-                    <li>
-                        <p><strong>Документацию</strong> к API для фронтэнд (англ. frontend) разработчиков (<a href="https://github.com/ufocomp/apostol-aws/blob/master/doc/REST-API-ru.md">пример</a>).</p>
-                    </li>
+                    <li><a href="https://github.com/ufocomp/module-AuthServer">Сервера авторизации</a> (OAuth 2.0);</li>
+                    <li><a href="https://github.com/ufocomp/module-AppServer">Сервера приложений</a> (REST API);</li>
+                    <li><a href="https://github.com/ufocomp/module-WebServer">Веб-сервера</a> (HTTP-сервера);</li>
+                    <li><a href="https://github.com/ufocomp/module-WebSocketAPI">WebSocket API</a>.</li>
                 </ul>
 
-                <p class="text-muted">Останется лишь приступить к разработке фронтэнд части проекта на любом удобном для веб-разработчика языке программирования (PHP, JavaScript, Python и д.р) и бизнес логики на языке программирования PL/pgSQL (на котором написан бэкэнд модуль).</p>
+                <p>Платформа устанавливается на сервер из <a href="https://github.com/ufocomp/apostol-aws">исходных кодов</a> в виде системной службы под операционную систему <b>Linux</b>.</p>
 
-                <hr class="my-4">
-                <p id="install"><small><b>1.</b> Поставляется и устанавливается на компьютер (сервер) в виде системной службы под операционную систему <b>Linux</b>.</small></p>
-
-                <hr class="my-4">
                 <p class="lead">
-                    <a class="btn btn-outline-primary" href="docs/">Читать документацию</a>
+                    <a class="btn btn-outline-primary" href="https://github.com/ufocomp/apostol-aws/blob/master/doc/REST-API-ru.md#%D0%BF%D0%BB%D0%B0%D1%82%D1%84%D0%BE%D1%80%D0%BC%D0%B0">Читать документацию</a>
+                </p>
+
+                <hr class="my-4">
+
+                <p><strong>Конфигурация</strong> написана на языке программирования PL/pgSQL, используется для разработки бизнес-логики и RESTful API.</p>
+
+                <p>Конфигурация базируется на API платформы и дополняет её функциями необходимыми для решения задач конкретного проекта.</p>
+
+                <p class="lead">
+                    <a class="btn btn-outline-primary" href="https://github.com/ufocomp/apostol-aws/blob/master/doc/REST-API-ru.md#%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%86%D0%B8%D1%8F">Читать документацию</a>
                 </p>
             </div>
 
@@ -123,7 +127,7 @@
                 <p><strong>Апостол</strong> - это программная платформа для создания системного программного обеспечения.</p>
                 <p>Платформа написана на языке программирования <strong>C++</strong>, имеет модульную конструкцию и включает в себя встроенную поддержку СУБД <a href="https://www.postgresql.org/" target="_blank" rel="nofollow">PostgreSQL</a>.</p>
                 <p class="text-muted"><small>В руках опытного разработчика это мощный инструмент для создания веб приложений любого уровня сложности</small>.</p>
-                <p><a class="btn btn-outline-primary" href="docs/" role="button">Узнать больше »</a></p>
+                <p><a class="btn btn-outline-primary" href="https://github.com/ufocomp/apostol" role="button">Узнать больше »</a></p>
             </div>
 
             <div class="col-md-4 p-3 p-md-5 bg-light border border-white">
@@ -150,7 +154,7 @@
                 <p>Встроенный сервер авторизации разработан на основе спецификации <strong>OAuth 2.0</strong> <a href="https://tools.ietf.org/html/rfc6749" rel="nofollow">RFC 6749</a> и расширении <strong>OpenID Connect</strong>.</p>
                 <p><b>Сервер авторизации</b> позволяет упростить доступ пользователей к приложениям, разрешив для этого использование существующей учетной записи социальной сети или, например, учетной записи пользователя в Google или в ЕСИА (Госуслуги).</p>
 
-                <p><a class="btn btn-outline-primary" href="docs/#Ref5" role="button">Узнать больше »</a></p>
+                <p><a class="btn btn-outline-primary" href="https://github.com/ufocomp/module-AuthServer" role="button">Узнать больше »</a></p>
             </div>
         </div>
 
