@@ -12,9 +12,7 @@
     ├─core/                     содержит файлы с исходным кодом: Apostol Core
     ├─lib/                      содержит файлы с исходным кодом библиотек
     | └─delphi/                 содержит файлы с исходным кодом библиотеки*: Delphi classes for C++
-    ├─workers/                  содержит файлы с исходным кодом дополнений (модулей)
-    | └─WebServer/              содержит файлы с исходным кодом дополнения: Веб-сервер
-    ├─helpers/                  содержит файлы с исходным кодом дополнений (модулей)
+    └─modules/                  содержит файлы с исходным кодом дополнений (модулей)
     www/                        содержит файлы с Веб-сайтом
 
 ОПИСАНИЕ
@@ -30,10 +28,6 @@
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
 1. Библиотека [libpq-dev](https://www.postgresql.org/download) (libraries and headers for C language frontend development);
 1. Библиотека [postgresql-server-dev-12](https://www.postgresql.org/download) (libraries and headers for C language backend development).
-1. Библиотека [libdelphi](https://github.com/ufocomp/libdelphi) (Delphi classes for C++);
-1. Библиотека [apostol-core](https://github.com/ufocomp/apostol-core) (Apostol Core C++);
-
-###### **ВНИМАНИЕ**: Устанавливать `libdelphi` не нужно, достаточно скачать и разместить в каталоге `src/lib` проекта.
 
 ### Linux (Debian/Ubuntu)
 
@@ -54,10 +48,6 @@ $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmak
 
 1. Скачать **Апостол** по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
 1. Распаковать;
-1. Скачать **libdelphi** по [ссылке](https://github.com/ufocomp/libdelphi/archive/master.zip);
-1. Распаковать в `src/lib/delphi`;
-1. Скачать **apostol-core** по [ссылке](https://github.com/ufocomp/apostol-core/archive/master.zip);
-1. Распаковать в `src/core`;
 1. Настроить `CMakeLists.txt` (по необходимости);
 1. Собрать и скомпилировать (см. ниже).
 
@@ -66,24 +56,10 @@ $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmak
 $ git clone https://github.com/ufocomp/apostol.git
 ~~~
 
-Чтобы добавить **libdelphi** в проект с помощью Git выполните:
-~~~
-$ cd apostol/src/lib
-$ git clone https://github.com/ufocomp/libdelphi.git delphi
-$ cd ../../../
-~~~
-
-Чтобы добавить **apostol-core** в проект с помощью Git выполните:
-~~~
-$ cd apostol/src
-$ git clone https://github.com/ufocomp/apostol-core.git core
-$ cd ../../
-~~~
-
 ###### Сборка:
 ~~~
 $ cd apostol
-$ cmake -DCMAKE_BUILD_TYPE=Release . -B cmake-build-release
+$ ./configure
 ~~~
 
 ###### Компиляция и установка:
@@ -124,16 +100,16 @@ $ sudo service apostol status
 
 Результат должен быть **примерно** таким:
 ~~~
-● apostol.service - LSB: starts the apostol web servcie
+● apostol.service - LSB: starts the apostol web service
    Loaded: loaded (/etc/init.d/apostol; generated; vendor preset: enabled)
-   Active: active (running) since Thu 2019-08-15 14:11:34 BST; 1h 1min ago
+   Active: active (running) since Tue 2020-08-25 23:04:53 UTC; 4 days ago
      Docs: man:systemd-sysv-generator(8)
-  Process: 16465 ExecStop=/etc/init.d/apostol stop (code=exited, status=0/SUCCESS)
-  Process: 16509 ExecStart=/etc/init.d/apostol start (code=exited, status=0/SUCCESS)
+  Process: 6310 ExecStop=/etc/init.d/apostol stop (code=exited, status=0/SUCCESS)
+  Process: 6987 ExecStart=/etc/init.d/apostol start (code=exited, status=0/SUCCESS)
     Tasks: 3 (limit: 4915)
    CGroup: /system.slice/apostol.service
-           ├─16520 apostol: master process /usr/sbin/abc
-           └─16521 apostol: worker process
+           ├─6999 apostol: master process /usr/sbin/apostol
+           └─7000 apostol: worker process ("web server")
 ~~~
 
 ### **Управление**.
