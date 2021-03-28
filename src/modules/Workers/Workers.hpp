@@ -26,9 +26,11 @@ Author:
 //----------------------------------------------------------------------------------------------------------------------
 
 #include "WebServer/WebServer.hpp"
+#include "VK/VK.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 static inline void CreateWorkers(CModuleProcess *AProcess) {
+    CVK::CreateModule(AProcess);
     CWebServer::CreateModule(AProcess);
 }
 
