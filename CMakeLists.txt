@@ -97,6 +97,21 @@ if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     message(STATUS "Dl libraries: ${dl_LIBRARIES}")
 endif()
 
+# rapidxml
+# ----------------------------------------------------------------------------------------------------------------------
+include_directories(${PROJECT_LIB_DIR}/rapidxml)
+file(GLOB lib_files ${lib_files} ${PROJECT_LIB_DIR}/rapidxml/*.hpp)
+
+# picojson
+# ----------------------------------------------------------------------------------------------------------------------
+include_directories(${PROJECT_LIB_DIR}/picojson)
+file(GLOB lib_files ${lib_files} ${PROJECT_LIB_DIR}/picojson/*.h)
+
+# jwt-cpp
+# ----------------------------------------------------------------------------------------------------------------------
+include_directories(${PROJECT_LIB_DIR}/jwt-cpp)
+file(GLOB lib_files ${lib_files} ${PROJECT_LIB_DIR}/jwt-cpp/*.h)
+
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
 include_directories(src/app src/core src/modules src/modules/Workers src/modules/Helpers src/processes)
