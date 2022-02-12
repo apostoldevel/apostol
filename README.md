@@ -1,6 +1,31 @@
 # Апостол (Apostol)
 
-**Апостол** - это фреймворк для разработки серверного программного обеспечения (системных служб), исходные коды на C++.
+**Апостол** - это HTTP-сервер с прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/), исходные коды на C++.
+
+* Основная идея заключается в том, чтобы соединить напрямую HTTP-сервер с базой данных исключив из цепочки обработки HTTP-запроса посредников в виде скриптовых языков программирования.
+
+ОПИСАНИЕ
+-
+
+**Апостол** реализован в виде фреймворка для разработки серверного программного обеспечения (системных служб) с применением асинхронной модели программирования на базе [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) с прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/) (через библиотеку: libpq) специально для высоко-нагруженных систем.
+
+Фреймворк имеет модульную конструкцию, встроенный HTTP-сервер и PQ-клиент ([PostgreSQL](https://www.postgresql.org/)).
+
+С помощью готовых модулей Апостол можно превратить в:
+
+- [Сервер авторизации](https://github.com/apostoldevel/module-AuthServer) (OAuth 2.0);
+- [Сервер приложений](https://github.com/apostoldevel/module-AppServer) (REST API);
+- [Сервер сообщений](https://github.com/apostoldevel/process-MessageServer) (SMTP/FCM/API);
+- [Веб-сервер](https://github.com/apostoldevel/module-WebServer) (HTTP);
+- [Файл сервер](https://github.com/apostoldevel/module-FileServer);
+- Proxy-сервер например [Сбербанк эквайринг](https://github.com/apostoldevel/module-SBAcquiring) или [MTS Communicator](https://github.com/apostoldevel/module-M2M);
+- [Сервер потоковых данных](https://github.com/apostoldevel/process-StreamServer) (UDP).
+
+Апостол имеет встроенную поддержку WebSocket: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
+
+Объединив всё выше перечисленное можно создать информационную систему [Апостол CRM](https://github.com/apostoldevel/apostol-crm) или [Центральную систему для станций зарядки электо-автомобилей](https://github.com/apostoldevel/apostol-cs) почему бы и нет ;-).
+
+_С Апостол Ваши возможности ограничены только Вашей фантазий._
 
 СТРУКТУРА КАТАЛОГОВ
 -
@@ -14,13 +39,6 @@
     | └─delphi/                 содержит файлы с исходным кодом библиотеки*: Delphi classes for C++
     └─modules/                  содержит файлы с исходным кодом дополнений (модулей)
     www/                        содержит файлы с Веб-сайтом
-
-ОПИСАНИЕ
--
-
-* Фрейворк разработан с применением асинхронной модели программирования на базе [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) с прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/) (через библиотеку: libpq) специально для высоконагруженных систем.
-
-* Фреймворк имеет модульную конструкцию, встроенный HTTP-сервер и PQ-сервер ([PostgreSQL](https://www.postgresql.org/)). 
 
 СБОРКА И УСТАНОВКА
 -
