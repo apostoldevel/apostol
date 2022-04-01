@@ -68,6 +68,33 @@ $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmak
 
 Для того чтобы установить PostgreSQL воспользуйтесь инструкцией по [этой](https://www.postgresql.org/download/) ссылке.
 
+#### База данных
+
+Для того чтобы установить базу данных необходимо выполнить:
+
+1. Прописать наименование базы данных в файле db/sql/sets.conf (по умолчанию: web)
+1. Прописать пароли для пользователей СУБД [libpq-pgpass](https://postgrespro.ru/docs/postgrespro/13/libpq-pgpass):
+   ~~~
+   $ sudo -iu postgres -H vim .pgpass
+   ~~~
+   ~~~
+   *:*:*:http:http
+   ~~~
+1. Указать в файле настроек `/etc/postgresql/{version}/main/pg_hba.conf`:
+   ~~~
+   # TYPE  DATABASE        USER            ADDRESS                 METHOD
+   local	web		http					md5
+   ~~~
+1. Применить настройки:
+   ~~~
+   sudo pg_ctlcluster {version} main reload
+   ~~~   
+1. Выполнить:
+   ~~~
+   $ cd db/
+   $ ./install.sh --make
+   ~~~
+
 ###### Параметр `--make` необходим для установки базы данных в первый раз. Далее установочный скрипт можно запускать или без параметров или с параметром `--install`.
 
 Для установки **Апостол** (без Git) необходимо:

@@ -1,0 +1,8 @@
+\echo [M] make.psql
+\ir sets.conf
+\ir user.sql
+\ir db.sql
+\connect :dbname :username
+\ir schema.sql
+\ir routine.sql
+\q

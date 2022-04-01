@@ -1,0 +1,7 @@
+\echo [M] install.psql
+\ir sets.conf
+\ir db.sql
+\connect :dbname :username
+\ir schema.sql
+\ir routine.sql
+\q
