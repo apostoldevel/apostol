@@ -38,7 +38,7 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        //-- CPQServer ------------------------------------------------------------------------------------------------
+        //-- CPQServer -------------------------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -143,10 +143,12 @@ namespace Apostol {
 
         void CPQServer::PQGet(CHTTPServerConnection *AConnection, const CString &Path) {
 
+            auto pRequest = AConnection->Request();
+
             CStringList SQL;
 
-            const auto &caHeaders = HeadersToJson(AConnection->Request()->Headers).ToString();
-            const auto &caParams = ParamsToJson(AConnection->Request()->Params).ToString();
+            const auto &caHeaders = HeadersToJson(pRequest->Headers).ToString();
+            const auto &caParams = ParamsToJson(pRequest->Params).ToString();
 
             SQL.Add(CString()
                             .MaxFormatSize(256 + Path.Size() + caHeaders.Size() + caParams.Size())
@@ -167,10 +169,12 @@ namespace Apostol {
 
         void CPQServer::PQPost(CHTTPServerConnection *AConnection, const CString &Path, const CString &Body) {
 
+            auto pRequest = AConnection->Request();
+
             CStringList SQL;
 
-            const auto &caHeaders = HeadersToJson(AConnection->Request()->Headers).ToString();
-            const auto &caParams = ParamsToJson(AConnection->Request()->Params).ToString();
+            const auto &caHeaders = HeadersToJson(pRequest->Headers).ToString();
+            const auto &caParams = ParamsToJson(pRequest->Params).ToString();
             const auto &caBody = Body.IsEmpty() ? "null" : PQQuoteLiteral(Body);
 
             SQL.Add(CString()
