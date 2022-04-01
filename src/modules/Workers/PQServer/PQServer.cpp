@@ -149,7 +149,7 @@ namespace Apostol {
             const auto &caParams = ParamsToJson(AConnection->Request()->Params).ToString();
 
             SQL.Add(CString()
-                            .MaxFormatSize(256 + Path.Size() + caHeaders.Size())
+                            .MaxFormatSize(256 + Path.Size() + caHeaders.Size() + caParams.Size())
                             .Format("SELECT * FROM http.get(%s, %s::jsonb, %s::jsonb);",
                                     PQQuoteLiteral(Path).c_str(),
                                     PQQuoteLiteral(caHeaders).c_str(),
