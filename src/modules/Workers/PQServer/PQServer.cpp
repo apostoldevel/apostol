@@ -42,7 +42,7 @@ namespace Apostol {
 
         //--------------------------------------------------------------------------------------------------------------
 
-        CPQServer::CPQServer(CModuleProcess *AProcess) : CApostolModule(AProcess, "application server", "worker/PQServer") {
+        CPQServer::CPQServer(CModuleProcess *AProcess) : CApostolModule(AProcess, "postgres query server", "worker/PQServer") {
             m_Headers.Add("Authorization");
 
             CPQServer::InitMethods();
@@ -223,7 +223,7 @@ namespace Apostol {
                 return;
             }
 
-            const auto& caContentType = pRequest->Headers.Values(_T("Content-Type")).Lower();
+            const auto& caContentType = pRequest->Headers[_T("Content-Type")].Lower();
             const auto bContentJson = (caContentType.Find(_T("application/json")) != CString::npos);
 
             CJSON Json;
