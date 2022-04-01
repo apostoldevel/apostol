@@ -40,6 +40,7 @@ namespace Apostol {
         class CPQServer: public CApostolModule {
         private:
 
+            static CJSON ParamsToJson(const CStringList &Params);
             static CJSON HeadersToJson(const CHeaders &Headers);
 
             void InitMethods() override;
@@ -65,7 +66,7 @@ namespace Apostol {
             }
 
             void PQGet(CHTTPServerConnection *AConnection, const CString &Path);
-            void PQPost(CHTTPServerConnection *AConnection, const CString &Path, const CString &Payload);
+            void PQPost(CHTTPServerConnection *AConnection, const CString &Path, const CString &Body);
 
             void Heartbeat() override;
 

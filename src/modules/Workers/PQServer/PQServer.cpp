@@ -122,10 +122,21 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
+        CJSON CPQServer::ParamsToJson(const CStringList &Params) {
+            CJSON Json;
+            for (int i = 0; i < Params.Count(); i++) {
+                Json.Object().AddPair(Params.Names(i), Params.Values(i));
+            }
+            return Json;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+
         CJSON CPQServer::HeadersToJson(const CHeaders &Headers) {
             CJSON Json;
-            for (int i = 0; i < Headers.Count(); i++)
-                Json.Object().AddPair(Headers[i].Name(), Headers[i].Value());
+            for (int i = 0; i < Headers.Count(); i++) {
+                const auto &caHeader = Headers[i];
+                Json.Object().AddPair(caHeader.Name(), caHeader.Value());
+            }
             return Json;
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -134,14 +145,15 @@ namespace Apostol {
 
             CStringList SQL;
 
-            const auto &caJson = HeadersToJson(AConnection->Request()->Headers);
-            const auto &caHeaders = caJson.ToString();
+            const auto &caHeaders = HeadersToJson(AConnection->Request()->Headers).ToString();
+            const auto &caParams = ParamsToJson(AConnection->Request()->Params).ToString();
 
             SQL.Add(CString()
                             .MaxFormatSize(256 + Path.Size() + caHeaders.Size())
-                            .Format("SELECT * FROM http.get(%s, %s::jsonb);",
+                            .Format("SELECT * FROM http.get(%s, %s::jsonb, %s::jsonb);",
                                     PQQuoteLiteral(Path).c_str(),
-                                    PQQuoteLiteral(caHeaders).c_str()
+                                    PQQuoteLiteral(caHeaders).c_str(),
+                                    PQQuoteLiteral(caParams).c_str()
                             ));
 
             try {
@@ -153,20 +165,21 @@ namespace Apostol {
         }
         //--------------------------------------------------------------------------------------------------------------
 
-        void CPQServer::PQPost(CHTTPServerConnection *AConnection, const CString &Path, const CString &Payload) {
+        void CPQServer::PQPost(CHTTPServerConnection *AConnection, const CString &Path, const CString &Body) {
 
             CStringList SQL;
 
-            const auto &caJson = HeadersToJson(AConnection->Request()->Headers);
-            const auto &caHeaders = caJson.ToString();
-            const auto &caPayload = Payload.IsEmpty() ? "null" : PQQuoteLiteral(Payload);
+            const auto &caHeaders = HeadersToJson(AConnection->Request()->Headers).ToString();
+            const auto &caParams = ParamsToJson(AConnection->Request()->Params).ToString();
+            const auto &caBody = Body.IsEmpty() ? "null" : PQQuoteLiteral(Body);
 
             SQL.Add(CString()
-                            .MaxFormatSize(256 + Path.Size() + caHeaders.Size() + caPayload.Size())
-                            .Format("SELECT * FROM http.post(%s, %s::jsonb, %s::jsonb);",
+                            .MaxFormatSize(256 + Path.Size() + caHeaders.Size() + caParams.Size() + caBody.Size())
+                            .Format("SELECT * FROM http.post(%s, %s::jsonb, %s::jsonb, %s::jsonb);",
                                     PQQuoteLiteral(Path).c_str(),
                                     PQQuoteLiteral(caHeaders).c_str(),
-                                    caPayload.c_str()
+                                    PQQuoteLiteral(caParams).c_str(),
+                                    caBody.c_str()
                             ));
 
             try {
@@ -218,9 +231,9 @@ namespace Apostol {
                 ContentToJson(pRequest, Json);
             }
 
-            const auto& caPayload = bContentJson ? pRequest->Content : Json.ToString();
+            const auto& caBody = bContentJson ? pRequest->Content : Json.ToString();
 
-            PQPost(AConnection, path, caPayload);
+            PQPost(AConnection, path, caBody);
         }
         //--------------------------------------------------------------------------------------------------------------
 

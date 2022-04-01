@@ -3,17 +3,19 @@
 --------------------------------------------------------------------------------
 /**
  * GET запрос.
- * @param {text} pPath - Путь
+ * @param {text} pRoute - Маршрут
  * @param {jsonb} pHeader - HTTP заголовок
+ * @param {jsonb} pParams - Параметры запроса
  * @return {SETOF json} - Записи в JSON
  */
 CREATE OR REPLACE FUNCTION http.get (
-  pPath     text,
-  pHeader   jsonb
+  pRoute    text,
+  pHeader   jsonb,
+  pParams   jsonb
 ) RETURNS   SETOF json
 AS $$
 BEGIN
-  CASE lower(pPath)
+  CASE pRoute
   WHEN '/api/v1/ping' THEN
 
 	RETURN NEXT json_build_object('code', 200, 'message', 'OK');
@@ -26,9 +28,13 @@ BEGIN
 
 	RETURN NEXT pHeader;
 
+  WHEN '/api/v1/params' THEN
+
+	RETURN NEXT pParams;
+
   ELSE
 
-    RAISE EXCEPTION 'Route "%" not found.', pPath;
+    RAISE EXCEPTION 'Route "%" not found.', pRoute;
 
   END CASE;
 
@@ -43,14 +49,16 @@ $$ LANGUAGE plpgsql
 --------------------------------------------------------------------------------
 /**
  * POST запрос.
- * @param {text} pPath - Путь
+ * @param {text} pRoute - Маршрут
  * @param {jsonb} pHeader - HTTP заголовок
+ * @param {jsonb} pParams - Параметры запроса
  * @param {jsonb} pBody - Тело запроса
  * @return {SETOF json} - Записи в JSON
  */
 CREATE OR REPLACE FUNCTION http.post (
-  pPath     text,
+  pRoute    text,
   pHeader   jsonb,
+  pParams   jsonb,
   pBody     jsonb
 ) RETURNS   SETOF json
 AS $$
@@ -62,10 +70,14 @@ BEGIN
     -- parse authorization
   END LOOP;
 
-  CASE lower(pPath)
+  CASE pRoute
   WHEN '/api/v1/header' THEN
 
 	RETURN NEXT pHeader;
+
+  WHEN '/api/v1/params' THEN
+
+	RETURN NEXT pParams;
 
   WHEN '/api/v1/body' THEN
 
@@ -73,7 +85,7 @@ BEGIN
 
   ELSE
 
-    RAISE EXCEPTION 'Route "%" not found.', pPath;
+    RAISE EXCEPTION 'Route "%" not found.', pRoute;
 
   END CASE;
 
