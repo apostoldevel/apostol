@@ -3,13 +3,13 @@
 --------------------------------------------------------------------------------
 /**
  * GET запрос.
- * @param {text} patch - Путь
+ * @param {text} path - Путь
  * @param {jsonb} headers - HTTP заголовки
  * @param {jsonb} params - Параметры запроса
  * @return {SETOF json}
  */
 CREATE OR REPLACE FUNCTION http.get (
-  patch     text,
+  path      text,
   headers   jsonb,
   params    jsonb DEFAULT null
 ) RETURNS   SETOF json
@@ -17,7 +17,7 @@ AS $$
 DECLARE
   r         record;
 BEGIN
-  IF split_part(patch, '/', 3) != 'v1' THEN
+  IF split_part(path, '/', 3) != 'v1' THEN
     RAISE EXCEPTION 'Invalid API version.';
   END IF;
 
@@ -27,7 +27,7 @@ BEGIN
     RAISE NOTICE '%: %', r.key, r.value;
   END LOOP;
 
-  CASE split_part(patch, '/', 4)
+  CASE split_part(path, '/', 4)
   WHEN 'ping' THEN
 
 	RETURN NEXT json_build_object('code', 200, 'message', 'OK');
@@ -46,7 +46,7 @@ BEGIN
 
   ELSE
 
-    RAISE EXCEPTION 'Patch "%" not found.', patch;
+    RAISE EXCEPTION 'Patch "%" not found.', path;
 
   END CASE;
 
@@ -61,14 +61,14 @@ $$ LANGUAGE plpgsql
 --------------------------------------------------------------------------------
 /**
  * POST запрос.
- * @param {text} patch - Путь
+ * @param {text} path - Путь
  * @param {jsonb} headers - HTTP заголовки
  * @param {jsonb} params - Параметры запроса
  * @param {jsonb} body - Тело запроса
  * @return {SETOF json}
  */
 CREATE OR REPLACE FUNCTION http.post (
-  patch     text,
+  path      text,
   headers   jsonb,
   params    jsonb DEFAULT null,
   body      jsonb DEFAULT null
@@ -77,7 +77,7 @@ AS $$
 DECLARE
   r         record;
 BEGIN
-  IF split_part(patch, '/', 3) != 'v1' THEN
+  IF split_part(path, '/', 3) != 'v1' THEN
     RAISE EXCEPTION 'Invalid API version.';
   END IF;
 
@@ -87,7 +87,7 @@ BEGIN
     RAISE NOTICE '%: %', r.key, r.value;
   END LOOP;
 
-  CASE split_part(patch, '/', 4)
+  CASE split_part(path, '/', 4)
   WHEN 'ping' THEN
 
 	RETURN NEXT json_build_object('code', 200, 'message', 'OK');
@@ -110,7 +110,7 @@ BEGIN
 
   ELSE
 
-    RAISE EXCEPTION 'Patch "%" not found.', patch;
+    RAISE EXCEPTION 'Patch "%" not found.', path;
 
   END CASE;
 
