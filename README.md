@@ -9,25 +9,36 @@
     * **Автономность**: После сборки Вы получаете полностью готовый к работе бинарный файл в виде системной службы (демона) под ОС Linux;
     * **Скорость**: Запросы к HTTP-серверу и базе данных выполняются на столько быстро на сколько это позволяет операционная система и СУБД;
     * **Пул соединений**: Апостол имеет собственный настраиваемый пул соединений с PostgreSQL.
-  
+
 ОПИСАНИЕ
 -
 
 **Апостол** реализован в виде фреймворка для разработки серверного программного обеспечения (системных служб) с применением асинхронной модели программирования на базе [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) с прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/) (через библиотеку: libpq) специально для высоко-нагруженных систем.
 
+МОДУЛИ
+-
+
 Фреймворк имеет модульную конструкцию, встроенный HTTP-сервер и PQ-клиент ([PostgreSQL](https://www.postgresql.org/)).
 
-С помощью готовых модулей Апостол можно превратить в:
+### Данная сборка поставляется двумя модулями:
+
+- [WebServer](https://github.com/apostoldevel/module-WebServer) (Веб-сервер);
+    * Обеспечивает работу [Swagger UI](https://swagger.io/tools/swagger-ui) который будет доступен по адресу http://localhost:8080 в вашем браузере после запуска **Апостол**.
+
+
+- [PQFetch](https://github.com/apostoldevel/module-PQFetch) (Postgres Query Fetch);
+    * Предоставляет возможность проектировать backend на языке программирования PL/pqSQL непосредственно в самой базе данных.
+
+### С помощью дополнительных модулей Апостол можно превратить в:
 
 - [Сервер авторизации](https://github.com/apostoldevel/module-AuthServer) (OAuth 2.0);
 - [Сервер приложений](https://github.com/apostoldevel/module-AppServer) (REST API);
 - [Сервер сообщений](https://github.com/apostoldevel/process-MessageServer) (SMTP/FCM/API);
-- [Веб-сервер](https://github.com/apostoldevel/module-WebServer) (HTTP);
 - [Файл сервер](https://github.com/apostoldevel/module-FileServer);
 - Proxy-сервер например [Сбербанк эквайринг](https://github.com/apostoldevel/module-SBAcquiring) или [MTS Communicator](https://github.com/apostoldevel/module-M2M);
 - [Сервер потоковых данных](https://github.com/apostoldevel/process-StreamServer) (UDP).
 
-Апостол имеет встроенную поддержку WebSocket: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
+**Апостол** имеет встроенную поддержку WebSocket: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
 
 Объединив всё выше перечисленное можно создать информационную систему [Апостол CRM](https://github.com/apostoldevel/apostol-crm) или [Центральную систему для станций зарядки электо-автомобилей](https://github.com/apostoldevel/apostol-cs) почему бы и нет ;-).
 
@@ -62,7 +73,7 @@ _С Апостол Ваши возможности ограничены толь
 $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
 ~~~
 
-###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство. 
+###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство.
 
 #### PostgreSQL
 
@@ -127,18 +138,18 @@ $ sudo make install
 /usr/sbin
 ~~~
 
-Файл конфигурации и необходимые для работы файлы, в зависимости от варианта установки, будут расположены в: 
+Файл конфигурации и необходимые для работы файлы, в зависимости от варианта установки, будут расположены в:
 ~~~
 /etc/apostol
 или
 ~/apostol
 ~~~
 
-ЗАПУСК 
+ЗАПУСК
 -
 ###### Если `INSTALL_AS_ROOT` установлено в `ON`.
 
-**`apostol`** - это системная служба (демон) Linux. 
+**`apostol`** - это системная служба (демон) Linux.
 Для управления **`apostol`** используйте стандартные команды управления службами.
 
 Для запуска `apostol` выполните:
@@ -168,8 +179,8 @@ $ sudo service apostol status
 ### **Управление**.
 
 Управлять **`apostol`** можно с помощью сигналов.
-Номер главного процесса по умолчанию записывается в файл `/run/apostol.pid`. 
-Изменить имя этого файла можно при конфигурации сборки или же в `apostol.conf` секция `[daemon]` ключ `pid`. 
+Номер главного процесса по умолчанию записывается в файл `/run/apostol.pid`.
+Изменить имя этого файла можно при конфигурации сборки или же в `apostol.conf` секция `[daemon]` ключ `pid`.
 
 Главный процесс поддерживает следующие сигналы:
 

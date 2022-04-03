@@ -3,7 +3,8 @@ info:
   description: >
     Направляет HTTP GET и POST запросы в базу данных PostgreSQL вызывая функции http.get и http.post соответственно.
   version: "1.0.0"
-  title: Модуль для Апостол PQFetch
+  title: >
+    Apostol: Postgres Query Fetch
   contact:
     email: apostoldevel@gmail.com
   license:
