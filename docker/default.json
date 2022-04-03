@@ -1,0 +1,4 @@
+{
+  "hosts": ["localhost:8080"],
+  "root": "/opt/apostol/www"
+}
