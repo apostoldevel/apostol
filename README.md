@@ -154,26 +154,29 @@ $ sudo make install
 
 Для запуска `apostol` выполните:
 ~~~
-$ sudo service apostol start
+$ sudo systemctl start apostol
 ~~~
 
 Для проверки статуса выполните:
 ~~~
-$ sudo service apostol status
+$ sudo systemctl status apostol
 ~~~
 
 Результат должен быть **примерно** таким:
 ~~~
-● apostol.service - LSB: starts the apostol web service
-   Loaded: loaded (/etc/init.d/apostol; generated; vendor preset: enabled)
-   Active: active (running) since Tue 2020-08-25 23:04:53 UTC; 4 days ago
-     Docs: man:systemd-sysv-generator(8)
-  Process: 6310 ExecStop=/etc/init.d/apostol stop (code=exited, status=0/SUCCESS)
-  Process: 6987 ExecStart=/etc/init.d/apostol start (code=exited, status=0/SUCCESS)
-    Tasks: 3 (limit: 4915)
-   CGroup: /system.slice/apostol.service
-           ├─6999 apostol: master process /usr/sbin/apostol
-           └─7000 apostol: worker process ("web server")
+● apostol.service - Apostol
+     Loaded: loaded (/etc/systemd/system/apostol.service; enabled; vendor preset: enabled)
+     Active: active (running) since Sat 2019-04-06 00:00:00 MSK; 3y ago
+    Process: 461158 ExecStartPre=/usr/bin/rm -f /run/apostol.pid (code=exited, status=0/SUCCESS)
+    Process: 461160 ExecStartPre=/usr/sbin/apostol -t (code=exited, status=0/SUCCESS)
+    Process: 461162 ExecStart=/usr/sbin/apostol (code=exited, status=0/SUCCESS)
+   Main PID: 461163 (apostol)
+      Tasks: 2 (limit: 77011)
+     Memory: 2.6M
+        CPU: 44ms
+     CGroup: /system.slice/apostol.service
+             ├─461163 apostol: master process /usr/sbin/apostol
+             └─461164 apostol: worker process ("pq fetch", "web server")
 ~~~
 
 ### **Управление**.
