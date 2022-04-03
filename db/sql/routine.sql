@@ -3,38 +3,50 @@
 --------------------------------------------------------------------------------
 /**
  * GET запрос.
- * @param {text} pRoute - Маршрут
- * @param {jsonb} pHeader - HTTP заголовок
- * @param {jsonb} pParams - Параметры запроса
- * @return {SETOF json} - Записи в JSON
+ * @param {text} patch - Путь
+ * @param {jsonb} headers - HTTP заголовки
+ * @param {jsonb} params - Параметры запроса
+ * @return {SETOF json}
  */
 CREATE OR REPLACE FUNCTION http.get (
-  pRoute    text,
-  pHeader   jsonb,
-  pParams   jsonb
+  patch     text,
+  headers   jsonb,
+  params    jsonb DEFAULT null
 ) RETURNS   SETOF json
 AS $$
+DECLARE
+  r         record;
 BEGIN
-  CASE pRoute
-  WHEN '/api/v1/ping' THEN
+  IF split_part(patch, '/', 3) != 'v1' THEN
+    RAISE EXCEPTION 'Invalid API version.';
+  END IF;
+
+  FOR r IN SELECT * FROM jsonb_each(headers)
+  LOOP
+    -- parse headers here
+    RAISE NOTICE '%: %', r.key, r.value;
+  END LOOP;
+
+  CASE split_part(patch, '/', 4)
+  WHEN 'ping' THEN
 
 	RETURN NEXT json_build_object('code', 200, 'message', 'OK');
 
-  WHEN '/api/v1/time' THEN
+  WHEN 'time' THEN
 
 	RETURN NEXT json_build_object('serverTime', trunc(extract(EPOCH FROM Now())));
 
-  WHEN '/api/v1/header' THEN
+  WHEN 'headers' THEN
 
-	RETURN NEXT pHeader;
+	RETURN NEXT coalesce(headers, jsonb_build_object());
 
-  WHEN '/api/v1/params' THEN
+  WHEN 'params' THEN
 
-	RETURN NEXT pParams;
+	RETURN NEXT coalesce(params, jsonb_build_object());
 
   ELSE
 
-    RAISE EXCEPTION 'Route "%" not found.', pRoute;
+    RAISE EXCEPTION 'Patch "%" not found.', patch;
 
   END CASE;
 
@@ -49,43 +61,56 @@ $$ LANGUAGE plpgsql
 --------------------------------------------------------------------------------
 /**
  * POST запрос.
- * @param {text} pRoute - Маршрут
- * @param {jsonb} pHeader - HTTP заголовок
- * @param {jsonb} pParams - Параметры запроса
- * @param {jsonb} pBody - Тело запроса
- * @return {SETOF json} - Записи в JSON
+ * @param {text} patch - Путь
+ * @param {jsonb} headers - HTTP заголовки
+ * @param {jsonb} params - Параметры запроса
+ * @param {jsonb} body - Тело запроса
+ * @return {SETOF json}
  */
 CREATE OR REPLACE FUNCTION http.post (
-  pRoute    text,
-  pHeader   jsonb,
-  pParams   jsonb,
-  pBody     jsonb
+  patch     text,
+  headers   jsonb,
+  params    jsonb DEFAULT null,
+  body      jsonb DEFAULT null
 ) RETURNS   SETOF json
 AS $$
 DECLARE
   r         record;
 BEGIN
-  FOR r IN SELECT * FROM jsonb_to_record(pHeader) AS x("Authorization" text)
+  IF split_part(patch, '/', 3) != 'v1' THEN
+    RAISE EXCEPTION 'Invalid API version.';
+  END IF;
+
+  FOR r IN SELECT * FROM jsonb_each(headers)
   LOOP
-    -- parse authorization
+    -- parse headers here
+    RAISE NOTICE '%: %', r.key, r.value;
   END LOOP;
 
-  CASE pRoute
-  WHEN '/api/v1/header' THEN
+  CASE split_part(patch, '/', 4)
+  WHEN 'ping' THEN
 
-	RETURN NEXT pHeader;
+	RETURN NEXT json_build_object('code', 200, 'message', 'OK');
 
-  WHEN '/api/v1/params' THEN
+  WHEN 'time' THEN
 
-	RETURN NEXT pParams;
+	RETURN NEXT json_build_object('serverTime', trunc(extract(EPOCH FROM Now())));
 
-  WHEN '/api/v1/body' THEN
+  WHEN 'headers' THEN
 
-	RETURN NEXT pBody;
+	RETURN NEXT coalesce(headers, jsonb_build_object());
+
+  WHEN 'params' THEN
+
+	RETURN NEXT coalesce(params, jsonb_build_object());
+
+  WHEN 'body' THEN
+
+	RETURN NEXT coalesce(body, jsonb_build_object());
 
   ELSE
 
-    RAISE EXCEPTION 'Route "%" not found.', pRoute;
+    RAISE EXCEPTION 'Patch "%" not found.', patch;
 
   END CASE;
 

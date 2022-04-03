@@ -1,0 +1,307 @@
+openapi: 3.0.0
+info:
+  description: >
+    Направляет HTTP GET и POST запросы в базу данных PostgreSQL вызывая функции http.get и http.post соответственно.
+  version: "1.0.0"
+  title: Модуль для Апостол PQFetch
+  contact:
+    email: apostoldevel@gmail.com
+  license:
+    name: MIT License
+    url: https://github.com/apostoldevel/apostol/blob/master/LICENSE
+externalDocs:
+  description: GitHub
+  url: https://github.com/apostoldevel/apostol
+servers:
+  - url: 'http://{host}:{port}/api/v1'
+    description: Custom
+    variables:
+      host:
+        default: localhost
+      port:
+        default: '8080'
+tags:
+  - name: GET
+    description: >
+      Обработка HTTP GET запроса в базе данных PostgreSQL (вызывается PL/pqSQL функция `http.get`).
+  - name: POST
+    description: >
+      Обработка HTTP POST запроса в базе данных PostgreSQL (вызывается PL/pqSQL функция `http.post`).
+paths:
+  /ping:
+    get:
+      tags:
+        - GET
+      summary: Проверка соединения.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - POST
+      summary: Проверка соединения.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+  /time:
+    get:
+      tags:
+        - GET
+      summary: Время сервера.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  serverTime:
+                    type: integer
+                    description: UNIX time
+                example:
+                  serverTime: 1642521843938
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - POST
+      summary: Время сервера.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  serverTime:
+                    type: integer
+                    description: UNIX time
+                example:
+                  serverTime: 1642521843938
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+  /headers:
+    get:
+      tags:
+        - GET
+      summary: HTTP заголовки запроса.
+      parameters:
+        - $ref: '#/components/parameters/resultObject'
+        - $ref: '#/components/parameters/resultFormat'
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/headers'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - POST
+      summary: HTTP заголовки запроса.
+      parameters:
+        - $ref: '#/components/parameters/resultObject'
+        - $ref: '#/components/parameters/resultFormat'
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/headers'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+  /params:
+    get:
+      tags:
+        - GET
+      summary: Параметры запроса.
+      parameters:
+        - $ref: '#/components/parameters/resultObject'
+        - $ref: '#/components/parameters/resultFormat'
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/params'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - POST
+      summary: Параметры запроса.
+      parameters:
+        - $ref: '#/components/parameters/resultObject'
+        - $ref: '#/components/parameters/resultFormat'
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/params'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+  /body:
+    post:
+      tags:
+        - POST
+      summary: Эхо ответ тела запроса.
+      parameters:
+        - $ref: '#/components/parameters/resultObject'
+        - $ref: '#/components/parameters/resultFormat'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/body'
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/body'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '5XX':
+          $ref: '#/components/responses/InternalError'
+components:
+  parameters:
+    resultObject:
+      in: query
+      name: result_object
+      required: false
+      schema:
+        type: string
+        enum: [true, false]
+      description: Wrap the result in a JSON-object named "result".
+    resultFormat:
+      in: query
+      name: result_format
+      required: false
+      schema:
+        type: string
+        enum: [object, array, null]
+      description: >
+        All endpoints are returned: JSON-object or JSON-array depending on the number of entries in the response. 
+        You can change this behavior with this setting.
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    InternalError:
+      description: Internal error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+  schemas:
+    headers:
+      type: object
+    params:
+      type: object
+    body:
+      type: object
+    error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+              format: int32
+            message:
+              type: string
