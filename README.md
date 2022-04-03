@@ -52,7 +52,7 @@ Docker
 ### Собрать
 
 ~~~
-$ docker build -t apostol .
+docker build -t apostol .
 ~~~
 
 ### Получить
@@ -65,12 +65,12 @@ docker pull apostoldevel/apostol
 
 Если собрали самомтоятельно:
 ~~~
-$ docker run -d -p 8080:8080 --rm --name apostol apostol
+docker run -d -p 8080:8080 --rm --name apostol apostol
 ~~~
 
 Если получили готовый образ:
 ~~~
-$ docker run -d -p 8080:8080 --rm --name apostol apostoldevel/apostol
+docker run -d -p 8080:8080 --rm --name apostol apostoldevel/apostol
 ~~~
 
 Swagger UI будет доступен по адресу http://localhost:8080 или http://host-ip:8080 в вашем браузере.
@@ -101,7 +101,7 @@ Swagger UI будет доступен по адресу http://localhost:8080 �
 
 Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
 ~~~
-$ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
+sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
 ~~~
 
 ###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство.
@@ -148,20 +148,20 @@ $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmak
 
 Для установки **Апостол** с помощью Git выполните:
 ~~~
-$ git clone https://github.com/ufocomp/apostol.git
+git clone https://github.com/ufocomp/apostol.git
 ~~~
 
 ###### Сборка:
 ~~~
-$ cd apostol
-$ ./configure
+cd apostol
+./configure
 ~~~
 
 ###### Компиляция и установка:
 ~~~
-$ cd cmake-build-release
-$ make
-$ sudo make install
+cd cmake-build-release
+make
+sudo make install
 ~~~
 
 По умолчанию бинарный файл `apostol` будет установлен в:
@@ -185,12 +185,12 @@ $ sudo make install
 
 Для запуска `apostol` выполните:
 ~~~
-$ sudo systemctl start apostol
+sudo systemctl start apostol
 ~~~
 
 Для проверки статуса выполните:
 ~~~
-$ sudo systemctl status apostol
+sudo systemctl status apostol
 ~~~
 
 Результат должен быть **примерно** таким:
