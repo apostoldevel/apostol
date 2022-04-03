@@ -98,7 +98,7 @@ $ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmak
    ~~~
 1. Применить настройки:
    ~~~
-   sudo pg_ctlcluster {version} main reload
+   $ sudo pg_ctlcluster <version> main reload
    ~~~   
 1. Выполнить:
    ~~~
