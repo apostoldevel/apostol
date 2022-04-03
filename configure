@@ -108,9 +108,10 @@ github()
     git pull
 
     download_from_github src/lib ufocomp libdelphi master delphi
-    download_from_github src ufocomp apostol-core master core
+    download_from_github src apostoldevel apostol-core master core
 
-    download_from_github src/modules/Workers ufocomp module-WebServer master WebServer
+    download_from_github src/modules/Workers apostoldevel module-WebServer master WebServer
+    download_from_github src/modules/Workers apostoldevel module-PQFetch master PQFetch
 }
 
 Success()
