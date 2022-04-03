@@ -25,12 +25,12 @@ Author:
 #define APOSTOL_WORKERS_HPP
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "PQServer/PQServer.hpp"
+#include "PQFetch/PQFetch.hpp"
 #include "WebServer/WebServer.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 static inline void CreateWorkers(CModuleProcess *AProcess) {
-    CPQServer::CreateModule(AProcess);
+    CPQFetch::CreateModule(AProcess);
     CWebServer::CreateModule(AProcess);
 }
 
