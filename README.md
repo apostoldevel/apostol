@@ -64,7 +64,7 @@ _С Апостол Ваши возможности ограничены толь
 1. Компилятор C++;
 1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
 1. Библиотека [libpq-dev](https://www.postgresql.org/download) (libraries and headers for C language frontend development);
-1. Библиотека [postgresql-server-dev-12](https://www.postgresql.org/download) (libraries and headers for C language backend development).
+1. Библиотека [postgresql-server-dev-all](https://www.postgresql.org/download) (libraries and headers for C language backend development).
 
 ### Linux (Debian/Ubuntu)
 
