@@ -4,5 +4,7 @@
 \ir db.sql
 \connect :dbname :username
 \ir schema.sql
+\ir table.sql
+\ir view.sql
 \ir routine.sql
 \q
