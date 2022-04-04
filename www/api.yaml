@@ -24,10 +24,10 @@ servers:
 tags:
   - name: GET
     description: >
-      Обработка HTTP GET запроса в базе данных PostgreSQL (вызывается PL/pqSQL функция `http.get`).
+      Обработка HTTP GET запроса в базе данных PostgreSQL (вызывается функция `http.get`).
   - name: POST
     description: >
-      Обработка HTTP POST запроса в базе данных PostgreSQL (вызывается PL/pqSQL функция `http.post`).
+      Обработка HTTP POST запроса в базе данных PostgreSQL (вызывается функция `http.post`).
 paths:
   /ping:
     get:
