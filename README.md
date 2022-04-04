@@ -26,7 +26,7 @@
     * Обеспечивает работу [Swagger UI](https://swagger.io/tools/swagger-ui) который будет доступен по адресу http://localhost:8080 в вашем браузере после запуска **Апостол**.
 
 
-- [PQFetch](https://github.com/apostoldevel/module-PQFetch) (Postgres Query Fetch);
+- [PQFetch](https://github.com/apostoldevel/module-PQFetch) (Postgres Fetch);
     * Предоставляет возможность принимать и отправлять HTTP-запросы на языке программирования PL/pqSQL.
 
 ### С помощью дополнительных модулей Апостол можно превратить в:
