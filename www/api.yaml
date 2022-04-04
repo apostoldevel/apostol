@@ -4,7 +4,7 @@ info:
     Направляет HTTP GET и POST запросы в базу данных PostgreSQL вызывая функции http.get и http.post соответственно.
   version: "1.0.0"
   title: >
-    Apostol: Postgres Query Fetch
+    Apostol: Postgres Fetch
   contact:
     email: apostoldevel@gmail.com
   license:

@@ -18,7 +18,7 @@
 МОДУЛИ
 -
 
-Фреймворк имеет модульную конструкцию, встроенный HTTP-сервер и PQ-клиент ([PostgreSQL](https://www.postgresql.org/)).
+Фреймворк имеет модульную конструкцию, встроенный HTTP-сервер и [PostgreSQL](https://www.postgresql.org/) клиент.
 
 ### Данная сборка поставляется двумя модулями:
 
@@ -26,7 +26,7 @@
     * Обеспечивает работу [Swagger UI](https://swagger.io/tools/swagger-ui) который будет доступен по адресу http://localhost:8080 в вашем браузере после запуска **Апостол**.
 
 
-- [PQFetch](https://github.com/apostoldevel/module-PQFetch) (Postgres Fetch);
+- [PGFetch](https://github.com/apostoldevel/module-PGFetch) (Postgres Fetch);
     * Предоставляет возможность принимать и отправлять HTTP-запросы на языке программирования PL/pgSQL.
 
 ### С помощью дополнительных модулей Апостол можно превратить в:

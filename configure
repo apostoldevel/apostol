@@ -111,7 +111,7 @@ github()
     download_from_github src apostoldevel apostol-core master core
 
     download_from_github src/modules/Workers apostoldevel module-WebServer master WebServer
-    download_from_github src/modules/Workers apostoldevel module-PQFetch master PQFetch
+    download_from_github src/modules/Workers apostoldevel module-PGFetch master PGFetch
 }
 
 Success()
