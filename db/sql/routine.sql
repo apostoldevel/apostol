@@ -2,7 +2,7 @@
 -- HTTP LOG --------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION WriteToLog (
+CREATE OR REPLACE FUNCTION http.write_to_log (
   pPath         text,
   pHeaders      jsonb,
   pParams       jsonb DEFAULT null,
@@ -29,7 +29,7 @@ $$ LANGUAGE plpgsql
 -- HTTP REQUEST ----------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION CreateRequest (
+CREATE OR REPLACE FUNCTION http.create_request (
   pResource     text,
   pMethod       text DEFAULT 'GET',
   pHeaders      jsonb DEFAULT null,
@@ -55,7 +55,7 @@ $$ LANGUAGE plpgsql
 -- HTTP RESPONSE ---------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION CreateResponse (
+CREATE OR REPLACE FUNCTION http.create_response (
   pRequest      uuid,
   pStatus       integer,
   pStatusText   text,
@@ -107,7 +107,7 @@ DECLARE
   vMessage  text;
   vContext  text;
 BEGIN
-  nId := WriteToLog(path, headers, params);
+  nId := http.write_to_log(path, headers, params);
 
   IF split_part(path, '/', 3) != 'v1' THEN
     RAISE EXCEPTION 'Invalid API version.';
@@ -137,6 +137,13 @@ BEGIN
 
 	RETURN NEXT coalesce(params, jsonb_build_object());
 
+  WHEN 'log' THEN
+
+	FOR r IN SELECT * FROM http.log ORDER BY id DESC
+	LOOP
+	  RETURN NEXT row_to_json(r);
+	END LOOP;
+
   ELSE
 
     RAISE EXCEPTION 'Patch "%" not found.', path;
@@ -150,7 +157,7 @@ EXCEPTION
 WHEN others THEN
   GET STACKED DIAGNOSTICS vMessage = MESSAGE_TEXT, vContext = PG_EXCEPTION_CONTEXT;
 
-  PERFORM WriteToLog(path, headers, params, null, 'GET', vMessage, vContext);
+  PERFORM http.write_to_log(path, headers, params, null, 'GET', vMessage, vContext);
 
   RETURN NEXT json_build_object('error', json_build_object('code', 400, 'message', vMessage));
 
@@ -188,7 +195,7 @@ DECLARE
   vMessage  text;
   vContext  text;
 BEGIN
-  nId := WriteToLog(path, headers, params, body, 'POST');
+  nId := http.write_to_log(path, headers, params, body, 'POST');
 
   IF split_part(path, '/', 3) != 'v1' THEN
     RAISE EXCEPTION 'Invalid API version.';
@@ -235,7 +242,7 @@ EXCEPTION
 WHEN others THEN
   GET STACKED DIAGNOSTICS vMessage = MESSAGE_TEXT, vContext = PG_EXCEPTION_CONTEXT;
 
-  PERFORM WriteToLog(path, headers, params, body, 'POST', vMessage, vContext);
+  PERFORM http.write_to_log(path, headers, params, body, 'POST', vMessage, vContext);
 
   RETURN NEXT json_build_object('error', json_build_object('code', 400, 'message', vMessage));
 
@@ -284,7 +291,7 @@ BEGIN
     END IF;
   END IF;
 
-  RETURN CreateRequest(resource, method, headers, content, done, fail);
+  RETURN http.create_request(resource, method, headers, content, done, fail);
 END;
 $$ LANGUAGE plpgsql
   SECURITY DEFINER
