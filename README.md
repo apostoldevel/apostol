@@ -14,7 +14,7 @@
      
 DESCRIPTION
 -
-**Apostol** is implemented as a framework for developing server software (system services) using an asynchronous programming model based on the epoll API with direct access to the [PostgreSQL](https://www.postgresql.org/) (through the library: `libpq`), specifically for highly loaded systems.
+**Apostol** is implemented as a framework for developing server software (system services) using an asynchronous programming model based on the [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) with direct access to the [PostgreSQL](https://www.postgresql.org/) (through the library: `libpq`), specifically for highly loaded systems.
 
 MODULES
 -
