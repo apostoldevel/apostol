@@ -1,49 +1,50 @@
-# Апостол (Apostol)
+[![ru](https://img.shields.io/badge/lang-ru-green.svg)](https://github.com/apostoldevel/apostol/blob/master/README.ru-RU.md)
 
-**Апостол** - это HTTP-сервер с прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/), исходные коды на C++.
+# Apostol
 
-* Основная идея заключается в том, чтобы соединить напрямую HTTP-сервер с базой данных исключив из цепочки обработки HTTP-запроса посредников в виде скриптовых языков программирования.
+**Apostol** is an HTTP server with direct access to the [PostgreSQL](https://www.postgresql.org/), with source code in C++.
+
+* The main idea is to connect the HTTP server directly to the database, eliminating intermediary scripts in the form of programming languages from the `HTTP request` processing chain.
 
 
-* Основные преимущества:
-    * **Автономность**: После сборки Вы получаете полностью готовый к работе бинарный файл в виде системной службы (демона) под ОС Linux;
-    * **Скорость**: Запросы к HTTP-серверу и базе данных выполняются на столько быстро на сколько это позволяет операционная система и СУБД;
-    * **Пул соединений**: Апостол имеет собственный настраиваемый пул соединений с PostgreSQL.
+* The main advantages:
+    * **Autonomy**: After building, you get a fully ready-to-use binary file in the form of a system service (daemon) under Linux OS;
+    * **Speed**: Queries to the HTTP server and the database are executed as fast as the operating system and DBMS allow;
+    * **Connection pool**: Apostle has its own customizable connection pool with PostgreSQL.
+     
+DESCRIPTION
+-
+**Apostol** is implemented as a framework for developing server software (system services) using an asynchronous programming model based on the epoll API with direct access to the [PostgreSQL](https://www.postgresql.org/) (through the library: `libpq`), specifically for highly loaded systems.
 
-ОПИСАНИЕ
+MODULES
 -
 
-**Апостол** реализован в виде фреймворка для разработки серверного программного обеспечения (системных служб) с применением асинхронной модели программирования на базе [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) с прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/) (через библиотеку: libpq) специально для высоко-нагруженных систем.
+The framework has a modular design, built-in HTTP server, and [PostgreSQL](https://www.postgresql.org/) client.
 
-МОДУЛИ
--
+### This build comes with two modules:
 
-Фреймворк имеет модульную конструкцию, встроенный HTTP-сервер и [PostgreSQL](https://www.postgresql.org/) клиент.
-
-### Данная сборка поставляется двумя модулями:
-
-- [WebServer](https://github.com/apostoldevel/module-WebServer) (Веб-сервер);
-    * Обеспечивает работу [Swagger UI](https://swagger.io/tools/swagger-ui) который будет доступен по адресу http://localhost:8080 в вашем браузере после запуска **Апостол**.
+- [WebServer](https://github.com/apostoldevel/module-WebServer) (Web server);
+    * Provides the [Swagger UI](https://swagger.io/tools/swagger-ui) which will be available at [http://localhost:8080](http://localhost:8080) in your browser after launching **Apostol**.
 
 
 - [PGFetch](https://github.com/apostoldevel/module-PGFetch) (Postgres Fetch);
-    * Предоставляет возможность принимать и отправлять HTTP-запросы на языке программирования PL/pgSQL.
+    * Enables receiving and sending `HTTP requests` in `the PL/pgSQL` programming language.
+  
+### With additional modules, Apostol can be turned into:
 
-### С помощью дополнительных модулей Апостол можно превратить в:
+- [AuthServer](https://github.com/apostoldevel/module-AuthServer) (Authorization server OAuth 2.0);
+- [AppServer](https://github.com/apostoldevel/module-AppServer) (Application server);
+- [MessageServer](https://github.com/apostoldevel/process-MessageServer) (Message server: SMTP/FCM/API);
+- [FileServer](https://github.com/apostoldevel/module-FileServer) (File server);
+- [Replication](https://github.com/apostoldevel/module-Replication) (Replication);
+- [StreamServer](https://github.com/apostoldevel/process-StreamServer) (Streaming data server).
 
-- [Сервер авторизации](https://github.com/apostoldevel/module-AuthServer) (OAuth 2.0);
-- [Сервер приложений](https://github.com/apostoldevel/module-AppServer) (REST API);
-- [Сервер сообщений](https://github.com/apostoldevel/process-MessageServer) (SMTP/FCM/API);
-- [Файл сервер](https://github.com/apostoldevel/module-FileServer);
-- Proxy-сервер например [Сбербанк эквайринг](https://github.com/apostoldevel/module-SBAcquiring) или [MTS Communicator](https://github.com/apostoldevel/module-M2M);
-- [Сервер потоковых данных](https://github.com/apostoldevel/process-StreamServer) (UDP).
+Apostol has built-in WebSocket support: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
 
-**Апостол** имеет встроенную поддержку WebSocket: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
+Combining all the above, you can create an information system [Apostol CRM](https://github.com/apostoldevel/apostol-crm) or [Central System for Electric Vehicle Charging Stations](https://github.com/apostoldevel/apostol-cs) why not ;-).
 
-Объединив всё выше перечисленное можно создать информационную систему [Апостол CRM](https://github.com/apostoldevel/apostol-crm) или [Центральную систему для станций зарядки электо-автомобилей](https://github.com/apostoldevel/apostol-cs) почему бы и нет ;-).
-
-_С Апостол Ваши возможности ограничены только Вашей фантазий._
-
+_With Apostol your possibilities are only limited by your imagination._
+ 
 Docker
 -
 
@@ -141,7 +142,7 @@ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake 
 
 Для установки **Апостол** (без Git) необходимо:
 
-1. Скачать **Апостол** по [ссылке](https://github.com/ufocomp/apostol/archive/master.zip);
+1. Скачать [Апостол](https://github.com/ufocomp/apostol/archive/master.zip);
 1. Распаковать;
 1. Настроить `CMakeLists.txt` (по необходимости);
 1. Собрать и скомпилировать (см. ниже).
@@ -178,10 +179,11 @@ sudo make install
 
 ЗАПУСК
 -
+
 ###### Если `INSTALL_AS_ROOT` установлено в `ON`.
 
-**`apostol`** - это системная служба (демон) Linux.
-Для управления **`apostol`** используйте стандартные команды управления службами.
+`apostol` - это системная служба (демон) Linux.
+Для управления `apostol` используйте стандартные команды управления службами.
 
 Для запуска `apostol` выполните:
 ~~~
@@ -210,9 +212,10 @@ sudo systemctl status apostol
              └─461164 apostol: worker process ("pq fetch", "web server")
 ~~~
 
-### **Управление**.
+УПРАВЛЕНИЕ
+-
 
-Управлять **`apostol`** можно с помощью сигналов.
+Управлять `apostol` можно с помощью сигналов.
 Номер главного процесса по умолчанию записывается в файл `/run/apostol.pid`.
 Изменить имя этого файла можно при конфигурации сборки или же в `apostol.conf` секция `[daemon]` ключ `pid`.
 
