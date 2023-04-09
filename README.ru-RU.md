@@ -143,14 +143,14 @@ sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake 
 
 Для установки **Апостол** (без Git) необходимо:
 
-1. Скачать [Апостол](https://github.com/ufocomp/apostol/archive/master.zip);
+1. Скачать [Апостол](https://github.com/apostoldevel/apostol/archive/master.zip);
 1. Распаковать;
 1. Настроить `CMakeLists.txt` (по необходимости);
 1. Собрать и скомпилировать (см. ниже).
 
 Для установки **Апостол** с помощью Git выполните:
 ~~~
-git clone https://github.com/ufocomp/apostol.git
+git clone https://github.com/apostoldevel/apostol.git
 ~~~
 
 ###### Сборка:

@@ -141,14 +141,14 @@ To install the database, you need to perform the following steps:
 
 To install **Apostol** (without Git), you need to:
 
-1. Download [Apostol](https://github.com/ufocomp/apostol/archive/master.zip);
+1. Download [Apostol](https://github.com/apostoldevel/apostol/archive/master.zip);
 2. Unpack it;
 3. Configure CMakeLists.txt (if necessary);
 4. Build and compile (see below).
 
 To install Apostol using Git, execute:
 ~~~
-git clone https://github.com/ufocomp/apostol.git
+git clone https://github.com/apostoldevel/apostol.git
 ~~~
 
 ###### Build:
