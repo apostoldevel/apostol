@@ -10,7 +10,7 @@
 * The main advantages:
     * **Autonomy**: After building, you get a fully ready-to-use binary file in the form of a system service (daemon) under Linux OS;
     * **Speed**: Queries to the HTTP server and the database are executed as fast as the operating system and DBMS allow;
-    * **Connection pool**: Apostle has its own customizable connection pool with PostgreSQL.
+    * **Connection pool**: Apostol has its own customizable connection pool with [PostgreSQL](https://www.postgresql.org/).
      
 DESCRIPTION
 -
