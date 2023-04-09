@@ -49,152 +49,154 @@ _С Апостол Ваши возможности ограничены толь
 Docker
 -
 
-You can build an image yourself or get a ready-made one from Docker Hub:
+Вы можете собрать образ самостоятельно или получить уже готовый из докер-хаб:
 
-### Build
+### Собрать
 
 ~~~
 docker build -t apostol .
 ~~~
 
-### Get
+### Получить
 
 ~~~
 docker pull apostoldevel/apostol
 ~~~
-### Run
 
-If you built it yourself:
+### Запустить
+
+Если собрали самомтоятельно:
 ~~~
 docker run -d -p 8080:8080 --rm --name apostol apostol
 ~~~
 
-If you got a ready-made image:
+Если получили готовый образ:
 ~~~
 docker run -d -p 8080:8080 --rm --name apostol apostoldevel/apostol
 ~~~
 
-Swagger UI will be available at [http://localhost:8080](http://localhost:8080) or http://host-ip:8080 in your browser.
+Swagger UI будет доступен по адресу http://localhost:8080 или http://host-ip:8080 в вашем браузере.
 
-DIRECTORY STRUCTURE
+СТРУКТУРА КАТАЛОГОВ
 -
-    auto/                       contains scripts files
-    cmake-modules/              contains CMake modules files
-    conf/                       contains configuration files
-    src/                        contains source code files
-    ├─app/                      contains source code files: Apostol
-    ├─core/                     contains source code files: Apostol Core
-    ├─lib/                      contains source code files for libraries
-    | └─delphi/                 contains source code files for the library*: Delphi classes for C++
-    └─modules/                  contains source code files for add-ons (modules)
-    www/                        contains files for the website
+    auto/                       содержит файлы со скриптами
+    cmake-modules/              содержит файлы с модулями CMake
+    conf/                       содержит файлы с настройками
+    src/                        содержит файлы с исходным кодом
+    ├─app/                      содержит файлы с исходным кодом: Apostol
+    ├─core/                     содержит файлы с исходным кодом: Apostol Core
+    ├─lib/                      содержит файлы с исходным кодом библиотек
+    | └─delphi/                 содержит файлы с исходным кодом библиотеки*: Delphi classes for C++
+    └─modules/                  содержит файлы с исходным кодом дополнений (модулей)
+    www/                        содержит файлы с Веб-сайтом
 
-BUILD AND INSTALLATION
+СБОРКА И УСТАНОВКА
 -
-To install **Apostol**, you will need:
+Для установки **Апостол** Вам потребуется:
 
-1. C++ compiler;
-2. [CMake](https://cmake.org) or an Integrated Development Environment (IDE) with [CMake](https://cmake.org) support;
-3. [libpq-dev](https://www.postgresql.org/download) library (libraries and headers for C language frontend development);
-4. [postgresql-server-dev-all](https://www.postgresql.org/download) library (libraries and headers for C language backend development).
+1. Компилятор C++;
+1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
+1. Библиотека [libpq-dev](https://www.postgresql.org/download) (libraries and headers for C language frontend development);
+1. Библиотека [postgresql-server-dev-all](https://www.postgresql.org/download) (libraries and headers for C language backend development).
 
 ### Linux (Debian/Ubuntu)
 
-To install the C++ compiler and necessary libraries on Ubuntu, run:
+Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
 ~~~
 sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
 ~~~
 
-###### A detailed description of how to install C++, CMake, IDE, and other components required for the project build is not included in this guide.
+###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство.
 
 #### PostgreSQL
 
-To install PostgreSQL, use the instructions at [this](https://www.postgresql.org/download/) link.
+Для того чтобы установить PostgreSQL воспользуйтесь инструкцией по [этой](https://www.postgresql.org/download/) ссылке.
 
-#### Database
+#### База данных
 
-To install the database, you need to perform the following steps:
+Для того чтобы установить базу данных необходимо выполнить:
 
-1. Specify the name of the database in the db/sql/sets.conf file (by default: web)
-1. Specify the passwords for the DBMS users [libpq-pgpass](https://postgrespro.ru/docs/postgrespro/13/libpq-pgpass):
+1. Прописать наименование базы данных в файле db/sql/sets.conf (по умолчанию: web)
+1. Прописать пароли для пользователей СУБД [libpq-pgpass](https://postgrespro.ru/docs/postgrespro/13/libpq-pgpass):
    ~~~
    $ sudo -iu postgres -H vim .pgpass
    ~~~
    ~~~
    *:*:*:http:http
    ~~~
-1. Specify in the configuration file /etc/postgresql/{version}/main/pg_hba.conf:
+1. Указать в файле настроек `/etc/postgresql/{version}/main/pg_hba.conf`:
    ~~~
    # TYPE  DATABASE        USER            ADDRESS                 METHOD
-   local  web    http          md5
+   local	web		http					md5
    ~~~
-1. Apply the settings:
+1. Применить настройки:
    ~~~
    $ sudo pg_ctlcluster <version> main reload
    ~~~   
-1. Execute:
+1. Выполнить:
    ~~~
    $ cd db/
    $ ./install.sh --make
    ~~~
 
-###### The --make parameter is required to install the database for the first time. After that, the installation script can be run without parameters or with the --install parameter.
+###### Параметр `--make` необходим для установки базы данных в первый раз. Далее установочный скрипт можно запускать или без параметров или с параметром `--install`.
 
-To install **Apostol** (without Git), you need to:
+Для установки **Апостол** (без Git) необходимо:
 
-1. Download [Apostol](https://github.com/ufocomp/apostol/archive/master.zip);
-2. Unpack it;
-3. Configure CMakeLists.txt (if necessary);
-4. Build and compile (see below).
+1. Скачать [Апостол](https://github.com/ufocomp/apostol/archive/master.zip);
+1. Распаковать;
+1. Настроить `CMakeLists.txt` (по необходимости);
+1. Собрать и скомпилировать (см. ниже).
 
-To install Apostol using Git, execute:
+Для установки **Апостол** с помощью Git выполните:
 ~~~
 git clone https://github.com/ufocomp/apostol.git
 ~~~
 
-###### Build:
+###### Сборка:
 ~~~
 cd apostol
 ./configure
 ~~~
 
-###### Compilation and installation:
+###### Компиляция и установка:
 ~~~
 cd cmake-build-release
 make
 sudo make install
 ~~~
 
-By default, the apostol binary will be installed in:
+По умолчанию бинарный файл `apostol` будет установлен в:
 ~~~
 /usr/sbin
 ~~~
 
-The configuration file and files required for operation, depending on the installation option, will be located in:
+Файл конфигурации и необходимые для работы файлы, в зависимости от варианта установки, будут расположены в:
 ~~~
 /etc/apostol
-or
+или
 ~/apostol
 ~~~
 
-LAUNCH
+ЗАПУСК
 -
-###### If `INSTALL_AS_ROOT` is set to ON.
 
-`apostol` is a Linux system service (daemon). 
-To manage `apostol`, use standard service management commands.
+###### Если `INSTALL_AS_ROOT` установлено в `ON`.
 
-To launch `apostol`, execute:
+`apostol` - это системная служба (демон) Linux.
+Для управления `apostol` используйте стандартные команды управления службами.
+
+Для запуска `apostol` выполните:
 ~~~
 sudo systemctl start apostol
 ~~~
 
-To check the status, execute:
+Для проверки статуса выполните:
 ~~~
 sudo systemctl status apostol
 ~~~
 
-The result should be something like this:
+Результат должен быть **примерно** таким:
 ~~~
 ● apostol.service - Apostol
      Loaded: loaded (/etc/systemd/system/apostol.service; enabled; vendor preset: enabled)
@@ -211,25 +213,25 @@ The result should be something like this:
              └─461164 apostol: worker process ("pq fetch", "web server")
 ~~~
 
-MANAGEMENT
+УПРАВЛЕНИЕ
 -
 
-`apostol` can be managed using signals.
-The main process number is written by default to the `/run/apostol.pid` file.
-You can change the name of this file during the build configuration or in the `apostol.conf` `[daemon]` section with the `pid` key.
+Управлять `apostol` можно с помощью сигналов.
+Номер главного процесса по умолчанию записывается в файл `/run/apostol.pid`.
+Изменить имя этого файла можно при конфигурации сборки или же в `apostol.conf` секция `[daemon]` ключ `pid`.
 
-The main process supports the following signals:
+Главный процесс поддерживает следующие сигналы:
 
-|Signal   |Action            |
+|Сигнал   |Действие          |
 |---------|------------------|
-|TERM, INT|fast shutdown     |
-|QUIT     |graceful shutdown |
-|HUP      |configuration change, launching new worker processes with new configuration, graceful shutdown of old worker processes|
-|WINCH    |graceful shutdown of worker processes|
+|TERM, INT|быстрое завершение|
+|QUIT     |плавное завершение|
+|HUP	  |изменение конфигурации, запуск новых рабочих процессов с новой конфигурацией, плавное завершение старых рабочих процессов|
+|WINCH    |плавное завершение рабочих процессов|	
 
-There is no need to manage worker processes individually. Nevertheless, they also support some signals:
+Управлять рабочими процессами по отдельности не нужно. Тем не менее, они тоже поддерживают некоторые сигналы:
 
-|Signal   |Action            |
+|Сигнал   |Действие          |
 |---------|------------------|
-|TERM, INT|fast shutdown     |
-|QUIT     |graceful shutdown |
+|TERM, INT|быстрое завершение|
+|QUIT	  |плавное завершение|
