@@ -4,7 +4,7 @@
 
 **Apostol** is an HTTP server with direct access to the [PostgreSQL](https://www.postgresql.org/), with source code in C++.
 
-* The main idea is to connect the HTTP server directly to the database, eliminating intermediary scripts in the form of programming languages from the `HTTP request` processing chain.
+* The main idea is to connect the HTTP server directly to the database, eliminating intermediary in the form of script programming languages from the `HTTP request` processing chain.
 
 
 * The main advantages:
