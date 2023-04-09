@@ -36,7 +36,7 @@ The framework has a modular design, built-in HTTP server, and [PostgreSQL](https
 - [AppServer](https://github.com/apostoldevel/module-AppServer) (Application server);
 - [MessageServer](https://github.com/apostoldevel/process-MessageServer) (Message server: SMTP/FCM/API);
 - [FileServer](https://github.com/apostoldevel/module-FileServer) (File server);
-- [Replication](https://github.com/apostoldevel/module-Replication) (Replication);
+- [Replication](https://github.com/apostoldevel/process-Replication) (Replication);
 - [StreamServer](https://github.com/apostoldevel/process-StreamServer) (Streaming data server).
 
 Apostol has built-in WebSocket support: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).

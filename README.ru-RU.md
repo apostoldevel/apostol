@@ -37,7 +37,7 @@
 - [AppServer](https://github.com/apostoldevel/module-AppServer) (Сервер приложений);
 - [MessageServer](https://github.com/apostoldevel/process-MessageServer) (Сервер сообщений: SMTP/FCM/API);
 - [FileServer](https://github.com/apostoldevel/module-FileServer) (Файл сервер);
-- [Replication](https://github.com/apostoldevel/module-Replication) (Реьликация);
+- [Replication](https://github.com/apostoldevel/process-Replication) (Реьликация);
 - [StreamServer](https://github.com/apostoldevel/process-StreamServer) (Сервер потоковых данных).
 
 **Апостол** имеет встроенную поддержку WebSocket: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
