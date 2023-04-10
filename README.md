@@ -36,14 +36,26 @@ The framework has a modular design, built-in HTTP server, and [PostgreSQL](https
 - [AppServer](https://github.com/apostoldevel/module-AppServer) (Application server);
 - [MessageServer](https://github.com/apostoldevel/process-MessageServer) (Message server: SMTP/FCM/API);
 - [FileServer](https://github.com/apostoldevel/module-FileServer) (File server);
-- [Replication](https://github.com/apostoldevel/process-Replication) (Replication);
+- [Replication](https://github.com/apostoldevel/process-Replication) (Database replication);
 - [StreamServer](https://github.com/apostoldevel/process-StreamServer) (Streaming data server).
 
 Apostol has built-in WebSocket support: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
 
-Combining all the above, you can create an information system [Apostol CRM](https://github.com/apostoldevel/apostol-crm) or [Central System for Electric Vehicle Charging Stations](https://github.com/apostoldevel/apostol-cs) why not ;-).
+Combining all the above, you can create an information system [CRM System](https://github.com/apostoldevel/apostol-crm), [Central system for charging points](https://github.com/apostoldevel/apostol-cs) or [Telegram bot on PL/pgSQL](https://github.com/apostoldevel/apostol-pgtg) why not ;-).
 
 _With Apostol your possibilities are only limited by your imagination._
+
+Projects
+-
+
+Projects implemented at **Apostol**:
+
+* [OCPP CSS](https://ocpp-css.com) (Central System as Service for Charging Points)
+* [BitDeals](https://testnet.bitdeals.org/info/about) (Bitcoin payment processing service)
+* [Fenomy](https://fenomy.com) (Ecosystem of personal and commercial security)
+* [Ship Safety ERP](https://ship-safety.ru) (ERP system for organization of production activities of the shipping company)
+* [PlugMe](https://plugme.ru) (CRM system for charging stations and owners of electric vehicles)
+* [DEBT Master](https://debt-master.ru) (A system for automating debt collection)
 
 Docker
 -

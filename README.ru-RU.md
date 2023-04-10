@@ -37,14 +37,27 @@
 - [AppServer](https://github.com/apostoldevel/module-AppServer) (Сервер приложений);
 - [MessageServer](https://github.com/apostoldevel/process-MessageServer) (Сервер сообщений: SMTP/FCM/API);
 - [FileServer](https://github.com/apostoldevel/module-FileServer) (Файл сервер);
-- [Replication](https://github.com/apostoldevel/process-Replication) (Реьликация);
+- [Replication](https://github.com/apostoldevel/process-Replication) (Репликация базы данных);
 - [StreamServer](https://github.com/apostoldevel/process-StreamServer) (Сервер потоковых данных).
 
 **Апостол** имеет встроенную поддержку WebSocket: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
 
-Объединив всё выше перечисленное можно создать информационную систему [Апостол CRM](https://github.com/apostoldevel/apostol-crm) или [Центральную систему для станций зарядки электо-автомобилей](https://github.com/apostoldevel/apostol-cs) почему бы и нет ;-).
+Объединив всё выше перечисленное можно создать информационную систему [Апостол CRM](https://github.com/apostoldevel/apostol-crm), [Центральную систему для станций зарядки электо-автомобилей](https://github.com/apostoldevel/apostol-cs) или [Telegram бот на PL/pgSQL](https://github.com/apostoldevel/apostol-pgtg) почему бы и нет ;-).
 
 _С Апостол Ваши возможности ограничены только Вашей фантазий._
+
+[Свидетельство о государственной регистрации программы для ЭВМ](https://st.fl.ru/users/al/alienufo/portfolio/f_1156277cef5ebb72.pdf).
+
+Проекты
+-
+Реализованные на **Апостол** проекты:
+
+* [OCPP CSS](http://ocpp-css.ru) (Центральная система в виде сервиса для зарядных станций)
+* [Ship Safety ERP](https://ship-safety.ru) (ERP-система для организации производственной деятельности судоходных компаний)
+* [PlugMe](https://plugme.ru) (CRM-система для зарядных станций и владельцев электромобилей)
+* [DEBT Master](https://debt-master.ru) (Система для автоматизации взыскания долгов)
+* [BitDeals](https://testnet.bitdeals.org/info/about) (Сервис обработки биткоин-платежей)
+* [Fenomy](https://fenomy.com) (Экосистема персональной и коммерческой безопасности)
 
 Docker
 -
