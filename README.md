@@ -4,10 +4,9 @@
 
 **Apostol** is a framework for developing server-side (backend) applications, with source code in C++.
 
-**Apostol** is an HTTP server with direct access to the [PostgreSQL](https://www.postgresql.org/).
+The key element of the platform is an HTTP server with direct access to the [PostgreSQL](https://www.postgresql.org/) database.
 
-* The main idea is to connect the HTTP server directly to the database, eliminating intermediary in the form of script programming languages from the `HTTP request` processing chain.
-
+**The uniqueness** of the solution lies in the fact that both the HTTP server and [PostgreSQL](https://www.postgresql.org/) sockets are in a single event processing loop, which allows data to be instantly transmitted from the HTTP server to the database. In other words, there are no intermediaries between the HTTP server and the database, which are usually represented by scripting programming languages. This, in turn, allows queries to be executed against the database with maximum efficiency and minimal time delays.
 
 * The main advantages:
     * **Autonomy**: After building, you get a fully ready-to-use binary file in the form of a system service (daemon) under Linux OS;
