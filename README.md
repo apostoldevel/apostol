@@ -31,7 +31,7 @@ The framework has a modular design, built-in HTTP server, and [PostgreSQL](https
 
 
 - [PGFetch](https://github.com/apostoldevel/module-PGFetch) (Postgres Fetch);
-    * Enables receiving and sending `HTTP requests` in `the PL/pgSQL` programming language.
+    * Enables receiving and sending `HTTP requests` in the `PL/pgSQL` programming language.
   
 ### With additional modules, Apostol can be turned into:
 
