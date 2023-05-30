@@ -1,6 +1,6 @@
 [![ru](https://img.shields.io/badge/lang-ru-green.svg)](https://github.com/apostoldevel/apostol/blob/master/README.ru-RU.md)
 
-![image](https://github.com/apostoldevel/apostol/assets/91010417/e5adc5ff-a9a6-455b-aaf6-326f9f5f8a3b)
+![image](https://github.com/apostoldevel/apostol/assets/91010417/06469678-7262-4d86-b27e-e456b49ed021)
 
 # Apostol
 
