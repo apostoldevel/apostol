@@ -1,5 +1,7 @@
 [![ru](https://img.shields.io/badge/lang-ru-green.svg)](https://github.com/apostoldevel/apostol/blob/master/README.ru-RU.md)
 
+![image](https://github.com/apostoldevel/apostol/assets/91010417/e5adc5ff-a9a6-455b-aaf6-326f9f5f8a3b)
+
 # Apostol
 
 **Apostol** is a framework for developing server-side (backend) applications, with source code in C++.

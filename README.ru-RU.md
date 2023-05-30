@@ -1,5 +1,7 @@
 [![en](https://img.shields.io/badge/lang-en-green.svg)](https://github.com/apostoldevel/apostol/blob/master/README.md)
 
+![image](https://github.com/apostoldevel/apostol/assets/91010417/e5adc5ff-a9a6-455b-aaf6-326f9f5f8a3b)
+
 # Апостол (Apostol)
 
 **Апостол** - это фреймворк для разработки серверных приложений, исходные коды на C++.
