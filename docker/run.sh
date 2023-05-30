@@ -11,7 +11,7 @@ if ! [[ $LANG ]]; then
 fi
 
 if ! [[ $PG_VERSION ]]; then
-  PG_VERSION=14
+  PG_VERSION=15
 fi
 
 if ! [[ $PG_CLUSTER ]]; then

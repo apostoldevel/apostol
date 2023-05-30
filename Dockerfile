@@ -4,13 +4,15 @@ LABEL project="apostol"
 
 ENV PROJECT_NAME 'apostol'
 
-ENV PG_VERSION '14'
+ENV PG_VERSION '15'
 ENV PG_CLUSTER 'main'
 
-ENV TZ 'Europe/Moscow'
+ENV TZ 'UTC'
 
-ENV LANG 'ru_RU.UTF-8'
-ENV LC_ALL 'ru_RU.UTF-8'
+ENV LANG 'en_US.UTF-8'
+ENV LC_ALL 'en_US.UTF-8'
+
+ENV PGSSLCERT /tmp/postgresql.crt
 
 RUN set -eux; \
     echo $TZ > /etc/timezone;  \
