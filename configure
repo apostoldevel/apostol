@@ -112,6 +112,8 @@ github()
 
     download_from_github src/modules/Workers apostoldevel module-WebServer master WebServer
     download_from_github src/modules/Workers apostoldevel module-PGFetch master PGFetch
+
+    download_from_github db/sql apostoldevel db-http master http
 }
 
 Success()
