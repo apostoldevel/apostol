@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   description: >
-    Направляет HTTP GET и POST запросы в базу данных PostgreSQL вызывая функции http.get и http.post соответственно.
+    Directs GET and POST HTTP requests to the PostgreSQL database by calling functions http.get and http.post respectively.
   version: "1.0.0"
   title: >
     Apostol: Postgres Fetch
@@ -24,16 +24,16 @@ servers:
 tags:
   - name: GET
     description: >
-      Обработка HTTP GET запроса в базе данных PostgreSQL (вызывается функция `http.get`).
+      Processing an HTTP GET request in a PostgreSQL database (the `http.get` function is called).
   - name: POST
     description: >
-      Обработка HTTP POST запроса в базе данных PostgreSQL (вызывается функция `http.post`).
+      Processing an HTTP POST request in a PostgreSQL database (the `http.post` function is called).
 paths:
   /ping:
     get:
       tags:
         - GET
-      summary: Проверка соединения.
+      summary: Checking the connection.
       responses:
         '200':
           description: OK.
@@ -50,7 +50,7 @@ paths:
     post:
       tags:
         - POST
-      summary: Проверка соединения.
+      summary: Checking the connection.
       responses:
         '200':
           description: OK.
@@ -68,7 +68,7 @@ paths:
     get:
       tags:
         - GET
-      summary: Время сервера.
+      summary: Server time.
       responses:
         '200':
           description: OK.
@@ -91,7 +91,7 @@ paths:
     post:
       tags:
         - POST
-      summary: Время сервера.
+      summary: Server time.
       responses:
         '200':
           description: OK.
@@ -115,7 +115,7 @@ paths:
     get:
       tags:
         - GET
-      summary: HTTP заголовки запроса.
+      summary: HTTP request headers.
       parameters:
         - $ref: '#/components/parameters/resultObject'
         - $ref: '#/components/parameters/resultFormat'
@@ -139,7 +139,7 @@ paths:
     post:
       tags:
         - POST
-      summary: HTTP заголовки запроса.
+      summary: HTTP request headers.
       parameters:
         - $ref: '#/components/parameters/resultObject'
         - $ref: '#/components/parameters/resultFormat'
@@ -164,7 +164,7 @@ paths:
     get:
       tags:
         - GET
-      summary: Параметры запроса.
+      summary: Request Parameters.
       parameters:
         - $ref: '#/components/parameters/resultObject'
         - $ref: '#/components/parameters/resultFormat'
@@ -188,7 +188,7 @@ paths:
     post:
       tags:
         - POST
-      summary: Параметры запроса.
+      summary: Request Parameters.
       parameters:
         - $ref: '#/components/parameters/resultObject'
         - $ref: '#/components/parameters/resultFormat'
@@ -213,7 +213,7 @@ paths:
     post:
       tags:
         - POST
-      summary: Эхо ответ тела запроса.
+      summary: Echo response of the request body.
       parameters:
         - $ref: '#/components/parameters/resultObject'
         - $ref: '#/components/parameters/resultFormat'
