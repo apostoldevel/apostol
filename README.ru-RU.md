@@ -1,6 +1,6 @@
 [![en](https://img.shields.io/badge/lang-en-green.svg)](https://github.com/apostoldevel/apostol/blob/master/README.md)
 
-![image](https://github.com/apostoldevel/apostol/assets/91010417/06469678-7262-4d86-b27e-e456b49ed021)
+![image](https://github.com/apostoldevel/apostol/assets/91010417/406429c9-3827-4c31-93cb-66b8e40ff224)
 
 # Апостол (Apostol)
 
