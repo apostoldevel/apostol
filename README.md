@@ -52,10 +52,10 @@ Projects
 -
 
 Projects implemented at **Apostol**:
-
+ 
+* [CopyFrog](https://copyfrog.ai) (AI-powered platform for creating unique images, Ad Copy, video creatives, marketing descriptions for products and services)
 * [OCPP CSS](https://ocpp-css.com) (Central System as Service for Charging Points)
-* [BitDeals](https://testnet.bitdeals.org/info/about) (Bitcoin payment processing service)
-* [Fenomy](https://fenomy.com) (Ecosystem of personal and commercial security)
+* [BitDeals](https://testnet.bitdeals.org) (Bitcoin payment processing service)
 * [Ship Safety ERP](https://ship-safety.ru) (ERP system for organization of production activities of the shipping company)
 * [PlugMe](https://plugme.ru) (CRM system for charging stations and owners of electric vehicles)
 * [DEBT Master](https://debt-master.ru) (A system for automating debt collection)
