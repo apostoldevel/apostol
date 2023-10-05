@@ -10,7 +10,6 @@ DECLARE
   f             record;
   r             record;
   e             record;
-  a             record;
 
   uCurrencyFrom uuid;
   uCurrencyTo   uuid;
@@ -31,19 +30,19 @@ BEGIN
       SELECT * INTO r FROM jsonb_to_record(reply) AS x(success bool, base text, date date, rates jsonb);
 
       IF NOT r.success THEN
-		RETURN;
-	  END IF;
+        RETURN;
+      END IF;
 
       SELECT id INTO uCurrencyFrom FROM public.currency WHERE code = r.base;
 
       IF FOUND THEN
-		FOR e IN SELECT * FROM jsonb_each_text(r.rates)
-		LOOP
-		  SELECT id INTO uCurrencyTo FROM public.currency WHERE code = e.key;
-		  IF FOUND THEN
-			PERFORM public.update_rate(uCurrencyFrom, uCurrencyTo, to_number(e.value, '999999990.00999999'));
-		  END IF;
-		END LOOP;
+        FOR e IN SELECT * FROM jsonb_each_text(r.rates)
+        LOOP
+          SELECT id INTO uCurrencyTo FROM public.currency WHERE code = e.key;
+          IF FOUND THEN
+            PERFORM public.update_rate(uCurrencyFrom, uCurrencyTo, to_number(e.value, '999999990.00999999'));
+          END IF;
+        END LOOP;
       END IF;
     END IF;
 
