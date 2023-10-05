@@ -1,1 +1,2 @@
+\ir './public/create.psql'
 \ir './http/create.psql'

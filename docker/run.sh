@@ -11,7 +11,7 @@ if ! [[ $LANG ]]; then
 fi
 
 if ! [[ $PG_VERSION ]]; then
-  PG_VERSION=15
+  PG_VERSION=16
 fi
 
 if ! [[ $PG_CLUSTER ]]; then
@@ -20,6 +20,10 @@ fi
 
 if ! [[ $PG_DATA ]]; then
   PG_DATA=/var/lib/postgresql/$PG_VERSION/$PG_CLUSTER
+fi
+
+if ! [[ $PGWEB_DATABASE_URL ]]; then
+  export PGWEB_DATABASE_URL=postgres://http:http@localhost:5432/web
 fi
 
 pop_directory()
@@ -97,6 +101,6 @@ else
   pg_ctlcluster $PG_VERSION $PG_CLUSTER start
 fi
 
-/usr/sbin/$PROJECT_NAME
+/usr/sbin/$PROJECT_NAME & /usr/bin/pgweb --bind=0.0.0.0 --listen=8081 --skip-open
 
 pg_ctlcluster $PG_VERSION $PG_CLUSTER stop

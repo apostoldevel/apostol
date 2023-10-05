@@ -4,7 +4,7 @@ LABEL project="apostol"
 
 ENV PROJECT_NAME 'apostol'
 
-ENV PG_VERSION '15'
+ENV PG_VERSION '16'
 ENV PG_CLUSTER 'main'
 
 ENV TZ 'UTC'
@@ -28,11 +28,16 @@ RUN set -eux; \
     apt-get update -y;
 
 RUN set -eux; \
-    apt-get install apt-utils bash build-essential cmake cmake-data g++ gcc libcurl4-openssl-dev libssl-dev make pkg-config sudo wget git htop mc lsb-release -y; \
+    apt-get install apt-utils bash build-essential cmake cmake-data g++ gcc libcurl4-openssl-dev libssl-dev make pkg-config sudo wget curl git htop mc lsb-release -y; \
     sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'; \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -; \
     apt-get update -y; \
     apt-get install postgresql libpq-dev postgresql-server-dev-all -y;
+
+RUN curl -s https://api.github.com/repos/sosedoff/pgweb/releases/latest | grep linux_amd64.zip | grep download | cut -d '"' -f 4 | wget -qi -; \
+    unzip pgweb_linux_amd64.zip; \
+    rm pgweb_linux_amd64.zip; \
+    mv pgweb_linux_amd64 /usr/bin/pgweb;
 
 WORKDIR /opt/$PROJECT_NAME
 
@@ -49,5 +54,8 @@ RUN set -eux; \
     pg_dropcluster $PG_VERSION $PG_CLUSTER;
 
 COPY ./docker/run.sh /opt/run.sh
+
+EXPOSE 8080
+EXPOSE 8081
 
 CMD ["bash", "/opt/run.sh"]

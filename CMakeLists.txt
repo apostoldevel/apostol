@@ -190,7 +190,8 @@ install(FILES conf/default.conf DESTINATION ${INSTALL_PATH} RENAME ${PROJECT_NAM
 
 if (INSTALL_AS_ROOT)
     if (USE_SYSTEMD)
-        install(FILES auto/unit.service DESTINATION /etc/systemd/system RENAME ${PROJECT_NAME}.service PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+        install(FILES auto/unit.service DESTINATION /lib/systemd/system RENAME ${PROJECT_NAME}.service PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+        install(CODE "execute_process(COMMAND systemctl daemon-reload)")
         install(CODE "execute_process(COMMAND systemctl enable ${PROJECT_NAME}.service)")
     else()
         install(FILES auto/daemon DESTINATION /etc/init.d RENAME ${PROJECT_NAME} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)

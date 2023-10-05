@@ -1,5 +1,6 @@
 \echo [M] install.psql
 \ir sets.conf
 \connect :dbname :username
+\ir './public/update.psql'
 \ir './http/update.psql'
 \q
