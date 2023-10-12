@@ -80,15 +80,19 @@ docker pull apostoldevel/apostol
 
 If you built it yourself:
 ~~~
-docker run -d -p 8080:8080 --rm --name apostol apostol
+docker run -d -p 8080:8080 -p 8081:8081 -p 5433:5432 --rm --name apostol apostol
 ~~~
 
 If you got a ready-made image:
 ~~~
-docker run -d -p 8080:8080 --rm --name apostol apostoldevel/apostol
+docker run -d -p 8080:8080 -p 8081:8081 -p 5433:5432 --rm --name apostol apostoldevel/apostol
 ~~~
 
-Swagger UI will be available at [http://localhost:8080](http://localhost:8080) or http://host-ip:8080 in your browser.
+[Swagger UI](https://github.com/swagger-api/swagger-ui) will be available at <http://localhost:8080> or http://host-ip:8080 in your browser.
+
+[Pgweb](https://github.com/sosedoff/pgweb) is a web-based database explorer for PostgreSQL will be available at <http://localhost:8081> or http://host-ip:8081 in your browser.
+
+> Instead of pgweb, you can use any other tool for working with databases. PostgreSQL from the container will be available on port 5433.
 
 DIRECTORY STRUCTURE
 -

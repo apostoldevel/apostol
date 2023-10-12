@@ -83,15 +83,19 @@ docker pull apostoldevel/apostol
 
 Если собрали самомтоятельно:
 ~~~
-docker run -d -p 8080:8080 --rm --name apostol apostol
+docker run -d -p 8080:8080 -p 8081:8081 -p 5433:5432 --rm --name apostol apostol
 ~~~
 
 Если получили готовый образ:
 ~~~
-docker run -d -p 8080:8080 --rm --name apostol apostoldevel/apostol
+docker run -d -p 8080:8080 -p 8081:8081 -p 5433:5432 --rm --name apostol apostoldevel/apostol
 ~~~
 
-Swagger UI будет доступен по адресу http://localhost:8080 или http://host-ip:8080 в вашем браузере.
+[Swagger UI](https://github.com/swagger-api/swagger-ui) будет доступен по адресу <http://localhost:8080> или http://host-ip:8080 в вашем браузере.
+
+[Pgweb](https://github.com/sosedoff/pgweb) - веб-обозреватель для PostgreSQL будет доступен по адресу <http://localhost:8081> или http://host-ip:8081 в вашем браузере.
+
+> Вместо pgweb можно использовать любой другой инструмент для работы с базами данных. PostgreSQL из контейнера будет доступен на порту 5433.
 
 СТРУКТУРА КАТАЛОГОВ
 -
