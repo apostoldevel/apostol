@@ -90,7 +90,7 @@ SELECT * FROM http.log ORDER BY id DESC;
 В качестве входящих параметров они принимают:
 
 * `path` - Путь;
-* `headers` - HTTP заголовоки;
+* `headers` - HTTP заголовки;
 * `params` - Строка запроса (query string), преобразованная в формат JSON;
 * `body` - Тело запроса, если это POST запрос.
 
@@ -116,7 +116,9 @@ SELECT http.fetch('http://localhost:8080/api/v1/log', content => null::text);
 Функции обратного вызова
 -
 
-В начале статьи я упомянул, что обработка полученных данных будет происходить через функции обратного вызова. Для лучшего понимания того, как это будет происходить, давайте решим конкретную задачу, например, получение курсов валют с разбором полученного ответа и сохранением данных в таблицу курсов.
+В начале статьи я упомянул, что обработка полученных данных будет происходить через функции обратного вызова.
+
+Для лучшего понимания того, как это будет происходить, давайте решим конкретную задачу, например, получение курсов валют с разбором полученного ответа и сохранением данных в таблицу курсов.
 
 Чтобы было понятно, как это работает в связке с HTTP-сервером, я добавил в функцию `http.get` следующий код:
 ~~~sql
@@ -134,19 +136,26 @@ SELECT http.fetch('http://localhost:8080/api/v1/log', content => null::text);
     END LOOP;
 ~~~
 
-> На запрос «самых последних» (latest) курсов мы будем возвращать статические данные, но зато в формате [API курсов валют](https://exchangeratesapi.io/documentation) и, если у Вас есть доступ к службам курсов валют, то Вы можете запросить данные через их API.
+> На запрос «самых последних» (latest) курсов мы будем возвращать статические данные в формате [API курсов валют](https://exchangeratesapi.io/documentation). Если у Вас есть доступ к службам курсов валют, Вы можете запросить данные через их API.
 
 Обрабатывать полученные данные мы будем с помощью функции обратного вызова `public.exchange_rate_done`, с программным кодом которой можно ознакомиться в pgweb, а сами запросы будут следующими:
 
+Из контейнера:
 ~~~sql
-SELECT http.fetch('http://localhost:8080/api/v1/latest?base=USD', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest', null, 'curl');
-SELECT http.fetch('http://localhost:8080/api/v1/latest?base=BTC', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest', null, 'curl');
+SELECT http.fetch('http://localhost:8080/api/v1/latest?base=USD', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest');
+SELECT http.fetch('http://localhost:8080/api/v1/latest?base=BTC', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest');
 ~~~
 
-Или через наш сервер:
+Через наш сервер:
 ~~~sql
-SELECT http.fetch('https://apostoldevel.com/api/v1/latest?base=USD', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest', null, 'curl');
-SELECT http.fetch('https://apostoldevel.com/api/v1/latest?base=BTC', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest', null, 'curl');
+SELECT http.fetch('https://apostoldevel.com/api/v1/latest?base=USD', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest');
+SELECT http.fetch('https://apostoldevel.com/api/v1/latest?base=BTC', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest');
+~~~
+
+Через службу курсов валют (при наличии доступа):
+~~~sql
+SELECT http.fetch('https://api.exchangerate.host/latest?base=USD&symbols=BTC,EUR,RUB', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest', null, 'curl');
+SELECT http.fetch('https://api.exchangerate.host/latest?base=BTC&symbols=USD,EUR,RUB', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest', null, 'curl');
 ~~~
 
 Результатом этих действий станет заполненная данными таблица `public.rate`.
@@ -178,7 +187,7 @@ PL/pgSQL функция `http.fetch` является оберткой для ф
 
 ![NOTIFY](pg_notify.png)
 
-Далее в ход вступает некое клиентское приложение, которое подключено к PostgreSQL и готово принимать асинхронные уведомления, и именно оно выступает в качестве HTTP-клиента и сервера, отправляет HTTP -запрос и сохраняет результат в таблицу `http.response`.
+Далее в ход вступает некое клиентское приложение, которое подключено к PostgreSQL и готово принимать асинхронные уведомления, и именно оно выступает в качестве HTTP-клиента и сервера, отправляет HTTP-запрос и сохраняет результат в таблицу `http.response`.
 
 Клиентское приложение
 -
@@ -194,7 +203,7 @@ PL/pgSQL функция `http.fetch` является оберткой для ф
 
 Я продемонстрировал простой в использовании, но в то же время очень гибкий механизм коммуникации с внешними системами непосредственно из PostgreSQL.
 
-Если говорить о практическом применении, то представьте, что в вашей системе формируется счёт на оплату, по которому должно произойти автоматическое списание денег с заранее привязанной карты клиента. Все необходимые данные для реализации этой задачи находятся в базе данных. Следовательно, то приложение (микросервис), которое будет взаимодействовать с платежной системой, должно быть подключено к базе данных и каким-то образом оповещено о наличии нового счета. Приложение должно получить необходимые данные, обработать их, сформировать запрос к платежной системе, сохранить результат в БД. После успешного списания необходимо сформировать электронный чек, а это уже взаимодействие с другим сервисом, а ещё было бы неплохо уведомить клиента по e-mail, в виде СМС или через мобильное приложение (FCM) о наличии счёта и статусе выполнения операции.
+Если говорить о практическом применении, то представьте, что в вашей системе формируется счёт на оплату, по которому должно произойти автоматическое списание денег с заранее привязанной карты клиента. Все необходимые данные для реализации этой задачи находятся в базе данных. Следовательно, то приложение (микросервис), которое будет взаимодействовать с платежной системой, должно быть подключено к базе данных и каким-то образом оповещено о наличии нового счета. Приложение должно получить необходимые данные, обработать их, сформировать запрос к платежной системе, сохранить результат в БД. После успешного списания необходимо сформировать электронный чек, а это уже взаимодействие с другим сервисом, а ещё было бы неплохо уведомить клиента по e-mail, в виде СМС или через мобильное приложение ([FCM](https://firebase.google.com/docs/cloud-messaging?hl=ru)) о наличии счёта и статусе выполнения операции.
 
 Иными словами, мы получаем каскад задач на взаимодействие с внешними системами через их API, при этом оперируя теми данными, которые находятся в СУБД.
 
