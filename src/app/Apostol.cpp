@@ -45,7 +45,7 @@ namespace Apostol {
 
             if (Config()->Flags().show_help) {
                 std::cerr << "Usage: " APP_NAME << " [-?hvVt] [-s signal] [-c filename]"
-                             " [-p prefix] [-g directives]" LINEFEED
+                             " [-p prefix] [-g directives] [-w workers] [-l locale]" LINEFEED
                              LINEFEED
                              "Options:" LINEFEED
                              "  -?,-h         : this help" LINEFEED
@@ -53,13 +53,14 @@ namespace Apostol {
                              "  -V            : show version and configure options then exit" LINEFEED
                              "  -t            : test configuration and exit" LINEFEED
                              "  -s signal     : send signal to a master process: stop, quit, reopen, reload" LINEFEED
+                             "  -c filename   : set configuration file (default: " APP_CONF_FILE ")" LINEFEED
                              #ifdef APP_PREFIX
                              "  -p prefix     : set prefix path (default: " APP_PREFIX ")" LINEFEED
                              #else
                              "  -p prefix     : set prefix path (default: NONE)" LINEFEED
                              #endif
-                             "  -c filename   : set configuration file (default: " APP_CONF_FILE ")" LINEFEED
                              "  -g directives : set global directives out of configuration file" LINEFEED
+                             "  -w workers    : set count of worker processes (default: 0 - automatically)" LINEFEED
                              "  -l locale     : set locale (default: " APP_DEFAULT_LOCALE ")" LINEFEED
                           << std::endl;
             }
@@ -107,7 +108,7 @@ namespace Apostol {
                                 goto next;
                             }
 
-                            if (!argv()[++i].empty()) {
+                            if (++i < argc() && !argv()[i].empty()) {
                                 Config()->Prefix(argv()[i]);
                                 goto next;
                             }
@@ -120,7 +121,7 @@ namespace Apostol {
                                 goto next;
                             }
 
-                            if (!argv()[++i].empty()) {
+                            if (++i < argc() && !argv()[i].empty()) {
                                 Config()->ConfFile(argv()[i]);
                                 goto next;
                             }
@@ -133,17 +134,30 @@ namespace Apostol {
                                 goto next;
                             }
 
-                            if (!argv()[++i].empty()) {
+                            if (++i < argc() && !argv()[i].empty()) {
                                 Config()->ConfParam(argv()[i]);
                                 goto next;
                             }
 
                             throw Delphi::Exception::Exception(_T("option \"-g\" requires parameter"));
 
+                        case 'w':
+                            if (*P) {
+                                Config()->Workers(StrToIntDef(P, 0));
+                                goto next;
+                            }
+
+                            if (++i < argc() && !argv()[i].empty()) {
+                                Config()->Workers(StrToIntDef(argv()[i].c_str(), 0));
+                                goto next;
+                            }
+
+                            throw Delphi::Exception::Exception(_T("option \"-w\" requires parameter"));
+
                         case 's':
                             if (*P) {
                                 Config()->Signal(P);
-                            } else if (!argv()[++i].empty()) {
+                            } else if (++i < argc() && !argv()[i].empty()) {
                                 Config()->Signal(argv()[i]);
                             } else {
                                 throw Delphi::Exception::Exception(_T("option \"-s\" requires parameter"));
@@ -166,7 +180,7 @@ namespace Apostol {
                                 goto next;
                             }
 
-                            if (!argv()[++i].empty()) {
+                            if (++i < argc() && !argv()[i].empty()) {
                                 Config()->Locale(argv()[i]);
                                 goto next;
                             }
@@ -208,7 +222,7 @@ int main(int argc, char *argv[]) {
 
     int exitcode;
 
-    DefaultLocale.SetLocale("");
+    DefaultLocale.SetLocale("en-US");
     
     CApostol Apostol(argc, argv);
 
@@ -232,6 +246,6 @@ int main(int argc, char *argv[]) {
         exit_failure("Unknown error...");
     }
 
-    exit(exitcode);
+    return exitcode;
 }
 //----------------------------------------------------------------------------------------------------------------------
