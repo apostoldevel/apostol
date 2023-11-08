@@ -33,13 +33,12 @@ list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules" )
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
 set(CORE_LIB_NAME apostol-core)
-#set(MODULES_LIB_NAME apostol-modules)
 
 add_custom_target(
         auto_increment_version
         ${CMAKE_COMMAND}
         -D VERSION_FILE=${CMAKE_SOURCE_DIR}/version.h
-        -P ${CMAKE_SOURCE_DIR}/AutoVersion.cmake
+        -P ${CMAKE_MODULE_PATH}/AutoVersion.cmake
 )
 
 set(PROJECT_LIB_DIR "src/lib")
@@ -156,11 +155,6 @@ target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         )
 
 target_link_libraries(${CORE_LIB_NAME} pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME} ${CURL_LIB_NAME} ${SSL_LIB_NAME} crypto)
-
-# Apostol modules
-# ----------------------------------------------------------------------------------------------------------------------
-#add_library(${MODULES_LIB_NAME} STATIC ${modules_files})
-#target_link_libraries(${MODULES_LIB_NAME} ${CORE_LIB_NAME})
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
