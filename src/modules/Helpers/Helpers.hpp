@@ -25,8 +25,10 @@ Author:
 #define APOSTOL_HELPERS_HPP
 //----------------------------------------------------------------------------------------------------------------------
 
-static inline void CreateHelpers(CModuleProcess *AProcess) {
+#include "PGFetch/PGFetch.hpp"
 
+static inline void CreateHelpers(CModuleProcess *AProcess) {
+    CPGFetch::CreateModule(AProcess);
 }
 
 #endif //APOSTOL_HELPERS_HPP

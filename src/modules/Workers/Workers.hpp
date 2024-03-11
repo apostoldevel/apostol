@@ -25,12 +25,12 @@ Author:
 #define APOSTOL_WORKERS_HPP
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "PGFetch/PGFetch.hpp"
+#include "PGHTTP/PGHTTP.hpp"
 #include "WebServer/WebServer.hpp"
 //----------------------------------------------------------------------------------------------------------------------
 
 static inline void CreateWorkers(CModuleProcess *AProcess) {
-    CPGFetch::CreateModule(AProcess);
+    CPGHTTP::CreateModule(AProcess);
     CWebServer::CreateModule(AProcess);
 }
 

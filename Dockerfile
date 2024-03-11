@@ -53,9 +53,9 @@ RUN set -eux; \
 RUN set -eux; \
     pg_dropcluster $PG_VERSION $PG_CLUSTER;
 
-COPY ./docker/run.sh /opt/run.sh
+COPY ./docker/entrypoint.sh /opt/entrypoint.sh
 
 EXPOSE 8080
 EXPOSE 8081
 
-CMD ["bash", "/opt/run.sh"]
+CMD ["bash", "/opt/entrypoint.sh"]

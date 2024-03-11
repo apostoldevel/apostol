@@ -58,6 +58,7 @@ add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
 if (WITH_POSTGRESQL)
     set(PQ_LIB_NAME "pq")
     add_compile_options("-DWITH_POSTGRESQL")
+    add_compile_options("-DPOSTGRESQL_VERSION_14")
 endif()
 
 if (WITH_SSL)
@@ -114,10 +115,11 @@ file(GLOB lib_files ${lib_files} ${PROJECT_LIB_DIR}/jwt-cpp/*.h)
 
 # Apostol
 # ----------------------------------------------------------------------------------------------------------------------
-include_directories(src/app src/core src/modules src/modules/Workers src/modules/Helpers src/processes)
+include_directories(src/app src/core src/common src/modules src/modules/Workers src/modules/Helpers src/processes)
 
 file(GLOB app_files version.h src/app/*.hpp src/app/*.cpp)
 file(GLOB core_files src/core/*.hpp src/core/*.cpp)
+file(GLOB common_files src/common/*.hpp src/common/*.cpp)
 file(GLOB modules_files src/modules/Modules.hpp src/modules/*/*.hpp src/modules/*/*/*.hpp src/modules/*/*/*.cpp)
 file(GLOB processes_files src/processes/Processes.hpp src/processes/*/*.hpp src/processes/*/*.cpp)
 
@@ -127,9 +129,10 @@ add_library(${CORE_LIB_NAME} STATIC
         $<TARGET_OBJECTS:delphi>
         ${lib_files}
         ${core_files}
+        ${common_files}
         ${modules_files}
         ${processes_files}
-        )
+)
 
 target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_NAME="${PROJECT_NAME}"
@@ -152,7 +155,7 @@ target_compile_definitions(${CORE_LIB_NAME} PUBLIC
         APP_POSTGRES_LOG_FILE="logs/postgres.log"
         APP_STREAM_LOG_FILE="logs/stream.log"
         APP_DOC_ROOT="www"
-        )
+)
 
 target_link_libraries(${CORE_LIB_NAME} pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME} ${CURL_LIB_NAME} ${SSL_LIB_NAME} crypto)
 
