@@ -4,21 +4,21 @@
 
 # Apostol
 
-**Apostol** is a framework for developing server-side (backend) applications, with source code in C++.
+**Apostol** is a framework for developing server applications (system services) on the Linux OS.
 
-The key element of the platform is an HTTP server with direct access to the [PostgreSQL](https://www.postgresql.org/) database.
+DESCRIPTION
+-
+Apostol is developed in the C++ programming language using an asynchronous programming model based on the [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) with direct access to the [PostgreSQL](https://www.postgresql.org/) (via the `libpq` library) specifically for high-load systems.
 
-**The uniqueness** of the solution lies in the fact that both the HTTP server and [PostgreSQL](https://www.postgresql.org/) sockets are in a single event processing loop, which allows data to be instantly transmitted from the HTTP server to the database. In other words, there are no intermediaries between the HTTP server and the database, which are usually represented by scripting programming languages. This, in turn, allows queries to be executed against the database with maximum efficiency and minimal time delays.
+The key element of the platform is the built-in HTTP server with direct access to the PostgreSQL DBMS.
+
+The **uniqueness** of the solution lies in the fact that both the HTTP server and PostgreSQL sockets are within a single event processing loop, which allows data to be transmitted instantly from the HTTP server to the database. In other words, there are no intermediaries, typically represented by scripting languages, between the HTTP server and the database. This, in turn, allows database queries to be executed with maximum efficiency and minimal latency.
 
 * The main advantages:
     * **Autonomy**: After building, you get a fully ready-to-use binary file in the form of a system service (daemon) under Linux OS;
     * **Speed**: Queries to the HTTP server and the database are executed as fast as the operating system and DBMS allow;
     * **Connection pool**: Apostol has its own customizable connection pool with [PostgreSQL](https://www.postgresql.org/).
      
-DESCRIPTION
--
-**Apostol** is implemented as a framework for developing server software (system services) using an asynchronous programming model based on the [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) with direct access to the [PostgreSQL](https://www.postgresql.org/) (through the library: `libpq`), specifically for highly loaded systems.
-
 MODULES
 -
 
