@@ -18,6 +18,8 @@ set(WITH_POSTGRESQL  ON  CACHE BOOL "Build with PostgreSQL")
 set(WITH_SSL         ON  CACHE BOOL "Build with SSL")
 set(WITH_CURL        ON  CACHE BOOL "Build with cURL")
 set(WITH_SQLITE3     OFF CACHE BOOL "Build with Sqlite3")
+set(WITH_UDP_SERVER  OFF CACHE BOOL "Build with UDP server")
+set(SERVER_TYPE      "HTTP" CACHE STRING "Server type: HTTP | TCP")
 # ----------------------------------------------------------------------------------------------------------------------
 
 if (INSTALL_AS_ROOT)
@@ -31,6 +33,14 @@ endif()
 list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules" )
 
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
+
+if (WITH_UDP_SERVER)
+    add_compile_options("-DWITH_STREAM_SERVER")
+endif()
+
+if (SERVER_TYPE STREQUAL "TCP" )
+    add_compile_options("-DAPOSTOL_SERVER_TYPE_TCP")
+endif()
 
 set(CORE_LIB_NAME apostol-core)
 
