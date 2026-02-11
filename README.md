@@ -57,15 +57,18 @@ The key element of the framework is the built‑in HTTP server, which runs in a 
 
 The framework has a modular architecture and includes built‑in UDP/TCP/WebSocket/HTTP servers and a client for [PostgreSQL](https://www.postgresql.org/).
 
-### This build comes with two modules
+### This distribution is supplied with the following modules
 
-- [**WebServer**](https://github.com/apostoldevel/module-WebServer) — web server
-    - Provides [Swagger UI](https://swagger.io/tools/swagger-ui), available at  
-      [http://localhost:8080](http://localhost:8080) after starting **Apostol**.
+- **WebServer** (https://github.com/apostoldevel/module-WebServer) — web server
+    - Provides Swagger UI (https://swagger.io/tools/swagger-ui), available at  
+      http://localhost:8080 after starting Apostol.
 
-- [**PGFetch**](https://github.com/apostoldevel/module-PGFetch) — Postgres Fetch
-    - Allows receiving and sending HTTP requests using `PL/pgSQL`.  
-      This lets you implement API logic directly in the database.
+- **PGFetch** (https://github.com/apostoldevel/module-PGFetch) — Postgres Fetch
+    - Allows you to send HTTP requests in PL/pgSQL directly from the database.
+
+- **PGHTTP** (https://github.com/apostoldevel/module-PGHTTP) — Postgres HTTP
+    - Allows you to receive and process HTTP requests (REST API) in PL/pgSQL.  
+      This makes it possible to implement API logic directly in the database.
 
 > More details about this build can be found in the [article](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.md).
 
@@ -75,7 +78,6 @@ The framework has a modular architecture and includes built‑in UDP/TCP/WebSock
 - [**AppServer**](https://github.com/apostoldevel/module-AppServer) — application server;
 - [**MessageServer**](https://github.com/apostoldevel/process-MessageServer) — messaging server (SMTP/FCM/API);
 - [**FileServer**](https://github.com/apostoldevel/module-FileServer) — file server;
-- [**Replication**](https://github.com/apostoldevel/process-Replication) — database replication service;
 - [**StreamServer**](https://github.com/apostoldevel/process-StreamServer) — streaming data server.
 
 A separate WebSocket module is available: [**WebSocket API**](https://github.com/apostoldevel/module-WebSocketAPI).

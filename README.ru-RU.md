@@ -57,14 +57,17 @@
 
 Фреймворк имеет модульную архитектуру и включает встроенные UDP/TCP/WebSocket/HTTP‑серверы и клиент для [PostgreSQL](https://www.postgresql.org/).
 
-### Данная сборка поставляется двумя модулями
+### Данная сборка поставляется следующими модулями
 
 - [**WebServer**](https://github.com/apostoldevel/module-WebServer) — веб‑сервер
     - Обеспечивает работу [Swagger UI](https://swagger.io/tools/swagger-ui), доступного по адресу:  
       [http://localhost:8080](http://localhost:8080) после запуска **Апостол**.
 
 - [**PGFetch**](https://github.com/apostoldevel/module-PGFetch) — Postgres Fetch
-    - Позволяет принимать и отправлять HTTP‑запросы на языке `PL/pgSQL`.  
+    - Позволяет отправлять HTTP‑запросы на языке `PL/pgSQL` непосредственно из базы данных.  
+
+- [**PGHTTP**](https://github.com/apostoldevel/module-PGHTTP) — Postgres HTTP
+    - Позволяет принимать и обрабатывать HTTP‑запросы (REST API) на языке `PL/pgSQL`.  
       Это даёт возможность реализовывать логику API непосредственно в базе данных.
 
 > Подробнее о возможностях этой сборки — в [статье](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.ru-RU.md).
@@ -75,7 +78,6 @@
 - [**AppServer**](https://github.com/apostoldevel/module-AppServer) — сервер приложений;
 - [**MessageServer**](https://github.com/apostoldevel/process-MessageServer) — сервер сообщений (SMTP/FCM/API);
 - [**FileServer**](https://github.com/apostoldevel/module-FileServer) — файловый сервер;
-- [**Replication**](https://github.com/apostoldevel/process-Replication) — сервис репликации баз данных;
 - [**StreamServer**](https://github.com/apostoldevel/process-StreamServer) — сервер потоковых данных.
 
 Отдельно доступен модуль WebSocket: [**WebSocket API**](https://github.com/apostoldevel/module-WebSocketAPI).
