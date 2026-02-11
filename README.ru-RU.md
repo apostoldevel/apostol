@@ -88,14 +88,14 @@
 
 Реальные проекты, реализованные на **Апостол**:
 
-- [Campus Caster & Campus CORS](https://cors.campusagro.com): NTRIP-кастер (Caster) и коммерческая система для передачи GNSS-поправок в реальном времени по протоколу NTRIP (протокол для потоковой передачи дифференциальных поправок GNSS через Интернет).
 - [CopyFrog](https://copyfrog.ai) — платформа на базе ИИ для генерации рекламных текстов, видео‑креативов и маркетинговых описаний;
-- [Ship Safety ERP](https://ship-safety.ru) — ERP‑система для судоходных компаний;
-- [OCPP CSS](http://ocpp-css.ru) — центральная система для зарядных станций (OCPP);
+- [ChargeMeCar](https://chargemecar.com) — центральная система для зарядных станций (OCPP);
+- [Campus Caster & Campus CORS](https://cors.campusagro.com): NTRIP-кастер (Caster) и коммерческая система для передачи GNSS-поправок в реальном времени по протоколу NTRIP (протокол для потоковой передачи дифференциальных поправок GNSS через Интернет).
+- [Talking to AI](https://t.me/TalkingToAIBot) — интеграция ChatGPT в Telegram-бот.
 - [PlugMe](https://plugme.ru) — CRM‑система для зарядных станций и владельцев электромобилей;
 - [DEBT Master](https://debt-master.ru) — система автоматизации взыскания задолженности;
+- [Ship Safety ERP](https://ship-safety.ru) — ERP‑система для судоходных компаний;
 - [BitDeals](https://testnet.bitdeals.org) — сервис обработки биткоин‑платежей.
-- [Talking to AI](https://t.me/TalkingToAIBot) — интеграция ChatGPT в Telegram-бот.
 
 ---
 
