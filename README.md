@@ -67,7 +67,7 @@ The framework has a modular architecture and includes built‑in UDP/TCP/WebSock
     - Allows receiving and sending HTTP requests using `PL/pgSQL`.  
       This lets you implement API logic directly in the database.
 
-> More details about this build can be found in the [article](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.ru-RU.md) (in Russian).
+> More details about this build can be found in the [article](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.md).
 
 ### With additional modules Apostol can be turned into
 
