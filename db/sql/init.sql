@@ -1,0 +1,2 @@
+\ir init.psql
+\q

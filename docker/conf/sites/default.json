@@ -1,0 +1,10 @@
+{
+  "hosts": ["example.com", "localhost:8080"],
+  "root": "/opt/apostol/www",
+  "oauth2": {
+    "identifier": "/oauth/identifier",
+    "callback": "/",
+    "error": "/oauth/error",
+    "debug": "http://localhost:3000"
+  }
+}

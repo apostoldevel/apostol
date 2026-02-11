@@ -1,49 +1,83 @@
-Sending and Processing HTTP Requests in PostgreSQL
-=
+# Sending and Handling HTTP Requests in PostgreSQL Without Extensions or External Languages
 
-In this article, I would like to share some developments we use in our projects, specifically how to send and process HTTP requests directly from/to PostgreSQL.
+In many projects PostgreSQL is used as a “passive” storage: applications query the database for data, and all integration with external APIs is implemented outside of it.
 
-> First off, you will not need to install additional extensions into the database or call functions written in a programming language other than [PL/pgSQL](https://postgrespro.ru/docs/postgresql/16/plpgsql). Furthermore, all requests will be executed asynchronously, and the processing of the received data will be done through callback functions.
+This article shows a different approach: how to send and process HTTP requests directly from PostgreSQL without installing additional extensions and without using external programming languages — only [PL/pgSQL](https://postgrespro.ru/docs/postgresql/16/plpgsql).
 
-## Pgweb
+At the same time:
 
-For the demonstration, you will need a pre-configured database, which can be accessed either on our site at <https://apostoldevel.com/pgweb>, or locally by running a **Docker** container.
+- HTTP requests are executed **asynchronously**;
+- incoming and outgoing requests are logged in tables;
+- responses are processed via **callback functions** in the database itself.
 
-> Following the [link](https://apostoldevel.com/pgweb) will open [pgweb](https://github.com/sosedoff/pgweb) - a web interface for PostgreSQL. In pgweb, you can execute SQL queries, which will be provided below, as well as explore the contents of tables and the program code of functions written in [PL/pgSQL](https://postgrespro.ru/docs/postgresql/16/plpgsql).
+---
+
+## Runtime environment
+
+For the demo we need a preconfigured database. You can access it in two ways:
+
+1. via the web interface on our website: <https://apostoldevel.com/pgweb>
+2. locally — by running the environment via Docker Compose (described below).
+
+The link opens [pgweb](https://github.com/sosedoff/pgweb) — a web UI for PostgreSQL. It’s convenient for:
+
+- running SQL queries from this article;
+- viewing tables and views;
+- exploring PL/pgSQL function code.
 
 ![pgweb](pgweb.png)
 
-## Docker
+---
 
-Download the Docker image:
-```shell
-docker pull apostoldevel/apostol
+## Local run via Docker Compose
+
+### Building containers
+
+```bash
+./docker-build.sh
 ```
 
-Run it:
-```shell
-docker run -p 8080:8080 -p 8081:8081 -p 5433:5432 --name apostol apostoldevel/apostol
+### Starting containers
+
+```bash
+./docker-up.sh
 ```
 
-Wait for the container to load, and then open pgweb at <http://localhost:8081> in your browser.
+After startup:
 
-Now we have everything we need to make an HTTP request directly from PostgreSQL.
+- **Swagger UI** ([swagger-ui](https://github.com/swagger-api/swagger-ui))  
+  is available at:
+    - <http://localhost:8080>
+    - or `http://<host-ip>:8080`
 
-> Instead of pgweb, you can use any other tool for working with databases. PostgreSQL from the container will be available on port 5433.
+- **Pgweb** ([pgweb](https://github.com/sosedoff/pgweb)) — web UI for PostgreSQL  
+  is available at:
+    - <http://localhost:8081/pgweb>
+    - or `http://<host-ip>:8081/pgweb`
 
-## HTTP Client
+This is enough to execute HTTP requests directly from PostgreSQL.
 
-As a first example, let’s make an HTTP request to ourselves (inside the local host):
+> Instead of pgweb you can use any other PostgreSQL client.  
+> PostgreSQL from the container is available on port `5433`.
+
+---
+
+## HTTP client in PostgreSQL
+
+Let’s start with the simplest case: perform an HTTP request to a local server.
 
 ```sql
 SELECT http.fetch('http://localhost:8080/api/v1/time', content => null::text);
 ```
 
-The execution of the HTTP request will occur **asynchronously**, so instead of the HTTP request data, we will receive a `uuid` identifier.
+The request is executed **asynchronously**, so instead of a response you will get a `uuid` — the request identifier.
 
-Outgoing HTTP requests will be recorded in the `http.request` table, and the result of the HTTP request will be saved in the `http.response` table.
+Under the hood:
 
-To view outgoing HTTP requests and their responses, use the `http.fetch` view:
+- outgoing HTTP requests are saved into the `http.request` table,
+- request results — into the `http.response` table.
+
+You can view the history of requests and responses via the `http.fetch` view:
 
 ```sql
 SELECT * FROM http.fetch ORDER BY datestart DESC;
@@ -51,15 +85,24 @@ SELECT * FROM http.fetch ORDER BY datestart DESC;
 
 ![fetch](fetch.png)
 
-The `status` field will contain the HTTP response code ([HTTP response status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)) for our HTTP request, and the `response` field will contain the response.
+Here:
 
-As the next example, let’s request data from [JSONPlaceholder](https://jsonplaceholder.typicode.com):
+- `status` — HTTP response code ([HTTP response status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status));
+- `response` — HTTP response body.
+
+Now let’s fetch data from the public service [JSONPlaceholder](https://jsonplaceholder.typicode.com):
 
 ```sql
-SELECT http.fetch('https://jsonplaceholder.typicode.com/posts/1', 'GET', content => null::text, type => 'curl');
+SELECT http.fetch(
+  'https://jsonplaceholder.typicode.com/posts/1',
+  'GET',
+  content => null::text,
+  type    => 'curl'
+);
 ```
 
-And in the `response` field of the `http.fetch` view, we will find:
+The `response` field will contain something like:
+
 ```json
 {
   "userId": 1,
@@ -69,11 +112,13 @@ And in the `response` field of the `http.fetch` view, we will find:
 }
 ```
 
-> Here we additionally specified the type `curl`, this parameter is necessary for requests to servers that only support the **HTTP/2** protocol (such requests are executed through the [cURL](https://curl.se) library).
+> The `type = 'curl'` parameter is used for requests to servers that support only **HTTP/2**. In this case, execution goes through [cURL](https://curl.se).
 
-## HTTP Server
+---
 
-Incoming HTTP requests are logged in the `http.log` table:
+## HTTP server on the PostgreSQL side
+
+Besides outgoing requests, we also record incoming HTTP requests. They are logged in the `http.log` table:
 
 ```sql
 SELECT * FROM http.log ORDER BY id DESC;
@@ -81,133 +126,288 @@ SELECT * FROM http.log ORDER BY id DESC;
 
 ![Log](log.png)
 
-To process incoming HTTP requests, we have two PL/pgSQL functions `http.get` and `http.post` at our disposal.
+Incoming requests are processed by two PL/pgSQL functions:
 
-They accept the following input parameters:
+- `http.get`
+- `http.post`
 
-* `path` - Path;
-* `headers` - HTTP headers;
-* `params` - Query string converted to JSON format;
-* `body` - Request body, if it is a POST request.
+Parameters:
 
-As a response, the functions return a set ([SETOF](https://postgrespro.ru/docs/postgresql/16/xfunc-sql)) of JSON strings.
+- `path` — request path;
+- `headers` — HTTP headers;
+- `params` — query string converted to JSON;
+- `body` — request body (for POST and similar methods).
 
-> Returning a set of values allows us to work more efficiently with the data, processing each row individually. [Learn more here](https://postgrespro.ru/docs/postgresql/16/plpgsql-control-structures).
+The functions return the result as a set of rows (`SETOF json`).
 
-Sample code from `http.get`:
+> Returning a set (`SETOF`) allows you to efficiently process results row by row. For details, see the [PL/pgSQL documentation](https://postgrespro.ru/docs/postgresql/16/plpgsql-control-structures).
+
+Here is a fragment of `http.get` that returns the contents of the log:
+
 ```sql
 WHEN 'log' THEN
  
-    FOR r IN SELECT * FROM http.log ORDER BY id DESC
-    LOOP
-      RETURN NEXT row_to_json(r);
-    END LOOP;
+  FOR r IN SELECT * FROM http.log ORDER BY id DESC
+  LOOP
+    RETURN NEXT row_to_json(r);
+  END LOOP;
 ```
 
-You can use the above code like this:
+You can call this code via:
+
 ```sql
 SELECT http.fetch('http://localhost:8080/api/v1/log', content => null::text);
 ```
 
-# Callback Functions
--
+---
 
-At the beginning of the article, I mentioned that the processing of received data would be done through callback functions.
+## Callback functions: handling responses in the database
 
-To better understand how this will happen, let's solve a specific problem, such as retrieving currency exchange rates with parsing the received response and saving the data in a rate table.
+Now to the most interesting part. We handle responses via callback functions in the database itself.
 
-To make it clear how this works in conjunction with an HTTP server, I added the following code to the `http.get` function:
+Let’s walk through a concrete task: obtain exchange rates, parse the response, and store it in a rates table.
+
+To show how this is connected with the HTTP server, we’ll add `latest` path handling to `http.get`:
+
 ```sql
-  WHEN 'latest' THEN
+WHEN 'latest' THEN
 
-    FOR r IN SELECT * FROM jsonb_to_record(params) AS x(base text, symbols text)
-    LOOP
-      IF r.base = 'USD' THEN
-        RETURN NEXT jsonb_build_object('success', true, 'timestamp', trunc(extract(EPOCH FROM Now())), 'base', r.base, 'date', to_char(Now(), 'YYYY-MM-DD'), 'rates', jsonb_build_object('RUB', 96.245026, 'EUR', 0.946739, 'BTC', 0.000038));
-      ELSIF r.base = 'BTC' THEN
-        RETURN NEXT jsonb_build_object('success', true, 'timestamp', trunc(extract(EPOCH FROM Now())), 'base', r.base, 'date', to_char(Now(), 'YYYY-MM-DD'), 'rates', jsonb_build_object('RUB', 2542803.2, 'EUR', 25012.95, 'USD', 26420.1));
-      ELSE
-        RETURN NEXT jsonb_build_object('success', false, jsonb_build_object('code', 400, 'message', format('Base "%s" not supported.', r.base)));
-      END IF;
-    END LOOP;
+  FOR r IN
+    SELECT * FROM jsonb_to_record(params) AS x(base text, symbols text)
+  LOOP
+    IF r.base = 'USD' THEN
+      RETURN NEXT jsonb_build_object(
+        'success',   true,
+        'timestamp', trunc(extract(EPOCH FROM now())),
+        'base',      r.base,
+        'date',      to_char(now(), 'YYYY-MM-DD'),
+        'rates',     jsonb_build_object(
+                        'RUB', 96.245026,
+                        'EUR', 0.946739,
+                        'BTC', 0.000038
+                      )
+      );
+    ELSIF r.base = 'BTC' THEN
+      RETURN NEXT jsonb_build_object(
+        'success',   true,
+        'timestamp', trunc(extract(EPOCH FROM now())),
+        'base',      r.base,
+        'date',      to_char(now(), 'YYYY-MM-DD'),
+        'rates',     jsonb_build_object(
+                        'RUB', 2542803.2,
+                        'EUR', 25012.95,
+                        'USD', 26420.1
+                      )
+      );
+    ELSE
+      RETURN NEXT jsonb_build_object(
+        'success', false,
+        jsonb_build_object(
+          'code',    400,
+          'message', format('Base "%s" not supported.', r.base)
+        )
+      );
+    END IF;
+  END LOOP;
 ```
 
-> On the "latest" query, we will return static data in the format of the [currency exchange rate API](https://exchangeratesapi.io/documentation). If you have access to currency exchange rate services, you can request data through their API.
+> Here for a “latest” rates request we return a **static** response in the format of the [exchange rates API](https://exchangeratesapi.io/documentation). If you have access to a real exchange rate service, you can fetch data through their API.
 
-We will process the received data using the callback function `public.exchange_rate_done`, the source code of which can be reviewed in pgweb, and the queries will be as follows:
+Next, we plug in the callback functions:
 
-From the container:
+- `public.exchange_rate_done` — handles successful responses,
+- `public.exchange_rate_fail` — handles errors.
+
+You can see the code of these functions in pgweb, so here we’ll just show invocation examples.
+
+### Calls from the container
+
 ```sql
-SELECT http.fetch('http://localhost:8080/api/v1/latest?base=USD', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest');
-SELECT http.fetch('http://localhost:8080/api/v1/latest?base=BTC', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest');
+SELECT http.fetch(
+  'http://localhost:8080/api/v1/latest?base=USD',
+  'GET',
+  null,
+  null,
+  'public.exchange_rate_done',
+  'public.exchange_rate_fail',
+  'api.exchangerate.host',
+  null,
+  'latest'
+);
+
+SELECT http.fetch(
+  'http://localhost:8080/api/v1/latest?base=BTC',
+  'GET',
+  null,
+  null,
+  'public.exchange_rate_done',
+  'public.exchange_rate_fail',
+  'api.exchangerate.host',
+  null,
+  'latest'
+);
 ```
 
-Through our server:
+### Via our server
+
 ```sql
-SELECT http.fetch('https://apostoldevel.com/api/v1/latest?base=USD', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest');
-SELECT http.fetch('https://apostoldevel.com/api/v1/latest?base=BTC', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest');
+SELECT http.fetch(
+  'https://apostoldevel.com/api/v1/latest?base=USD',
+  'GET',
+  null,
+  null,
+  'public.exchange_rate_done',
+  'public.exchange_rate_fail',
+  'api.exchangerate.host',
+  null,
+  'latest'
+);
+
+SELECT http.fetch(
+  'https://apostoldevel.com/api/v1/latest?base=BTC',
+  'GET',
+  null,
+  null,
+  'public.exchange_rate_done',
+  'public.exchange_rate_fail',
+  'api.exchangerate.host',
+  null,
+  'latest'
+);
 ```
 
-Through the currency exchange rate service (if access is available):
+### Via an external exchange‑rates service (if you have access)
+
 ```sql
-SELECT http.fetch('https://api.exchangerate.host/latest?base=USD&symbols=BTC,EUR,RUB', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest', null, 'curl');
-SELECT http.fetch('https://api.exchangerate.host/latest?base=BTC&symbols=USD,EUR,RUB', 'GET', null, null, 'public.exchange_rate_done', 'public.exchange_rate_fail', 'api.exchangerate.host', null, 'latest', null, 'curl');
+SELECT http.fetch(
+  'https://api.exchangerate.host/latest?base=USD&symbols=BTC,EUR,RUB',
+  'GET',
+  null,
+  null,
+  'public.exchange_rate_done',
+  'public.exchange_rate_fail',
+  'api.exchangerate.host',
+  null,
+  'latest',
+  null,
+  'curl'
+);
+
+SELECT http.fetch(
+  'https://api.exchangerate.host/latest?base=BTC&symbols=USD,EUR,RUB',
+  'GET',
+  null,
+  null,
+  'public.exchange_rate_done',
+  'public.exchange_rate_fail',
+  'api.exchangerate.host',
+  null,
+  'latest',
+  null,
+  'curl'
+);
 ```
 
-The result of these actions will be a data-filled `public.rate` table.
+The result of the callback functions is a populated `public.rate` table.
 
-You can view the current exchange rates through the `public.rates` view:
+You can view current rates via the `public.rates` view:
+
 ```sql
-SELECT * FROM public.rates WHERE validFromDate <= Now() AND validToDate > Now();
+SELECT *
+FROM public.rates
+WHERE validFromDate <= now()
+  AND validToDate   > now();
 ```
 
 ![Rates](rates.png)
 
-# Asynchronous Notification
+---
 
-Before delving into how it all works in detail, let's refer to the [PostgreSQL documentation](https://postgrespro.ru/docs/postgresql/16/libpq-notify):
+## How it works: LISTEN/NOTIFY
 
-> **34.9. Asynchronous Notification**
->
-> PostgreSQL provides asynchronous notification via the `LISTEN` and `NOTIFY` commands. A client session registers its interest in a specific notification channel using the `LISTEN` command (and can stop listening using the `UNLISTEN` command). All sessions listening to a specific channel will be notified asynchronously when the `NOTIFY` command is executed with a parameter specifying the name of that channel in any session. A `payload` string can be used to transmit additional data to listening sessions.
+The asynchronous execution mechanism is based on standard PostgreSQL features — `LISTEN/NOTIFY`.
 
-As you might have guessed, it is this mechanism that underlies the interaction between PostgreSQL and a certain client application, but let's not get ahead of ourselves.
+From the [documentation](https://postgrespro.ru/docs/postgresql/16/libpq-notify):
 
-## In Detail
+> **34.9. Asynchronous Notification**  
+> PostgreSQL provides asynchronous notification via the `LISTEN` and `NOTIFY` commands. A client session registers its interest in a particular notification channel with the `LISTEN` command (and may stop listening with `UNLISTEN`). All sessions listening on a particular channel are notified asynchronously when a `NOTIFY` command with the channel’s name is executed in any session. A `payload` string can be used to transmit additional data to listening sessions.
 
-Let's take a closer look at what happens on the PostgreSQL side after calling the `http.fetch` function:
+This mechanism is used to coordinate PostgreSQL with the client application that actually performs HTTP requests.
 
-The PL/pgSQL function `http.fetch` is a wrapper for the `http.create_request` function, where a record is written to the `http.request` table, followed by a call to the `NOTIFY` command through a trigger for adding a new record. That's all there is to it.
+---
+
+## `http.fetch` lifecycle
+
+Let’s see what happens after calling:
+
+```sql
+SELECT http.fetch('http://localhost:8080/api/v1/time', content => null::text);
+```
+
+1. The PL/pgSQL function `http.fetch` is a convenience wrapper around `http.create_request`.
+2. `http.create_request` creates a record in the `http.request` table with the HTTP request parameters.
+3. An insert into `http.request` fires a trigger.
+4. The trigger issues `NOTIFY` on a specific channel, passing the request identifier in the `payload`.
+
+At this point PostgreSQL’s role in this step ends.
 
 ![NOTIFY](pg_notify.png)
 
-Next, a certain client application comes into play, connected to PostgreSQL and ready to receive asynchronous notifications. It acts as an HTTP client and server, sends an HTTP request, and stores the result in the `http.response` table.
+Then:
 
-## Client Application
+- an external client application, which has subscribed in advance to this channel (`LISTEN`), receives the notification;
+- it reads the request data from `http.request`;
+- performs the HTTP request (using an HTTP client or cURL, including HTTP/2 support);
+- saves the result into the `http.response` table;
+- if needed, invokes the specified callback functions in the database.
 
-The client application is a separate program whose task is to perform certain actions upon signals from the server. In this case, it executes HTTP requests based on the data contained in the `http.request` table.
+---
 
-If you or your team are experienced enough, developing such an application should not be difficult. We use our own open source development — [Apostol](https://github.com/apostoldevel/apostol).
+## Client application
+
+The client application is a separate program that:
+
+- maintains a connection to PostgreSQL;
+- subscribes to the required notification channels (`LISTEN`);
+- on `NOTIFY` events, fetches new tasks from `http.request`;
+- performs HTTP requests to external systems;
+- stores results in `http.response`;
+- triggers callback function invocations.
+
+You can implement such an application in any language.
+
+We use our own **open source** project — [Apostol](https://github.com/apostoldevel/apostol).
 
 ![Activity](activity.png)
 
-# Conclusion
+---
 
-I have demonstrated a user-friendly yet highly flexible mechanism for communicating with external systems directly from PostgreSQL.
+## Where this is applicable
 
-In terms of practical application, imagine that an invoice is generated in your system, which should trigger an automatic debit from the customer's previously linked card. All the necessary data to implement this task are stored in the database. Consequently, the application (microservice) that will interact with the payment system must be connected to the database and somehow notified of the new invoice. The application needs to retrieve the necessary data, process it, form a request to the payment system, and save the result in the database. After a successful debit, an electronic receipt must be generated, which is an interaction with another service, and it would also be nice to notify the client by e-mail, SMS, or through a mobile application ([FCM](https://firebase.google.com/docs/cloud-messaging?hl=ru)) about the invoice and the status of the transaction.
+A practical example. Your system creates an invoice that must be automatically charged to a previously linked client card.
 
-In other words, we get a cascade of tasks for interacting with external systems through their APIs, while operating on the data that is in the database.
+High-level scenario:
 
-So, if the data is in the database, and we have a mechanism for communicating with external systems from PostgreSQL, why not form requests to the APIs of external systems in the same environment where the data is? This is a rhetorical question.
+1. A new invoice appears in PostgreSQL.
+2. A trigger creates a record in `http.request` and sends `NOTIFY`.
+3. The client application:
+    - receives the notification,
+    - reads invoice data,
+    - forms a request to the payment system,
+    - saves the result in the DB.
+4. After a successful charge:
+    - an electronic receipt is generated (calling another service),
+    - notifications are sent to the client (e‑mail, SMS, push via [FCM](https://firebase.google.com/docs/cloud-messaging?hl=ru)).
 
-The example above is not a theoretical exposition but a practical and working implementation.
+This creates a chain of integrations with external systems, while all business data and orchestration logic stay in the database.
 
-If you need a more visual example, here it is: [Talking to AI](https://t.me/TalkingToAIBot) is a Telegram chatbot for communicating with artificial intelligence (ChatGPT), implemented in PL/pgSQL.
+If data is already in the DB and we have a mechanism to communicate with external APIs directly from PostgreSQL, it is natural to form requests to those APIs right where the data lives. This is not a theoretical construct but a practical, working scheme.
 
-There is an example of a Telegram bot in PL/pgSQL with source code, the link is below.
+A more visual example: the Telegram bot [Talking to AI](https://t.me/TalkingToAIBot) for chatting with ChatGPT, which is implemented in PL/pgSQL and uses the approach described here.
 
-Source Code Links:
-* [Apostol](https://github.com/apostoldevel/apostol)
-* [Postgres Fetch](https://github.com/apostoldevel/module-PGFetch)
-* [Telegram bot in Postgres](https://github.com/apostoldevel/apostol-pgtg)
+---
+
+## Source code
+
+- Client application: [Apostol](https://github.com/apostoldevel/apostol)
+- PostgreSQL module: [Postgres Fetch](https://github.com/apostoldevel/module-PGFetch)

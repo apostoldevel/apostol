@@ -4,219 +4,288 @@
 
 # Апостол (Apostol)
 
-**Апостол** - это платформа (framework) для разработки серверных приложений (системных служб) под ОС Linux.
+**Апостол** — это высокопроизводительная C++‑платформа (framework) для разработки серверных приложений и системных служб под Linux с прямым доступом к PostgreSQL.
 
-ОПИСАНИЕ
--
-Апостол разработан на языке программирования C++ с применением асинхронной модели программирования на базе [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) с прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/) (через библиотеку: `libpq`) специально для высоко-нагруженных систем.
+---
 
-Ключевым элементом платформы является HTTP-сервер с прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/).
+## Оглавление
 
-**Уникальность** решения заключается в том, что и HTTP-сервер, и сокеты PostgreSQL находятся в едином цикле обработки событий, что позволяет мгновенно передавать данные с HTTP-сервера в базу данных. Другими словами, между HTTP-сервером и базой данных нет посредников, которые обычно представлены скриптовыми языками программирования. Это, в свою очередь, позволяет выполнять запросы к базе данных с максимальной эффективностью и минимальными временными задержками.
+- [Описание](#описание)
+- [Модули](#модули)
+    - [Модули в данной сборке](#данная-сборка-поставляется-двумя-модулями)
+    - [Дополнительные модули](#с-помощью-дополнительных-модулей-апостол-можно-превратить-в)
+- [Реальные проекты](#проекты)
+- [Структура каталогов](#структура-каталогов)
+- [Запуск в Docker (docker-compose)](#docker-compose)
+- [Сборка и установка](#сборка-и-установка)
+    - [Зависимости](#linux-debianubuntu)
+    - [Установка PostgreSQL и создание БД](#postgresql)
+    - [Установка исходников](#для-установки-апостол-без-git-необходимо)
+    - [Сборка и установка бинаря](#сборка)
+- [Запуск как сервис](#запуск)
+- [Управление процессами](#управление)
+- [Лицензии и регистрация](#лицензии-и-регистрация)
 
-* Основные преимущества:
-    * **Автономность**: После сборки Вы получаете полностью готовый к работе бинарный файл в виде системной службы (демона) под ОС Linux;
-    * **Скорость**: Запросы к HTTP-серверу и базе данных выполняются на столько быстро на сколько это позволяет операционная система и СУБД;
-    * **Пул соединений**: Апостол имеет собственный настраиваемый пул соединений с PostgreSQL.
+---
 
-МОДУЛИ
--
+## Описание
 
-Фреймворк имеет модульную конструкцию, встроенный HTTP-сервер и [PostgreSQL](https://www.postgresql.org/) клиент.
+Апостол разработан на C++ с использованием асинхронной модели программирования на базе [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) и прямым доступом к СУБД [PostgreSQL](https://www.postgresql.org/) через библиотеку `libpq`. Платформа ориентирована на высоконагруженные системы.
 
-### Данная сборка поставляется двумя модулями:
+Ключевым элементом платформы является встроенный HTTP‑сервер, работающий в одном цикле обработки событий с соединениями PostgreSQL.
 
-- [WebServer](https://github.com/apostoldevel/module-WebServer) (Веб-сервер);
-    * Обеспечивает работу [Swagger UI](https://swagger.io/tools/swagger-ui) который будет доступен по адресу [http://localhost:8080](http://localhost:8080) в вашем браузере после запуска **Апостол**.
+**Уникальность подхода**:
 
+- HTTP‑сервер и сокеты PostgreSQL находятся в **едином event‑loop**.
+- Данные идут **напрямую** между HTTP‑сервером и базой данных — без промежуточных скриптовых слоёв (PHP, Python и т.п.).
+- Это максимально снижает задержки, уменьшает накладные расходы и даёт предсказуемую производительность.
 
-- [PGFetch](https://github.com/apostoldevel/module-PGFetch) (Postgres Fetch);
-    * Предоставляет возможность принимать и отправлять `HTTP-запросы` на языке программирования `PL/pgSQL`.
+**Основные преимущества**:
 
-### С помощью дополнительных модулей Апостол можно превратить в:
+- **Автономность**  
+  После сборки вы получаете готовый бинарный файл системной службы (демона) под Linux.
 
-- [AuthServer](https://github.com/apostoldevel/module-AuthServer) (Сервер авторизации OAuth 2.0);
-- [AppServer](https://github.com/apostoldevel/module-AppServer) (Сервер приложений);
-- [MessageServer](https://github.com/apostoldevel/process-MessageServer) (Сервер сообщений: SMTP/FCM/API);
-- [FileServer](https://github.com/apostoldevel/module-FileServer) (Файл сервер);
-- [Replication](https://github.com/apostoldevel/process-Replication) (Репликация базы данных);
-- [StreamServer](https://github.com/apostoldevel/process-StreamServer) (Сервер потоковых данных).
+- **Скорость**  
+  Обработка HTTP‑запросов и выполнение SQL‑запросов выполняются настолько быстро, насколько это позволяет ОС и СУБД.
 
-**Апостол** имеет встроенную поддержку WebSocket: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
+- **Пул соединений**  
+  Встроенный настраиваемый пул соединений с PostgreSQL.
 
-Объединив всё выше перечисленное можно создать информационную систему [Апостол CRM](https://github.com/apostoldevel/apostol-crm), [Центральную систему для станций зарядки электо-автомобилей](https://github.com/apostoldevel/apostol-cs) или [Telegram бот на PL/pgSQL](https://github.com/apostoldevel/apostol-pgtg) почему бы и нет ;-).
+---
 
-_С Апостол Ваши возможности ограничены только Вашей фантазий._
+## Модули
 
-[Свидетельство о государственной регистрации программы для ЭВМ](https://st.fl.ru/users/al/alienufo/portfolio/f_1156277cef5ebb72.pdf).
+Фреймворк имеет модульную архитектуру и включает встроенные UDP/TCP/WebSocket/HTTP‑серверы и клиент для [PostgreSQL](https://www.postgresql.org/).
 
-Проекты
--
-Реализованные на **Апостол** проекты:
+### Данная сборка поставляется двумя модулями
 
-* [CopyFrog](https://copyfrog.ai) (Платформа на базе искусственного интеллекта для создания, рекламных текстов, видео-креативов, маркетинговых описаний товаров и услуг)
-* [OCPP CSS](http://ocpp-css.ru) (Центральная система в виде сервиса для зарядных станций)
-* [Ship Safety ERP](https://ship-safety.ru) (ERP-система для организации производственной деятельности судоходных компаний)
-* [PlugMe](https://plugme.ru) (CRM-система для зарядных станций и владельцев электромобилей)
-* [DEBT Master](https://debt-master.ru) (Система для автоматизации взыскания долгов)
-* [BitDeals](https://testnet.bitdeals.org) (Сервис обработки биткоин-платежей)
+- [**WebServer**](https://github.com/apostoldevel/module-WebServer) — веб‑сервер
+    - Обеспечивает работу [Swagger UI](https://swagger.io/tools/swagger-ui), доступного по адресу:  
+      [http://localhost:8080](http://localhost:8080) после запуска **Апостол**.
 
-Docker
--
+- [**PGFetch**](https://github.com/apostoldevel/module-PGFetch) — Postgres Fetch
+    - Позволяет принимать и отправлять HTTP‑запросы на языке `PL/pgSQL`.  
+      Это даёт возможность реализовывать логику API непосредственно в базе данных.
 
-Вы можете собрать образ самостоятельно или получить уже готовый из докер-хаб:
+> Подробнее о возможностях этой сборки — в [статье](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.ru-RU.md).
 
-### Собрать
+### С помощью дополнительных модулей Апостол можно превратить в
 
-~~~
-docker build -t apostol .
-~~~
+- [**AuthServer**](https://github.com/apostoldevel/module-AuthServer) — сервер авторизации OAuth 2.0;
+- [**AppServer**](https://github.com/apostoldevel/module-AppServer) — сервер приложений;
+- [**MessageServer**](https://github.com/apostoldevel/process-MessageServer) — сервер сообщений (SMTP/FCM/API);
+- [**FileServer**](https://github.com/apostoldevel/module-FileServer) — файловый сервер;
+- [**Replication**](https://github.com/apostoldevel/process-Replication) — сервис репликации баз данных;
+- [**StreamServer**](https://github.com/apostoldevel/process-StreamServer) — сервер потоковых данных.
 
-### Получить
+Отдельно доступен модуль WebSocket: [**WebSocket API**](https://github.com/apostoldevel/module-WebSocketAPI).
 
-~~~
-docker pull apostoldevel/apostol
-~~~
+---
 
-### Запустить
+## Проекты
 
-Если собрали самомтоятельно:
-~~~
-docker run -d -p 8080:8080 -p 8081:8081 -p 5433:5432 --rm --name apostol apostol
-~~~
+Реальные проекты, реализованные на **Апостол**:
 
-Если получили готовый образ:
-~~~
-docker run -d -p 8080:8080 -p 8081:8081 -p 5433:5432 --rm --name apostol apostoldevel/apostol
-~~~
+- [Campus Caster & Campus CORS](https://cors.campusagro.com): NTRIP-кастер (Caster) и коммерческая система для передачи GNSS-поправок в реальном времени по протоколу NTRIP (протокол для потоковой передачи дифференциальных поправок GNSS через Интернет).
+- [CopyFrog](https://copyfrog.ai) — платформа на базе ИИ для генерации рекламных текстов, видео‑креативов и маркетинговых описаний;
+- [Ship Safety ERP](https://ship-safety.ru) — ERP‑система для судоходных компаний;
+- [OCPP CSS](http://ocpp-css.ru) — центральная система для зарядных станций (OCPP);
+- [PlugMe](https://plugme.ru) — CRM‑система для зарядных станций и владельцев электромобилей;
+- [DEBT Master](https://debt-master.ru) — система автоматизации взыскания задолженности;
+- [BitDeals](https://testnet.bitdeals.org) — сервис обработки биткоин‑платежей.
+- [Talking to AI](https://t.me/TalkingToAIBot) — интеграция ChatGPT в Telegram-бот.
 
-[Swagger UI](https://github.com/swagger-api/swagger-ui) будет доступен по адресу <http://localhost:8080> или http://host-ip:8080 в вашем браузере.
+---
 
-[Pgweb](https://github.com/sosedoff/pgweb) - веб-обозреватель для PostgreSQL будет доступен по адресу <http://localhost:8081> или http://host-ip:8081 в вашем браузере.
+## Структура каталогов
 
-> Вместо pgweb можно использовать любой другой инструмент для работы с базами данных. PostgreSQL из контейнера будет доступен на порту 5433.
+```text
+auto/                       скрипты автоматизации
+cmake-modules/              модули CMake
+conf/                       конфигурационные файлы
+src/                        исходный код
+├─ app/                     исходный код: Apostol (приложение)
+├─ core/                    исходный код: Apostol Core (ядро фреймворка)
+├─ lib/                     исходный код библиотек
+│  └─ delphi/               Delphi classes for C++
+└─ modules/                 исходный код модулей (дополнений)
+www/                        файлы веб‑интерфейса (сайт, Swagger UI и т.п.)
+```
 
-СТРУКТУРА КАТАЛОГОВ
--
-    auto/                       содержит файлы со скриптами
-    cmake-modules/              содержит файлы с модулями CMake
-    conf/                       содержит файлы с настройками
-    src/                        содержит файлы с исходным кодом
-    ├─app/                      содержит файлы с исходным кодом: Apostol
-    ├─core/                     содержит файлы с исходным кодом: Apostol Core
-    ├─lib/                      содержит файлы с исходным кодом библиотек
-    | └─delphi/                 содержит файлы с исходным кодом библиотеки*: Delphi classes for C++
-    └─modules/                  содержит файлы с исходным кодом дополнений (модулей)
-    www/                        содержит файлы с Веб-сайтом
+---
 
-СБОРКА И УСТАНОВКА
--
-Для установки **Апостол** Вам потребуется:
+## Docker Compose
+
+### Сборка контейнеров
+
+```bash
+./docker-build.sh
+```
+
+### Запуск контейнеров
+
+```bash
+./docker-up.sh
+```
+
+После запуска:
+
+- **Swagger UI** ([swagger-ui](https://github.com/swagger-api/swagger-ui))  
+  будет доступен по адресу:
+    - [http://localhost:8080](http://localhost:8080)
+    - или `http://<host-ip>:8080`
+
+- **Pgweb** ([pgweb](https://github.com/sosedoff/pgweb)) — веб‑обозреватель для PostgreSQL  
+  будет доступен по адресу:
+    - [http://localhost:8081/pgweb](http://localhost:8081/pgweb/)
+    - или `http://<host-ip>:8081/pgweb`
+
+> Вместо pgweb можно использовать любой другой инструмент для работы с СУБД.  
+> PostgreSQL из контейнера доступен на порту `5433`.
+
+---
+
+## Сборка и установка
+
+Для локальной установки **Апостол** вам потребуются:
 
 1. Компилятор C++;
-1. [CMake](https://cmake.org) или интегрированная среда разработки (IDE) с поддержкой [CMake](https://cmake.org);
-1. Библиотека [libpq-dev](https://www.postgresql.org/download) (libraries and headers for C language frontend development);
-1. Библиотека [postgresql-server-dev-all](https://www.postgresql.org/download) (libraries and headers for C language backend development).
+2. [CMake](https://cmake.org) или IDE с поддержкой CMake;
+3. Библиотека [libpq-dev](https://www.postgresql.org/download) (frontend headers для работы с PostgreSQL);
+4. Библиотека [postgresql-server-dev-all](https://www.postgresql.org/download) (backend headers PostgreSQL).
 
 ### Linux (Debian/Ubuntu)
 
-Для того чтобы установить компилятор C++ и необходимые библиотеки на Ubuntu выполните:
-~~~
-sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
-~~~
+Установка компилятора C++ и основных библиотек:
 
-###### Подробное описание установки C++, CMake, IDE и иных компонентов необходимых для сборки проекта не входит в данное руководство.
+```bash
+sudo apt-get update
+sudo apt-get install \
+    build-essential \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    make cmake gcc g++
+```
+
+> Подробная установка C++, CMake, IDE и других вспомогательных инструментов не входит в это руководство.
 
 #### PostgreSQL
 
-Для того чтобы установить PostgreSQL воспользуйтесь инструкцией по [этой](https://www.postgresql.org/download/) ссылке.
+Установите PostgreSQL, следуя официальной инструкции:  
+<https://www.postgresql.org/download/>
 
 #### База данных
 
-Для того чтобы установить базу данных необходимо выполнить:
+Шаги подготовки базы данных:
 
-1. Прописать наименование базы данных в файле db/sql/sets.conf (по умолчанию: web)
-1. Прописать пароли для пользователей СУБД [libpq-pgpass](https://postgrespro.ru/docs/postgrespro/13/libpq-pgpass):
-   ~~~
-   $ sudo -iu postgres -H vim .pgpass
-   ~~~
-   ~~~
+1. Укажите имя базы данных в файле `db/sql/sets.conf`  
+   (по умолчанию: `web`).
+
+2. Укажите пароль для пользователя СУБД в файле `~postgres/.pgpass`:  
+   Под пользователем `postgres`:
+   ```bash
+   sudo -iu postgres -H vim .pgpass
+   ```
+   Пример содержимого:
+   ```text
    *:*:*:http:http
-   ~~~
-1. Указать в файле настроек `/etc/postgresql/{version}/main/pg_hba.conf`:
-   ~~~
-   # TYPE  DATABASE        USER            ADDRESS                 METHOD
-   local	web		http					md5
-   ~~~
-1. Применить настройки:
-   ~~~
-   $ sudo pg_ctlcluster <version> main reload
-   ~~~   
-1. Выполнить:
-   ~~~
-   $ cd db/
-   $ ./install.sh --make
-   ~~~
+   ```
 
-###### Параметр `--make` необходим для установки базы данных в первый раз. Далее установочный скрипт можно запускать или без параметров или с параметром `--install`.
+3. Включите доступ в конфигурации `pg_hba.conf`  
+   Файл: `/etc/postgresql/$PG_MAJOR/main/pg_hba.conf`:
+   ```text
+   # TYPE  DATABASE        USER    ADDRESS  METHOD
+   local   web             http            md5
+   ```
 
-Для установки **Апостол** (без Git) необходимо:
+4. Примените настройки:
+   ```bash
+   sudo pg_ctlcluster <version> main reload
+   ```
 
-1. Скачать [Апостол](https://github.com/apostoldevel/apostol/archive/master.zip);
-1. Распаковать;
-1. Настроить `CMakeLists.txt` (по необходимости);
-1. Собрать и скомпилировать (см. ниже).
+5. Инициализируйте базу:
+   ```bash
+   cd db/
+   ./runme.sh
+   ```
 
-Для установки **Апостол** с помощью Git выполните:
-~~~
+6. В меню установочного скрипта выберите `First Installation`.
+
+> Параметр `--init` необходим только при первой установке базы данных.  
+> Далее установочный скрипт можно запускать без параметров или с `--install`.
+
+---
+
+### Установка исходников
+
+#### Для установки **Апостол** без Git необходимо
+
+1. Скачать архив:  
+   <https://github.com/apostoldevel/apostol/archive/master.zip>
+2. Распаковать архив;
+3. При необходимости отредактировать `CMakeLists.txt`;
+4. Собрать проект (см. ниже).
+
+#### Для установки **Апостол** через Git
+
+```bash
 git clone https://github.com/apostoldevel/apostol.git
-~~~
-
-###### Сборка:
-~~~
 cd apostol
-./configure
-~~~
+```
 
-###### Компиляция и установка:
-~~~
+---
+
+### Сборка
+
+```bash
+./configure
+```
+
+### Компиляция и установка
+
+```bash
 cd cmake-build-release
 make
 sudo make install
-~~~
+```
 
-По умолчанию бинарный файл `apostol` будет установлен в:
-~~~
+По умолчанию бинарный файл `apostol` устанавливается в:
+
+```text
 /usr/sbin
-~~~
+```
 
-Файл конфигурации и необходимые для работы файлы, в зависимости от варианта установки, будут расположены в:
-~~~
+Файлы конфигурации и необходимые данные в зависимости от параметров установки будут располагаться в:
+
+```text
 /etc/apostol
 или
 ~/apostol
-~~~
+```
 
-ЗАПУСК
--
+---
 
-###### Если `INSTALL_AS_ROOT` установлено в `ON`.
+## Запуск
 
-`apostol` - это системная служба (демон) Linux.
-Для управления `apostol` используйте стандартные команды управления службами.
+Если при конфигурации сборки опция `INSTALL_AS_ROOT` установлена в `ON`, то `apostol` устанавливается как системная служба (демон) Linux.
 
-Для запуска `apostol` выполните:
-~~~
+### Управление через systemd
+
+Запуск сервиса:
+
+```bash
 sudo systemctl start apostol
-~~~
+```
 
-Для проверки статуса выполните:
-~~~
+Проверка статуса:
+
+```bash
 sudo systemctl status apostol
-~~~
+```
 
-Результат должен быть **примерно** таким:
-~~~
+Ожидаемый вывод (пример):
+
+```text
 ● apostol.service - Apostol
      Loaded: loaded (/etc/systemd/system/apostol.service; enabled; vendor preset: enabled)
      Active: active (running) since Sat 2019-04-06 00:00:00 MSK; 3y ago
@@ -230,27 +299,45 @@ sudo systemctl status apostol
      CGroup: /system.slice/apostol.service
              ├─461163 apostol: master process /usr/sbin/apostol
              └─461164 apostol: worker process ("pq fetch", "web server")
-~~~
+```
 
-УПРАВЛЕНИЕ
--
+---
 
-Управлять `apostol` можно с помощью сигналов.
-Номер главного процесса по умолчанию записывается в файл `/run/apostol.pid`.
-Изменить имя этого файла можно при конфигурации сборки или же в `apostol.conf` секция `[daemon]` ключ `pid`.
+## Управление
 
-Главный процесс поддерживает следующие сигналы:
+Управление `apostol` осуществляется с помощью UNIX‑сигналов.  
+PID главного процесса по умолчанию записывается в файл:
 
-|Сигнал   |Действие          |
-|---------|------------------|
-|TERM, INT|быстрое завершение|
-|QUIT     |плавное завершение|
-|HUP	  |изменение конфигурации, запуск новых рабочих процессов с новой конфигурацией, плавное завершение старых рабочих процессов|
-|WINCH    |плавное завершение рабочих процессов|	
+```text
+/run/apostol.pid
+```
 
-Управлять рабочими процессами по отдельности не нужно. Тем не менее, они тоже поддерживают некоторые сигналы:
+Имя PID‑файла можно изменить при конфигурации сборки или в `apostol.conf`  
+(секция `[daemon]`, ключ `pid`).
 
-|Сигнал   |Действие          |
-|---------|------------------|
-|TERM, INT|быстрое завершение|
-|QUIT	  |плавное завершение|
+### Сигналы главному процессу
+
+| Сигнал     | Действие                                                                                 |
+|-----------|-------------------------------------------------------------------------------------------|
+| `TERM`    | быстрое завершение                                                                       |
+| `INT`     | быстрое завершение                                                                       |
+| `QUIT`    | плавное завершение                                                                       |
+| `HUP`     | перечитать конфигурацию, запустить новые рабочие процессы, плавно завершить старые       |
+| `WINCH`   | плавное завершение рабочих процессов                                                     |
+
+Рабочими процессами отдельно управлять не требуется, однако они поддерживают:
+
+| Сигнал     | Действие          |
+|-----------|-------------------|
+| `TERM`    | быстрое завершение |
+| `INT`     | быстрое завершение |
+| `QUIT`    | плавное завершение |
+
+---
+
+## Лицензии и регистрация
+
+**Апостол** зарегистрирован как программа для ЭВМ:  
+[Свидетельство о государственной регистрации программы для ЭВМ](https://st.fl.ru/users/al/alienufo/portfolio/f_1156277cef5ebb72.pdf).
+
+Информация о лицензии (если есть отдельный файл `LICENSE`) рекомендуется продублировать здесь.

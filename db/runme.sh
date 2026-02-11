@@ -1,123 +1,90 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Define constants.
-#==============================================================================
-# The default sql directory.
-#------------------------------------------------------------------------------
-SQL_DIR="sql"
+INSTALL="$(pwd)/install.sh"
 
-create_directory()
-{
-    local DIRECTORY="$1"
+PS3='
+WARNING: [*] All data in the database will be lost.
+Please enter your choice: '
 
-    rm -rf "$DIRECTORY"
-    mkdir "$DIRECTORY"
-}
+options=(
+    "help (?): Help"                               # 1
+    "init (f): [*] First Installation"             # 2
+    "install (i): [*] Installation"                # 3
+    "create (c): [*] Create without data"          # 4
+    "update (u): Updates routines, views"          # 5
+    "database (db): [*] Creates an empty database" # 6
+    "quit (q): Exit from this menu"                # 7
+)
 
-display_heading_message()
-{
-    echo
-    echo "********************** $@ **********************"
-    echo
-}
-
-display_message()
-{
-    echo "$@"
-}
-
-display_error()
-{
-    >&2 echo "$@"
-}
-
-pop_directory()
-{
-    popd >/dev/null
-}
-
-push_directory()
-{
-    local DIRECTORY="$1"
-
-    pushd "$DIRECTORY" >/dev/null
-}
-
-display_help()
-{
-    display_message "Database installation management script."
-    display_message ""
-    display_message "Usage: ./runme.sh [OPTIONS]..."
-    display_message ""
-    display_message "Script options:"
-    display_message "--help       This message."
-    display_message "--make       [*] Creates users, database, schemas, tables, views, routines and initialization."
-    display_message "--install    [*] Creates database, schemas, tables, views, routines and initialization."
-    display_message "--create     [*] Creates database, schemas, tables, views, routines."
-    display_message "--update     Updates routines, views."
-    display_message "--patch      Updates tables, routines, views."
-    display_message "--database   [*] Creates an empty database."
-    display_message "--api        Drop and create api schema."
-    display_message "--kladr      Loading data from KLADR."
-    display_message ""
-    display_message "WARNING: [*] All data in database will be lost."
-}
-
-# Initialize environment.
-#==============================================================================
-# Exit this script on the first error.
-#------------------------------------------------------------------------------
-set -e
-
-# Parse command line options that are handled by this script.
-#------------------------------------------------------------------------------
-for OPTION in "$@"; do
-    case $OPTION in
-        # Standard script options.
-        (--help)	DISPLAY_HELP="yes";;
-
-        # Script options.
-        (--install)	SCRIPT="install";;
-        (--create)	SCRIPT="create";;
-        (--make)	SCRIPT="make";;
-        (--database)	SCRIPT="database";;
-        (--patch)	SCRIPT="patch";;
-        (--update)	SCRIPT="update";;
-        (--kladr)	SCRIPT="kladr";;
-        (--api)		SCRIPT="api";;
+function confirm_action() {
+    read -p "This action will lead to data loss. Are you sure? (y/n): " confirm
+    case $confirm in
+        [yY][eE][sS]|[yY])
+            return 0
+            ;;
+        [nN][oO]|[nN])
+            echo "Action cancelled. Returning to menu."
+            return 1
+            ;;
+        *)
+            echo "Invalid input. Returning to menu."
+            return 1
+            ;;
     esac
+}
+
+function perform_action() {
+    case $1 in
+        "init"|"install"|"create"|"database")
+            confirm_action || return
+            ;;
+    esac
+
+    # Call the install script with the appropriate argument
+    $INSTALL --"$1"
+    exit
+}
+
+function _switch() {
+    _reply="$1"
+
+    case $_reply in
+        ""|"?"|"--help"|"help"|"1")
+            $INSTALL --help
+            ;;
+        ""|"f"|"--init"|"init"|"2")
+            perform_action "init"
+            ;;
+        ""|"i"|"--install"|"install"|"3")
+            perform_action "install"
+            ;;
+        ""|"c"|"--create"|"create"|"4")
+            perform_action "create"
+            ;;
+        ""|"u"|"--update"|"update"|"5")
+            $INSTALL --update
+            exit
+            ;;
+        ""|"db"|"--database"|"database"|"6")
+            perform_action "database"
+            ;;
+        ""|"q"|"quit"|"7")
+            exit
+            ;;
+        *) echo "Invalid option. Use help option for the commands list.";;
+    esac
+}
+
+while true
+do
+    # Run option directly if specified in argument
+    [ ! -z $1 ] && _switch $1
+    [ ! -z $1 ] && exit 0
+
+    echo "==== DASHBOARD ===="
+    select opt in "${options[@]}"
+    do
+        _switch $REPLY
+        break
+    done
 done
-
-# Set param.
-#------------------------------------------------------------------------------
-if [[ !($SCRIPT) ]]; then
-    DISPLAY_HELP="yes"
-fi
-
-display_configuration()
-{
-    display_message "Installer configuration."
-    display_message "--------------------------------------------------------------------"
-    display_message "SCRIPT: $SCRIPT"
-    display_message "--------------------------------------------------------------------"
-}
-
-# Standard sql build.
-build_sql()
-{
-    push_directory "$SQL_DIR"
-
-    sudo -u postgres -H psql -d template1 -f $SCRIPT.psql 2>"../log/$SCRIPT.log"
-
-    pop_directory
-}
-
-# Build.
-#==============================================================================
-
-if [[ $DISPLAY_HELP ]]; then
-    display_help
-else
-    display_configuration
-    time build_sql "${SCRIPT[@]}"
-fi

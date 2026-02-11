@@ -25,7 +25,7 @@ BEGIN
 
     IF f.agent = 'api.exchangerate.host' AND f.command = 'latest' THEN
 
-      reply := f.response::jsonb;
+      reply := convert_from(f.response, 'utf8')::jsonb;
 
       SELECT * INTO r FROM jsonb_to_record(reply) AS x(success bool, base text, date date, rates jsonb);
 

@@ -1,6 +1,6 @@
 \encoding UTF8
 -- Пароль пользователя:
-\ir .passwd.psql
+\ir .env.psql
 
 -- Наименование пользователя:
 \set username http

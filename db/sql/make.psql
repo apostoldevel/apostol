@@ -1,7 +1,0 @@
-\echo [M] make.psql
-\ir sets.conf
-\ir user.sql
-\ir db.sql
-\connect :dbname :username
-\ir create.psql
-\q

@@ -4,216 +4,288 @@
 
 # Apostol
 
-**Apostol** is a framework for developing server applications (system services) on the Linux OS.
+**Apostol** is a high‑performance C++ framework for developing backend applications and system services on Linux with direct access to PostgreSQL.
 
-DESCRIPTION
--
-Apostol is developed in the C++ programming language using an asynchronous programming model based on the [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html) with direct access to the [PostgreSQL](https://www.postgresql.org/) (via the `libpq` library) specifically for high-load systems.
+---
 
-The key element of the platform is the built-in HTTP server with direct access to the PostgreSQL DBMS.
+## Table of Contents
 
-The **uniqueness** of the solution lies in the fact that both the HTTP server and PostgreSQL sockets are within a single event processing loop, which allows data to be transmitted instantly from the HTTP server to the database. In other words, there are no intermediaries, typically represented by scripting languages, between the HTTP server and the database. This, in turn, allows database queries to be executed with maximum efficiency and minimal latency.
+- [Overview](#overview)
+- [Modules](#modules)
+    - [Modules in this build](#this-build-comes-with-two-modules)
+    - [Additional modules](#with-additional-modules-apostol-can-be-turned-into)
+- [Real‑world projects](#projects)
+- [Directory structure](#directory-structure)
+- [Running in Docker (docker-compose)](#docker-compose)
+- [Build and installation](#build-and-installation)
+    - [Dependencies](#linux-debianubuntu)
+    - [Installing PostgreSQL and creating the database](#postgresql)
+    - [Installing sources](#installing-the-sources)
+    - [Building and installing the binary](#build)
+- [Running as a service](#running)
+- [Process control](#control)
+- [Licenses and registration](#licenses-and-registration)
 
-* The main advantages:
-    * **Autonomy**: After building, you get a fully ready-to-use binary file in the form of a system service (daemon) under Linux OS;
-    * **Speed**: Queries to the HTTP server and the database are executed as fast as the operating system and DBMS allow;
-    * **Connection pool**: Apostol has its own customizable connection pool with [PostgreSQL](https://www.postgresql.org/).
-     
-MODULES
--
+---
 
-The framework has a modular design, built-in HTTP server, and [PostgreSQL](https://www.postgresql.org/) client.
+## Overview
 
-### This build comes with two modules:
+Apostol is written in C++ using an asynchronous programming model based on the [epoll API](https://man7.org/linux/man-pages/man7/epoll.7.html), with direct access to the [PostgreSQL](https://www.postgresql.org/) DBMS via the `libpq` library. The framework is targeted at high‑load systems.
 
-- [WebServer](https://github.com/apostoldevel/module-WebServer) (Web server);
-    * Provides the [Swagger UI](https://swagger.io/tools/swagger-ui) which will be available at [http://localhost:8080](http://localhost:8080) in your browser after launching **Apostol**.
+The key element of the framework is the built‑in HTTP server, which runs in a single event loop together with PostgreSQL connections.
 
+**What makes it different**:
 
-- [PGFetch](https://github.com/apostoldevel/module-PGFetch) (Postgres Fetch);
-    * Enables receiving and sending `HTTP requests` in the `PL/pgSQL` programming language.
-  
-### With additional modules, Apostol can be turned into:
+- The HTTP server and PostgreSQL sockets live in a **single event loop**.
+- Data flows **directly** between the HTTP server and the database – no intermediate scripting layers (PHP, Python, etc.).
+- This minimizes latency and overhead and provides predictable performance.
 
-- [AuthServer](https://github.com/apostoldevel/module-AuthServer) (Authorization server OAuth 2.0);
-- [AppServer](https://github.com/apostoldevel/module-AppServer) (Application server);
-- [MessageServer](https://github.com/apostoldevel/process-MessageServer) (Message server: SMTP/FCM/API);
-- [FileServer](https://github.com/apostoldevel/module-FileServer) (File server);
-- [Replication](https://github.com/apostoldevel/process-Replication) (Database replication);
-- [StreamServer](https://github.com/apostoldevel/process-StreamServer) (Streaming data server).
+**Main advantages**:
 
-Apostol has built-in WebSocket support: [WebSocket API](https://github.com/apostoldevel/module-WebSocketAPI).
+- **Autonomy**  
+  After building, you get a ready‑to‑run Linux system service (daemon) binary.
 
-Combining all the above, you can create an information system [CRM System](https://github.com/apostoldevel/apostol-crm), [Central system for charging points](https://github.com/apostoldevel/apostol-cs) or [Telegram bot on PL/pgSQL](https://github.com/apostoldevel/apostol-pgtg) why not ;-).
+- **Speed**  
+  Handling HTTP requests and executing SQL queries is as fast as your OS and DBMS allow.
 
-_With Apostol your possibilities are only limited by your imagination._
+- **Connection pool**  
+  Built‑in configurable PostgreSQL connection pool.
 
-Projects
--
+---
 
-Projects implemented at **Apostol**:
- 
-* [CopyFrog](https://copyfrog.ai) (AI-powered platform for creating unique images, Ad Copy, video creatives, marketing descriptions for products and services)
-* [OCPP CSS](https://ocpp-css.com) (Central System as Service for Charging Points)
-* [BitDeals](https://testnet.bitdeals.org) (Bitcoin payment processing service)
-* [Ship Safety ERP](https://ship-safety.ru) (ERP system for organization of production activities of the shipping company)
-* [PlugMe](https://plugme.ru) (CRM system for charging stations and owners of electric vehicles)
-* [DEBT Master](https://debt-master.ru) (A system for automating debt collection)
+## Modules
 
-Docker
--
+The framework has a modular architecture and includes built‑in UDP/TCP/WebSocket/HTTP servers and a client for [PostgreSQL](https://www.postgresql.org/).
 
-You can build an image yourself or get a ready-made one from Docker Hub:
+### This build comes with two modules
 
-### Build
+- [**WebServer**](https://github.com/apostoldevel/module-WebServer) — web server
+    - Provides [Swagger UI](https://swagger.io/tools/swagger-ui), available at  
+      [http://localhost:8080](http://localhost:8080) after starting **Apostol**.
 
-~~~
-docker build -t apostol .
-~~~
+- [**PGFetch**](https://github.com/apostoldevel/module-PGFetch) — Postgres Fetch
+    - Allows receiving and sending HTTP requests using `PL/pgSQL`.  
+      This lets you implement API logic directly in the database.
 
-### Get
+> More details about this build can be found in the [article](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.ru-RU.md) (in Russian).
 
-~~~
-docker pull apostoldevel/apostol
-~~~
-### Run
+### With additional modules Apostol can be turned into
 
-If you built it yourself:
-~~~
-docker run -d -p 8080:8080 -p 8081:8081 -p 5433:5432 --rm --name apostol apostol
-~~~
+- [**AuthServer**](https://github.com/apostoldevel/module-AuthServer) — OAuth 2.0 authorization server;
+- [**AppServer**](https://github.com/apostoldevel/module-AppServer) — application server;
+- [**MessageServer**](https://github.com/apostoldevel/process-MessageServer) — messaging server (SMTP/FCM/API);
+- [**FileServer**](https://github.com/apostoldevel/module-FileServer) — file server;
+- [**Replication**](https://github.com/apostoldevel/process-Replication) — database replication service;
+- [**StreamServer**](https://github.com/apostoldevel/process-StreamServer) — streaming data server.
 
-If you got a ready-made image:
-~~~
-docker run -d -p 8080:8080 -p 8081:8081 -p 5433:5432 --rm --name apostol apostoldevel/apostol
-~~~
+A separate WebSocket module is available: [**WebSocket API**](https://github.com/apostoldevel/module-WebSocketAPI).
 
-[Swagger UI](https://github.com/swagger-api/swagger-ui) will be available at <http://localhost:8080> or http://host-ip:8080 in your browser.
+---
 
-[Pgweb](https://github.com/sosedoff/pgweb) is a web-based database explorer for PostgreSQL will be available at <http://localhost:8081> or http://host-ip:8081 in your browser.
+## Projects
 
-> Instead of pgweb, you can use any other tool for working with databases. PostgreSQL from the container will be available on port 5433.
+Real‑world projects built with **Apostol**:
 
-DIRECTORY STRUCTURE
--
-    auto/                       contains scripts files
-    cmake-modules/              contains CMake modules files
-    conf/                       contains configuration files
-    src/                        contains source code files
-    ├─app/                      contains source code files: Apostol
-    ├─core/                     contains source code files: Apostol Core
-    ├─lib/                      contains source code files for libraries
-    | └─delphi/                 contains source code files for the library*: Delphi classes for C++
-    └─modules/                  contains source code files for add-ons (modules)
-    www/                        contains files for the website
+- [Campus Caster & Campus CORS](https://cors.campusagro.com): an NTRIP caster and commercial system for transmitting real‑time GNSS corrections using the NTRIP protocol (a protocol for streaming differential GNSS corrections over the Internet).
+- [CopyFrog](https://copyfrog.ai) — an AI‑based platform for generating ad copy, video creatives, and marketing descriptions;
+- [Ship Safety ERP](https://ship-safety.ru) — an ERP system for shipping companies;
+- [OCPP CSS](http://ocpp-css.ru) — central system for charging stations (OCPP);
+- [PlugMe](https://plugme.ru) — CRM system for charging stations and EV owners;
+- [DEBT Master](https://debt-master.ru) — debt collection automation system;
+- [BitDeals](https://testnet.bitdeals.org) — bitcoin payment processing service;
+- [Talking to AI](https://t.me/TalkingToAIBot) — ChatGPT integration in a Telegram bot.
 
-BUILD AND INSTALLATION
--
-To install **Apostol**, you will need:
+---
 
-1. C++ compiler;
-2. [CMake](https://cmake.org) or an Integrated Development Environment (IDE) with [CMake](https://cmake.org) support;
-3. [libpq-dev](https://www.postgresql.org/download) library (libraries and headers for C language frontend development);
-4. [postgresql-server-dev-all](https://www.postgresql.org/download) library (libraries and headers for C language backend development).
+## Directory structure
+
+```text
+auto/                       automation scripts
+cmake-modules/              CMake modules
+conf/                       configuration files
+src/                        source code
+├─ app/                     source: Apostol (application)
+├─ core/                    source: Apostol Core (framework core)
+├─ lib/                     source code of libraries
+│  └─ delphi/               Delphi classes for C++
+└─ modules/                 source code of modules (extensions)
+www/                        web UI files (site, Swagger UI, etc.)
+```
+
+---
+
+## Docker Compose
+
+### Building containers
+
+```bash
+./docker-build.sh
+```
+
+### Starting containers
+
+```bash
+./docker-up.sh
+```
+
+After startup:
+
+- **Swagger UI** ([swagger-ui](https://github.com/swagger-api/swagger-ui))  
+  will be available at:
+    - [http://localhost:8080](http://localhost:8080)
+    - or `http://<host-ip>:8080`
+
+- **Pgweb** ([pgweb](https://github.com/sosedoff/pgweb)) — web‑based PostgreSQL browser  
+  will be available at:
+    - [http://localhost:8081/pgweb](http://localhost:8081/pgweb/)
+    - or `http://<host-ip>:8081/pgweb`
+
+> Instead of pgweb, you can use any other tool for working with the DBMS.  
+> PostgreSQL inside the container is available on port `5433`.
+
+---
+
+## Build and installation
+
+To install **Apostol** locally, you need:
+
+1. A C++ compiler;
+2. [CMake](https://cmake.org) or an IDE with CMake support;
+3. [libpq-dev](https://www.postgresql.org/download) (frontend headers for PostgreSQL);
+4. [postgresql-server-dev-all](https://www.postgresql.org/download) (PostgreSQL backend headers).
 
 ### Linux (Debian/Ubuntu)
 
-To install the C++ compiler and necessary libraries on Ubuntu, run:
-~~~
-sudo apt-get install build-essential libssl-dev libcurl4-openssl-dev make cmake gcc g++
-~~~
+Install a C++ compiler and basic libraries:
 
-###### A detailed description of how to install C++, CMake, IDE, and other components required for the project build is not included in this guide.
+```bash
+sudo apt-get update
+sudo apt-get install \
+    build-essential \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    make cmake gcc g++
+```
+
+> Detailed installation of C++, CMake, IDEs, and other auxiliary tools is beyond the scope of this guide.
 
 #### PostgreSQL
 
-To install PostgreSQL, use the instructions at [this](https://www.postgresql.org/download/) link.
+Install PostgreSQL following the official instructions:  
+<https://www.postgresql.org/download/>
 
 #### Database
 
-To install the database, you need to perform the following steps:
+Database preparation steps:
 
-1. Specify the name of the database in the db/sql/sets.conf file (by default: web)
-1. Specify the passwords for the DBMS users [libpq-pgpass](https://postgrespro.ru/docs/postgrespro/13/libpq-pgpass):
-   ~~~
-   $ sudo -iu postgres -H vim .pgpass
-   ~~~
-   ~~~
+1. Specify the database name in `db/sql/sets.conf`  
+   (default: `web`).
+
+2. Specify the DB user password in `~postgres/.pgpass`:  
+   Under the `postgres` user:
+   ```bash
+   sudo -iu postgres -H vim .pgpass
+   ```
+   Example content:
+   ```text
    *:*:*:http:http
-   ~~~
-1. Specify in the configuration file /etc/postgresql/{version}/main/pg_hba.conf:
-   ~~~
-   # TYPE  DATABASE        USER            ADDRESS                 METHOD
-   local  web    http          md5
-   ~~~
-1. Apply the settings:
-   ~~~
-   $ sudo pg_ctlcluster <version> main reload
-   ~~~   
-1. Execute:
-   ~~~
-   $ cd db/
-   $ ./install.sh --make
-   ~~~
+   ```
 
-###### The --make parameter is required to install the database for the first time. After that, the installation script can be run without parameters or with the --install parameter.
+3. Allow access in `pg_hba.conf`  
+   File: `/etc/postgresql/$PG_MAJOR/main/pg_hba.conf`:
+   ```text
+   # TYPE  DATABASE        USER    ADDRESS  METHOD
+   local   web             http            md5
+   ```
 
-To install **Apostol** (without Git), you need to:
+4. Apply settings:
+   ```bash
+   sudo pg_ctlcluster <version> main reload
+   ```
 
-1. Download [Apostol](https://github.com/apostoldevel/apostol/archive/master.zip);
-2. Unpack it;
-3. Configure CMakeLists.txt (if necessary);
-4. Build and compile (see below).
+5. Initialize the database:
+   ```bash
+   cd db/
+   ./runme.sh
+   ```
 
-To install Apostol using Git, execute:
-~~~
+6. In the installer menu, select `First Installation`.
+
+> The `--init` parameter is required only for the first database installation.  
+> Later you can run the installer without parameters or with `--install`.
+
+---
+
+### Installing the sources
+
+#### Installing **Apostol** without Git
+
+1. Download the archive:  
+   <https://github.com/apostoldevel/apostol/archive/master.zip>
+2. Unpack the archive;
+3. Edit `CMakeLists.txt` if necessary;
+4. Build the project (see below).
+
+#### Installing **Apostol** via Git
+
+```bash
 git clone https://github.com/apostoldevel/apostol.git
-~~~
-
-###### Build:
-~~~
 cd apostol
-./configure
-~~~
+```
 
-###### Compilation and installation:
-~~~
+---
+
+### Build
+
+```bash
+./configure
+```
+
+### Compilation and installation
+
+```bash
 cd cmake-build-release
 make
 sudo make install
-~~~
+```
 
-By default, the apostol binary will be installed in:
-~~~
+By default, the `apostol` binary is installed into:
+
+```text
 /usr/sbin
-~~~
+```
 
-The configuration file and files required for operation, depending on the installation option, will be located in:
-~~~
+Configuration files and required data, depending on installation options, will be located in:
+
+```text
 /etc/apostol
 or
 ~/apostol
-~~~
+```
 
-LAUNCH
--
-###### If `INSTALL_AS_ROOT` is set to ON.
+---
 
-`apostol` is a Linux system service (daemon).
-To manage `apostol`, use standard service management commands.
+## Running
 
-To launch `apostol`, execute:
-~~~
+If the `INSTALL_AS_ROOT` option was set to `ON` at configuration time, `apostol` is installed as a Linux system service (daemon).
+
+### Managing via systemd
+
+Start the service:
+
+```bash
 sudo systemctl start apostol
-~~~
+```
 
-To check the status, execute:
-~~~
+Check status:
+
+```bash
 sudo systemctl status apostol
-~~~
+```
 
-The result should be something like this:
-~~~
+Expected output (example):
+
+```text
 ● apostol.service - Apostol
      Loaded: loaded (/etc/systemd/system/apostol.service; enabled; vendor preset: enabled)
      Active: active (running) since Sat 2019-04-06 00:00:00 MSK; 3y ago
@@ -227,27 +299,45 @@ The result should be something like this:
      CGroup: /system.slice/apostol.service
              ├─461163 apostol: master process /usr/sbin/apostol
              └─461164 apostol: worker process ("pq fetch", "web server")
-~~~
+```
 
-MANAGEMENT
--
+---
 
-`apostol` can be managed using signals.
-The main process number is written by default to the `/run/apostol.pid` file.
-You can change the name of this file during the build configuration or in the `apostol.conf` `[daemon]` section with the `pid` key.
+## Control
 
-The main process supports the following signals:
+You control `apostol` using UNIX signals.  
+The master process PID is written by default to:
 
-|Signal   |Action            |
-|---------|------------------|
-|TERM, INT|fast shutdown     |
-|QUIT     |graceful shutdown |
-|HUP      |configuration change, launching new worker processes with new configuration, graceful shutdown of old worker processes|
-|WINCH    |graceful shutdown of worker processes|
+```text
+/run/apostol.pid
+```
 
-There is no need to manage worker processes individually. Nevertheless, they also support some signals:
+The PID file name can be changed at build configuration time or in `apostol.conf`  
+(section `[daemon]`, key `pid`).
 
-|Signal   |Action            |
-|---------|------------------|
-|TERM, INT|fast shutdown     |
-|QUIT     |graceful shutdown |
+### Signals to the master process
+
+| Signal   | Action                                                                                     |
+|----------|--------------------------------------------------------------------------------------------|
+| `TERM`   | fast shutdown                                                                              |
+| `INT`    | fast shutdown                                                                              |
+| `QUIT`   | graceful shutdown                                                                          |
+| `HUP`    | reload configuration, start new workers, gracefully shut down old ones                    |
+| `WINCH`  | gracefully shut down worker processes                                                      |
+
+You don’t need to control worker processes separately, but they support:
+
+| Signal   | Action            |
+|----------|-------------------|
+| `TERM`   | fast shutdown     |
+| `INT`    | fast shutdown     |
+| `QUIT`   | graceful shutdown |
+
+---
+
+## Licenses and registration
+
+**Apostol** is registered as computer software:  
+[Certificate of State Registration of a Computer Program](https://st.fl.ru/users/al/alienufo/portfolio/f_1156277cef5ebb72.pdf) (in Russian).
+
+If there is a separate `LICENSE` file, it is recommended to duplicate the license information here.
