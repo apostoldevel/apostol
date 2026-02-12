@@ -2,9 +2,11 @@
 
 ![image](https://github.com/apostoldevel/apostol/assets/91010417/cf0b289d-185f-4852-a9a9-cd953f4a7199)
 
-# Apostol
+# Apostol (A-POST-OL)
 
 **Apostol** is a high‑performance C++ framework for developing backend applications and system services on Linux with direct access to PostgreSQL.
+
+> A‑POST‑OL → Asynchronous POST Orchestration Loop — “OL” as Orchestration Loop → a single event loop for HTTP and PostgreSQL.
 
 ---
 
