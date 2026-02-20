@@ -53,18 +53,24 @@ Signals: TERM/INT=fast shutdown, QUIT=graceful shutdown, HUP=reload config + res
 **Process model:** Master process supervises worker processes (handle HTTP/DB requests) and a helper process (background tasks like PGFetch).
 
 **Source layout:**
+- `auto/` — Automation scripts
+- `cmake-modules/` — CMake modules
+- `conf/` — Configuration files (INI format for main config, JSON for OAuth2/sites)
 - `src/app/` — Main application entry point (`CApostol` extends `CApplication`)
 - `src/core/` — Framework core: HTTP server, PostgreSQL client, config, logging, process management, crypto/JWT
 - `src/lib/delphi/` — Custom C++ utility library ("Delphi classes for C++") providing base abstractions
 - `src/lib/` — Header-only libs: `rapidxml`, `picojson`, `jwt-cpp`
 - `src/common/` — Shared utilities
 - `src/modules/` — Plugin modules (the extensibility system)
-  - `Workers/` — Long-lived: `WebServer` (HTTP), `PGHTTP` (PostgreSQL HTTP bridge)
-  - `Helpers/` — Short-lived: `PGFetch` (HTTP requests from PL/pgSQL)
+  - `Workers/` — Long-lived:
+    - `WebServer` — HTTP web server; serves Swagger UI at `http://localhost:8080`
+    - `PGHTTP` — Receive and process HTTP requests (REST API) in PL/pgSQL
+  - `Helpers/` — Short-lived:
+    - `PGFetch` — Send HTTP requests in PL/pgSQL directly from the database
 - `src/processes/` — Process definitions
-- `conf/` — Configuration files (INI format for main config, JSON for OAuth2/sites)
 - `db/sql/` — PostgreSQL schema, tables, routines
 - `www/` — Static web content, Swagger UI, OpenAPI spec (`api.yaml`)
+- `doc/ARTICLE.md` — Detailed article about this build
 
 **Module system:** Modules inherit from `CModule`. Register new modules in `src/modules/Modules.hpp` (includes `Workers.hpp` and `Helpers.hpp`). Each module type has its own aggregator header.
 
