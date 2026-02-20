@@ -76,13 +76,13 @@ The framework has a modular architecture and includes built‑in UDP/TCP/WebSock
 
 ### With additional modules Apostol can be turned into
 
-- [**AuthServer**](https://github.com/apostoldevel/module-AuthServer) — OAuth 2.0 authorization server (in Russian);
-- [**AppServer**](https://github.com/apostoldevel/module-AppServer) — application server (in Russian);
-- [**MessageServer**](https://github.com/apostoldevel/process-MessageServer) — messaging server (SMTP/FCM/API) (in Russian);
-- [**FileServer**](https://github.com/apostoldevel/module-FileServer) — file server (in Russian);
-- [**StreamServer**](https://github.com/apostoldevel/process-StreamServer) — streaming data server (in Russian).
+- [**AuthServer**](https://github.com/apostoldevel/module-AuthServer) — OAuth 2.0 authorization server;
+- [**AppServer**](https://github.com/apostoldevel/module-AppServer) — application server;
+- [**MessageServer**](https://github.com/apostoldevel/process-MessageServer) — messaging server (SMTP/FCM/API);
+- [**FileServer**](https://github.com/apostoldevel/module-FileServer) — file server;
+- [**StreamServer**](https://github.com/apostoldevel/process-StreamServer) — streaming data server.
 
-A separate WebSocket module is available: [**WebSocket API**](https://github.com/apostoldevel/module-WebSocketAPI) (in Russian).
+A separate WebSocket module is available: [**WebSocket API**](https://github.com/apostoldevel/module-WebSocketAPI).
 
 ---
 
