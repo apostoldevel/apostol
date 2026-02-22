@@ -74,6 +74,8 @@ The framework has a modular architecture and includes built‑in UDP/TCP/WebSock
 
 > More details about this build can be found in the [article](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.md).
 
+> **Benchmark:** Apostol vs Python vs Node.js vs Go -- see the [REST API Benchmark](https://github.com/apostoldevel/apostol/blob/master/doc/BENCHMARK.md).
+
 ### With additional modules Apostol can be turned into
 
 - [**AuthServer**](https://github.com/apostoldevel/module-AuthServer) — OAuth 2.0 authorization server;

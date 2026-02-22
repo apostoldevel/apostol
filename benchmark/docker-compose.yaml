@@ -1,0 +1,205 @@
+services:
+
+  # --- Database layer ---
+
+  postgres:
+    build: ./postgres
+    container_name: bench-postgres
+    environment:
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: bench
+      POSTGRES_DB: bench
+    ports:
+      - "15432:5432"
+    networks:
+      bench-db:
+        ipv4_address: 172.19.2.10
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bench"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  pgbouncer:
+    build: ./pgbouncer
+    container_name: bench-pgbouncer
+    ports:
+      - "16432:6432"
+    networks:
+      bench-db:
+        ipv4_address: 172.19.2.20
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 6432 -U bench"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  # --- Application layer ---
+
+  nginx:
+    build: ./nginx
+    container_name: bench-nginx
+    ports:
+      - "8090:80"
+    networks:
+      bench-lan:
+        ipv4_address: 172.19.1.10
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/api/v0/ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  apostol:
+    build: ./apostol
+    container_name: bench-apostol
+    environment:
+      - WORKERS=${WORKERS:-2}
+      - DB_HOST=${DB_HOST:-bench-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - KEEPALIVE=${KEEPALIVE:-on}
+    ports:
+      - "8091:8080"
+    networks:
+      bench-lan:
+        ipv4_address: 172.19.1.11
+      bench-db:
+        ipv4_address: 172.19.2.11
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8080/api/v1/ping > /dev/null"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  python:
+    build: ./python
+    container_name: bench-python
+    environment:
+      - WORKERS=${WORKERS:-2}
+      - DB_HOST=${DB_HOST:-bench-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+    ports:
+      - "8092:8000"
+    networks:
+      bench-lan:
+        ipv4_address: 172.19.1.12
+      bench-db:
+        ipv4_address: 172.19.2.12
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v2/ping')\""]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  node:
+    build: ./node
+    container_name: bench-node
+    environment:
+      - WORKERS=${WORKERS:-2}
+      - DB_HOST=${DB_HOST:-bench-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+    ports:
+      - "8093:3000"
+    networks:
+      bench-lan:
+        ipv4_address: 172.19.1.13
+      bench-db:
+        ipv4_address: 172.19.2.13
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:3000/api/v3/ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  go:
+    build: ./go
+    container_name: bench-go
+    environment:
+      - WORKERS=${WORKERS:-2}
+      - DB_HOST=${DB_HOST:-bench-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+    ports:
+      - "8094:4000"
+    networks:
+      bench-lan:
+        ipv4_address: 172.19.1.14
+      bench-db:
+        ipv4_address: 172.19.2.14
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:4000/api/v4/ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  # --- Load generator (on-demand) ---
+
+  loadgen:
+    build: ./loadgen
+    container_name: bench-loadgen
+    volumes:
+      - ./results:/results
+    networks:
+      bench-lan:
+        ipv4_address: 172.19.1.100
+    profiles:
+      - loadgen
+
+networks:
+  bench-lan:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.1.0/24
+  bench-db:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.2.0/24
+
+volumes:
+  pg-data:

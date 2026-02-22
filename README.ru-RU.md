@@ -73,6 +73,8 @@
 
 > Подробнее о возможностях этой сборки — в [статье](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.ru-RU.md).
 
+> **Бенчмарк:** Apostol vs Python vs Node.js vs Go -- см. [REST API Benchmark](https://github.com/apostoldevel/apostol/blob/master/doc/BENCHMARK.ru-RU.md).
+
 ### С помощью дополнительных модулей Апостол можно превратить в
 
 - [**AuthServer**](https://github.com/apostoldevel/module-AuthServer) — сервер авторизации OAuth 2.0;
