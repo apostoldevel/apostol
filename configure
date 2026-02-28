@@ -122,6 +122,9 @@ fi
 if [[ $DISPLAY_HELP ]]; then
     display_help
 else
+    display_heading_message "Updating submodules"
+    git submodule update --init --remote
+
     display_configuration
     make_configuration
 fi
