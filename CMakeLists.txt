@@ -1,207 +1,203 @@
-cmake_minimum_required(VERSION 3.13)
-project(apostol)
+cmake_minimum_required(VERSION 3.25)
+project(apostol VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -rdynamic")
+# Version is exposed via the generated include/apostol/version.hpp
+# (see the apostol_version custom target below).
+# APP_VERSION compile definition kept for legacy compatibility.
 
-set(PROJECT_NAME "apostol")
-set(PROJECT_DESCRIPTION "Apostol")
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-message(STATUS "Project name: ${PROJECT_NAME}")
-message(STATUS "Project description: ${PROJECT_DESCRIPTION}")
+# ─── Project identity ─────────────────────────────────────────────────────────
 
-# Settings
-# ----------------------------------------------------------------------------------------------------------------------
-set(INSTALL_AS_ROOT  ON  CACHE BOOL "Install as root")
-set(USE_SYSTEMD      ON  CACHE BOOL "Use systemd")
-set(WITH_POSTGRESQL  ON  CACHE BOOL "Build with PostgreSQL")
-set(WITH_SSL         ON  CACHE BOOL "Build with SSL")
-set(WITH_CURL        ON  CACHE BOOL "Build with cURL")
-set(WITH_SQLITE3     OFF CACHE BOOL "Build with Sqlite3")
-set(WITH_UDP_SERVER  OFF CACHE BOOL "Build with UDP server")
-set(SERVER_TYPE      "HTTP" CACHE STRING "Server type: HTTP | TCP")
-# ----------------------------------------------------------------------------------------------------------------------
+set(APP_NAME        "apostol"           CACHE STRING "Application name (used for paths, config, PID)")
+set(APP_DESCRIPTION "Apostol"           CACHE STRING "Application description (WWW Server-name header)")
 
-if (INSTALL_AS_ROOT)
+message(STATUS "App name: ${APP_NAME}")
+message(STATUS "App description: ${APP_DESCRIPTION}")
+
+# ─── Settings ─────────────────────────────────────────────────────────────────
+
+set(INSTALL_AS_ROOT  ON  CACHE BOOL   "Install to /usr/sbin and /etc (requires root)")
+
+# Feature flags (set before add_subdirectory — libapostol picks them from cache)
+set(WITH_POSTGRESQL  ON  CACHE BOOL   "Build with PostgreSQL (libpq)")
+set(WITH_SSL         ON  CACHE BOOL   "Build with OpenSSL")
+set(WITH_CURL        ON  CACHE BOOL   "Build with libcurl")
+
+# Install paths
+if(INSTALL_AS_ROOT)
     set(INSTALL_BIN_PATH "/usr/sbin")
-    set(PROJECT_PREFIX "/etc/${PROJECT_NAME}")
+    set(APP_PREFIX "/etc/${APP_NAME}")
 else()
     set(INSTALL_BIN_PATH "/usr/local/sbin")
-    set(PROJECT_PREFIX "$ENV{HOME}/.config/${PROJECT_NAME}")
+    set(APP_PREFIX "$ENV{HOME}/.config/${APP_NAME}")
 endif()
 
-list( APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules" )
+# ─── Global compile options ──────────────────────────────────────────────────
 
-add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
+add_compile_options("$<$<CONFIG:Debug>:-D_DEBUG>")
 
-if (WITH_UDP_SERVER)
-    add_compile_options("-DWITH_STREAM_SERVER")
+# clang-tidy (applied per-target, not globally — avoids linting dependencies)
+option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
+if(ENABLE_CLANG_TIDY)
+    find_program(CLANG_TIDY_EXE NAMES clang-tidy)
+    if(CLANG_TIDY_EXE)
+        message(STATUS "clang-tidy: ${CLANG_TIDY_EXE}")
+    else()
+        message(WARNING "ENABLE_CLANG_TIDY is ON but clang-tidy not found")
+    endif()
 endif()
 
-if (SERVER_TYPE STREQUAL "TCP" )
-    add_compile_options("-DAPOSTOL_SERVER_TYPE_TCP")
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CORE_LIB_NAME apostol-core)
+# ─── libapostol (core framework) ─────────────────────────────────────────────
 
-add_custom_target(
-        auto_increment_version
-        ${CMAKE_COMMAND}
-        -D VERSION_FILE=${CMAKE_SOURCE_DIR}/version.h
-        -P ${CMAKE_MODULE_PATH}/AutoVersion.cmake
+add_subdirectory(src/lib/libapostol)
+
+# APP_* compile definitions — applied to `apostol` target (PUBLIC → propagates
+# to all consumers). libapostol itself does not set APP_* — the application does.
+target_compile_definitions(apostol PUBLIC
+    APP_NAME="${APP_NAME}"
+    APP_DESCRIPTION="${APP_DESCRIPTION}"
+    APP_DEFAULT_LOCALE="en_US.UTF-8"
+    APP_VAR="${APP_NAME}"
+    APP_OLDPID_EXT=".oldbin"
+    APP_DEFAULT_USER="nobody"
+    APP_DEFAULT_GROUP="nogroup"
+    APP_DEFAULT_LISTEN="0.0.0.0"
+    APP_PREFIX="${APP_PREFIX}/"
+    APP_CONF_PREFIX="conf/"
+    APP_CACHE_PREFIX="cache/"
+    APP_SBIN_PATH="sbin/${APP_NAME}"
+    APP_CONF_FILE="${APP_NAME}.json"
+    APP_PID_FILE="logs/${APP_NAME}.pid"
+    APP_LOCK_FILE="logs/${APP_NAME}.lock"
+    APP_ERROR_LOG_FILE="logs/error.log"
+    APP_ACCESS_LOG_FILE="logs/access.log"
+    APP_POSTGRES_LOG_FILE="logs/postgres.log"
+    APP_STREAM_LOG_FILE="logs/stream.log"
+    APP_DOC_ROOT="www"
+    APP_VERSION="${PROJECT_VERSION}"   # semver; full version+hash via apostol::k_build_version
+    APP_DEFAULT_LOG_LEVEL="notice"
+    APP_DEFAULT_LOG_MAX_SIZE=104857600
+    APP_DEFAULT_LISTEN_BACKLOG=128
+    APP_DEFAULT_WORKERS=1
+    APP_DEFAULT_PORT=4977
+    APP_DEFAULT_SERVER_TIMEOUT=5000
+    APP_DEFAULT_PG_CONNECT_TIMEOUT=5
 )
 
-set(PROJECT_LIB_DIR "src/lib")
+# ─── Build-time version header ───────────────────────────────────────────────
+#
+# cmake/GenerateVersion.cmake runs on every `cmake --build`, captures the
+# current git commit hash, and renders cmake/version.hpp.in into:
+#   ${CMAKE_BINARY_DIR}/include/apostol/version.hpp
+#
+# The generated file is NOT tracked (added to .gitignore).
+# Include it as:  #include "apostol/version.hpp"
 
-# Delphi classes for C++
-# ----------------------------------------------------------------------------------------------------------------------
-set(DELPHI_LIB_NAME delphi)
-set(DELPHI_LIB_DIR "${PROJECT_LIB_DIR}/${DELPHI_LIB_NAME}")
+set(APOSTOL_VERSION_OUT "${CMAKE_BINARY_DIR}/include/apostol/version.hpp")
 
-# -Iinclude
-include_directories(${DELPHI_LIB_DIR}/include)
-include_directories(${DELPHI_LIB_DIR}/src)
-
-add_compile_options("-DDELPHI_LIB_EXPORTS")
-add_compile_options(-DWWWServerName="${PROJECT_DESCRIPTION}")
-
-if (WITH_POSTGRESQL)
-    set(PQ_LIB_NAME "pq")
-    add_compile_options("-DWITH_POSTGRESQL")
-    add_compile_options("-DPOSTGRESQL_VERSION_14")
-endif()
-
-if (WITH_SSL)
-    set(SSL_LIB_NAME "ssl")
-    add_compile_options("-DWITH_SSL")
-endif()
-
-if (WITH_SQLITE3)
-    set(SQLITE3_LIB_NAME "sqlite3")
-    add_compile_options("-DWITH_SQLITE3")
-endif()
-
-if (WITH_CURL)
-    set(CURL_LIB_NAME "curl")
-    add_compile_options("-DWITH_CURL")
-endif()
-
-add_subdirectory(${DELPHI_LIB_DIR})
-
-# Find PkgConfig
-#------------------------------------------------------------------------------
-find_package( PkgConfig REQUIRED )
-
-set( prefix "${CMAKE_PREFIX_PATH}" )
-set( exec_prefix "\${prefix}" )
-set( libdir "\${exec_prefix}/lib" )
-set( includedir "\${exec_prefix}/include" )
-
-set( pkgconfigdir "${libdir}/pkgconfig" CACHE PATH "Path to pkgconfig directory." )
-
-# Find dl
-#------------------------------------------------------------------------------
-if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
-    find_package( Dl REQUIRED )
-
-    message(STATUS "Dl libs: ${dl_LIBS}")
-    message(STATUS "Dl libraries: ${dl_LIBRARIES}")
-endif()
-
-# rapidxml
-# ----------------------------------------------------------------------------------------------------------------------
-include_directories(${PROJECT_LIB_DIR}/rapidxml)
-file(GLOB lib_files ${lib_files} ${PROJECT_LIB_DIR}/rapidxml/*.hpp)
-
-# picojson
-# ----------------------------------------------------------------------------------------------------------------------
-include_directories(${PROJECT_LIB_DIR}/picojson)
-file(GLOB lib_files ${lib_files} ${PROJECT_LIB_DIR}/picojson/*.h)
-
-# jwt-cpp
-# ----------------------------------------------------------------------------------------------------------------------
-include_directories(${PROJECT_LIB_DIR}/jwt-cpp)
-file(GLOB lib_files ${lib_files} ${PROJECT_LIB_DIR}/jwt-cpp/*.h)
-
-# Apostol
-# ----------------------------------------------------------------------------------------------------------------------
-include_directories(src/app src/core src/common src/modules src/modules/Workers src/modules/Helpers src/processes)
-
-file(GLOB app_files version.h src/app/*.hpp src/app/*.cpp)
-file(GLOB core_files src/core/*.hpp src/core/*.cpp)
-file(GLOB common_files src/common/*.hpp src/common/*.cpp)
-file(GLOB modules_files src/modules/Modules.hpp src/modules/*/*.hpp src/modules/*/*/*.hpp src/modules/*/*/*.cpp)
-file(GLOB processes_files src/processes/Processes.hpp src/processes/*/*.hpp src/processes/*/*.cpp)
-
-# Apostol Core
-# ----------------------------------------------------------------------------------------------------------------------
-add_library(${CORE_LIB_NAME} STATIC
-        $<TARGET_OBJECTS:delphi>
-        ${lib_files}
-        ${core_files}
-        ${common_files}
-        ${modules_files}
-        ${processes_files}
+add_custom_target(apostol_version
+    COMMAND ${CMAKE_COMMAND}
+        -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
+        -DPROJECT_VERSION=${PROJECT_VERSION}
+        -DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+        -DVERSION_IN=${CMAKE_SOURCE_DIR}/cmake/version.hpp.in
+        -DVERSION_OUT=${APOSTOL_VERSION_OUT}
+        -P ${CMAKE_SOURCE_DIR}/cmake/GenerateVersion.cmake
+    BYPRODUCTS ${APOSTOL_VERSION_OUT}
+    COMMENT "Generating version header"
 )
 
-target_compile_definitions(${CORE_LIB_NAME} PUBLIC
-        APP_NAME="${PROJECT_NAME}"
-        APP_DESCRIPTION="${PROJECT_DESCRIPTION}"
-        APP_DEFAULT_LOCALE="en_US.UTF-8"
-        APP_VAR="${PROJECT_NAME}"
-        APP_OLDPID_EXT=".oldbin"
-        APP_DEFAULT_USER="nobody"
-        APP_DEFAULT_GROUP="nogroup"
-        APP_DEFAULT_LISTEN="0.0.0.0"
-        APP_PREFIX="${PROJECT_PREFIX}/"
-        APP_CONF_PREFIX="conf/"
-        APP_CACHE_PREFIX="cache/"
-        APP_SBIN_PATH="sbin/${PROJECT_NAME}"
-        APP_CONF_FILE="${PROJECT_NAME}.conf"
-        APP_PID_FILE="logs/${PROJECT_NAME}.pid"
-        APP_LOCK_FILE="logs/${PROJECT_NAME}.lock"
-        APP_ERROR_LOG_FILE="logs/error.log"
-        APP_ACCESS_LOG_FILE="logs/access.log"
-        APP_POSTGRES_LOG_FILE="logs/postgres.log"
-        APP_STREAM_LOG_FILE="logs/stream.log"
-        APP_DOC_ROOT="www"
+# ─── Module auto-discovery ───────────────────────────────────────────────────
+#
+# Place application-specific code in:
+#   src/app/              — application subclass and helpers
+#   src/modules/Workers/  — HTTP/WS request handlers  (like PGHTTP)
+#   src/modules/Helpers/  — background helper modules (like PGFetch)
+#
+# New .cpp files dropped into these directories are picked up automatically.
+# CMake re-runs configure when files are added/removed (CONFIGURE_DEPENDS).
+
+file(GLOB_RECURSE module_files  CONFIGURE_DEPENDS src/modules/*.cpp)
+
+message(STATUS "Module sources : ${module_files}")
+
+# ─── Modules library ────────────────────────────────────────────────────────
+
+add_library(apostol_modules STATIC ${module_files})
+
+target_include_directories(apostol_modules
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/modules
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/Workers
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/Helpers
+        ${CMAKE_BINARY_DIR}/include          # generated apostol/version.hpp
 )
 
-target_link_libraries(${CORE_LIB_NAME} pthread ${PQ_LIB_NAME} ${SQLITE3_LIB_NAME} ${CURL_LIB_NAME} ${SSL_LIB_NAME} crypto)
+target_link_libraries(apostol_modules PUBLIC apostol)
 
-# Apostol
-# ----------------------------------------------------------------------------------------------------------------------
-add_executable(${PROJECT_NAME} ${app_files})
-target_link_libraries(${PROJECT_NAME} ${CORE_LIB_NAME})
+add_dependencies(apostol_modules apostol_version)
 
-add_dependencies(${PROJECT_NAME} auto_increment_version)
+target_compile_options(apostol_modules PRIVATE
+    -Wall -Wextra -Wpedantic -Wno-unused-parameter
+)
 
-# Install
-# ----------------------------------------------------------------------------------------------------------------------
-file(GLOB conf_files conf/*.conf)
+if(ENABLE_CLANG_TIDY AND CLANG_TIDY_EXE)
+    set_target_properties(apostol_modules PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+endif()
 
-set(INSTALL_PATH "${PROJECT_PREFIX}")
+# ─── Main executable ─────────────────────────────────────────────────────────
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_BIN_PATH})
+file(GLOB_RECURSE app_src_files CONFIGURE_DEPENDS src/app/*.cpp)
+
+message(STATUS "App sources    : ${app_src_files}")
+
+add_executable(apostol_app ${app_src_files})
+
+set_target_properties(apostol_app PROPERTIES OUTPUT_NAME ${APP_NAME})
+
+target_include_directories(apostol_app PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/app
+)
+
+target_link_libraries(apostol_app PRIVATE apostol_modules)
+
+if(ENABLE_CLANG_TIDY AND CLANG_TIDY_EXE)
+    set_target_properties(apostol_app PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+endif()
+
+# ─── Install ──────────────────────────────────────────────────────────────────
+
+set(INSTALL_PATH "${APP_PREFIX}")
+
+install(TARGETS apostol_app DESTINATION ${INSTALL_BIN_PATH})
 
 install(DIRECTORY DESTINATION ${INSTALL_PATH})
-install(DIRECTORY DESTINATION ${INSTALL_PATH}/oauth2)
 install(DIRECTORY DESTINATION ${INSTALL_PATH}/conf)
 install(DIRECTORY DESTINATION ${INSTALL_PATH}/logs)
-install(DIRECTORY DESTINATION ${INSTALL_PATH}/sites)
-install(DIRECTORY conf/oauth2/ DESTINATION ${INSTALL_PATH}/oauth2)
-install(DIRECTORY conf/sites/ DESTINATION ${INSTALL_PATH}/sites)
-install(DIRECTORY www/ DESTINATION ${INSTALL_PATH}/www)
-install(FILES ${conf_files} DESTINATION ${INSTALL_PATH}/conf)
-install(FILES conf/default.conf DESTINATION ${INSTALL_PATH} RENAME ${PROJECT_NAME}.conf)
+install(DIRECTORY DESTINATION ${INSTALL_PATH}/cache)
 
-if (INSTALL_AS_ROOT)
-    if (USE_SYSTEMD)
-        install(FILES auto/unit.service DESTINATION /lib/systemd/system RENAME ${PROJECT_NAME}.service PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+# Install default config if present
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/conf/${APP_NAME}.json")
+    install(FILES conf/${APP_NAME}.json DESTINATION ${INSTALL_PATH}/conf)
+endif()
+
+# systemd unit
+if(INSTALL_AS_ROOT)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/auto/unit.service")
+        install(FILES auto/unit.service
+            DESTINATION /lib/systemd/system
+            RENAME ${APP_NAME}.service
+            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
         install(CODE "execute_process(COMMAND systemctl daemon-reload)")
-        install(CODE "execute_process(COMMAND systemctl enable ${PROJECT_NAME}.service)")
-    else()
-        install(FILES auto/daemon DESTINATION /etc/init.d RENAME ${PROJECT_NAME} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-        install(CODE "execute_process(COMMAND update-rc.d ${PROJECT_NAME} defaults)")
+        install(CODE "execute_process(COMMAND systemctl enable ${APP_NAME}.service)")
     endif()
 endif()

@@ -1,4 +1,0 @@
-\echo [M] database.psql
-\ir sets.psql
-\ir db.psql
-\q

@@ -1,4 +1,0 @@
-\ir routine.sql
-
-\ir './currency/update.psql'
-\ir './rate/update.psql'

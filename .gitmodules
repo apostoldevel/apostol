@@ -1,0 +1,16 @@
+[submodule "src/lib/libapostol"]
+	path = src/lib/libapostol
+	url = git@github.com:apostoldevel/libapostol.git
+	branch = master
+[submodule "src/modules/Workers/PGHTTP"]
+	path = src/modules/Workers/PGHTTP
+	url = git@github.com:apostoldevel/module-PGHTTP.git
+	branch = version2
+[submodule "src/modules/Workers/WebServer"]
+	path = src/modules/Workers/WebServer
+	url = git@github.com:apostoldevel/module-WebServer.git
+	branch = version2
+[submodule "src/modules/Helpers/PGFetch"]
+	path = src/modules/Helpers/PGFetch
+	url = git@github.com:apostoldevel/module-PGFetch.git
+	branch = version2

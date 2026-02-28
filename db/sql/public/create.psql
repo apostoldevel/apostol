@@ -1,4 +1,0 @@
-\ir routine.sql
-
-\ir './currency/create.psql'
-\ir './rate/create.psql'

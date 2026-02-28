@@ -1,6 +1,0 @@
-\echo [M] install.psql
-\ir sets.psql
-\connect :dbname :username
-\ir './public/update.psql'
-\ir './http/update.psql'
-\q

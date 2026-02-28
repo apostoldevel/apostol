@@ -1,0 +1,72 @@
+{
+  "_comment": "Apostol configuration",
+  "prefix": "/etc/apostol/",
+  "locale": "en_US.UTF-8",
+  "log": {
+    "level": "debug",
+    "file": "logs/error.log",
+    "access": "logs/access.log",
+    "stream": "logs/stream.log",
+    "postgres": "logs/postgres.log"
+  },
+  "daemon": {
+    "enabled": false,
+    "pid": "logs/apostol.pid",
+    "lock": "logs/apostol.lock"
+  },
+  "process": {
+    "master": false,
+    "helper": false,
+    "user": "",
+    "group": ""
+  },
+  "workers": 1,
+  "server": {
+    "listen": "127.0.0.1",
+    "port": 4977,
+    "backlog": 128,
+    "timeout": 5000,
+    "root": "www"
+  },
+  "module": {
+    "heartbeat": {
+      "enable": true
+    },
+    "WebServer": {
+      "enable": true
+    },
+    "PGHTTP": {
+      "enable": true,
+      "endpoints": ["/api/*"]
+    },
+    "PGFetch": {
+      "enable": true,
+      "timeout": 30
+    }
+  },
+  "postgres": {
+    "connect": false,
+    "notice": false,
+    "timeout": 10,
+    "worker": {
+      "host": "",
+      "port": "5432",
+      "dbname": "",
+      "user": "daemon",
+      "password": "",
+      "sslmode": "disable"
+    },
+    "helper": {
+      "user": "apibot",
+      "password": ""
+    },
+    "kernel": {
+      "user": "kernel",
+      "password": ""
+    },
+    "pool": {
+      "min": 5,
+      "max": 10
+    }
+  }
+}
