@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+#
+# Deploy apostol — build, install, and restart the service.
+# Install and restart steps require root privileges.
+#
+# Usage: ./deploy [OPTIONS]
+
+set -e
+
+PROJECT_NAME=apostol
+BUILD_TYPE=Release
+
+# --- Helpers --------------------------------------------------------------
+
+pop_directory()  { popd  >/dev/null; }
+push_directory() { pushd "$1" >/dev/null; }
+
+display_heading_message() { echo; echo "********************** $* **********************"; echo; }
+display_message()         { echo "$@"; }
+display_error()           { >&2 echo "$@"; }
+
+display_help()
+{
+    display_message "Usage: ./deploy [OPTION]..."
+    display_message ""
+    display_message "  (no flags)               Build + install + restart service"
+    display_message "  --update                 Restart service only (skip build/install)"
+    display_message "  --build-only             Build only (no install, no restart)"
+    display_message ""
+    display_message "  --release                Release build (default)"
+    display_message "  --debug                  Debug build"
+    display_message "  --build-dir=<path>       Location of build files (default: cmake-build-{type})"
+    display_message ""
+    display_message "  --help                   Display this help"
+    display_message ""
+}
+
+display_configuration()
+{
+    display_message "Configuration"
+    display_message "--------------------------------------------------------------------"
+    display_message "PROJECT_NAME         : $PROJECT_NAME"
+    display_message "BUILD_TYPE           : $BUILD_TYPE"
+    display_message "BUILD_DIR            : $BUILD_DIR"
+    display_message "--------------------------------------------------------------------"
+}
+
+# --- Steps ----------------------------------------------------------------
+
+build_project()
+{
+    display_heading_message "Build: $PROJECT_NAME"
+    cmake --build "$BUILD_DIR" --parallel "$(nproc)"
+}
+
+install_project()
+{
+    display_heading_message "Install: $PROJECT_NAME"
+    cmake --install "$BUILD_DIR"
+}
+
+service_stop()
+{
+    if command -v systemctl &>/dev/null \
+       && systemctl is-active --quiet "$PROJECT_NAME.service" 2>/dev/null; then
+        display_heading_message "Stop service: $PROJECT_NAME"
+        systemctl stop "$PROJECT_NAME.service"
+    fi
+}
+
+service_start()
+{
+    if command -v systemctl &>/dev/null \
+       && systemctl is-enabled --quiet "$PROJECT_NAME.service" 2>/dev/null; then
+        display_heading_message "Start service: $PROJECT_NAME"
+        systemctl start "$PROJECT_NAME.service"
+    fi
+}
+
+clear_logs()
+{
+    for log_dir in "/etc/$PROJECT_NAME/logs" "/var/log/$PROJECT_NAME"; do
+        if [[ -d "$log_dir" ]]; then
+            display_heading_message "Clear logs: $log_dir"
+            rm -f "$log_dir"/*.log
+        fi
+    done
+}
+
+# --- Parse options --------------------------------------------------------
+
+for OPTION in "$@"; do
+    case $OPTION in
+        (--help)        DISPLAY_HELP=yes ;;
+        (--update)      SKIP_BUILD=yes ;;
+        (--build-only)  BUILD_ONLY=yes ;;
+        (--release)     BUILD_TYPE=Release ;;
+        (--debug)       BUILD_TYPE=Debug ;;
+        (--build-dir=*) BUILD_DIR="${OPTION#*=}" ;;
+    esac
+done
+
+if ! [[ $BUILD_DIR ]]; then
+    if [[ $BUILD_TYPE == Debug ]]; then
+        BUILD_DIR=cmake-build-debug
+    else
+        BUILD_DIR=cmake-build-release
+    fi
+fi
+
+# --- Run ------------------------------------------------------------------
+
+if [[ $DISPLAY_HELP ]]; then
+    display_help
+    exit 0
+fi
+
+display_configuration
+
+if [[ $SKIP_BUILD ]]; then
+    # --update: restart service only (binary already installed)
+    service_stop
+    clear_logs
+    service_start
+
+elif [[ $BUILD_ONLY ]]; then
+    # --build-only: compile only, no install or restart
+    build_project
+
+else
+    # default: full deploy — build, install, restart
+    service_stop
+    build_project
+    install_project
+    clear_logs
+    service_start
+fi

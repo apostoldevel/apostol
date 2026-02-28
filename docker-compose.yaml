@@ -1,0 +1,75 @@
+name: 'apostol'
+
+services:
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/postgres/Dockerfile
+    container_name: postgres
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - db-network
+    ports:
+      - "5434:5432"
+    restart: unless-stopped
+    env_file: ./docker/postgres/.env
+    volumes:
+      - postgresql:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  pgbouncer:
+    build: ./docker/pgbouncer
+    container_name: pgbouncer
+    networks:
+      - db-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file: ./docker/pgbouncer/.env
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-h', 'pgbouncer', '-p', '6432']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build: .
+    container_name: backend
+    networks:
+      - lan-network
+      - db-network
+    ports:
+      - "4977:4977"
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - tmp:/tmp/apostol
+    depends_on:
+      - pgbouncer
+
+networks:
+  lan-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.1.0/24
+  db-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.2.0/24
+
+volumes:
+  postgresql:
+  tmp:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=100m

@@ -1,0 +1,70 @@
+{
+  "prefix": "/etc/apostol/",
+  "locale": "en_US.UTF-8",
+  "log": {
+    "level": "notice",
+    "file": "/var/log/apostol/error.log",
+    "access": "/var/log/apostol/access.log",
+    "stream": "/var/log/apostol/stream.log",
+    "postgres": "/var/log/apostol/postgres.log"
+  },
+  "daemon": {
+    "enabled": false,
+    "pid": "/run/apostol.pid"
+  },
+  "process": {
+    "master": true,
+    "helper": true,
+    "user": "",
+    "group": ""
+  },
+  "workers": 0,
+  "server": {
+    "listen": "0.0.0.0",
+    "port": 4977,
+    "backlog": 128,
+    "timeout": 30000,
+    "root": "www"
+  },
+  "module": {
+    "heartbeat": {
+      "enable": true
+    },
+    "WebServer": {
+      "enable": true
+    },
+    "PGHTTP": {
+      "enable": true,
+      "endpoints": ["/api/*"]
+    },
+    "PGFetch": {
+      "enable": true,
+      "timeout": 30
+    }
+  },
+  "postgres": {
+    "connect": true,
+    "notice": false,
+    "timeout": 10,
+    "worker": {
+      "host": "pgbouncer",
+      "port": "6432",
+      "dbname": "web",
+      "user": "http",
+      "password": "http",
+      "sslmode": "disable"
+    },
+    "helper": {
+      "host": "postgres",
+      "port": "5432",
+      "dbname": "web",
+      "user": "http",
+      "password": "http",
+      "sslmode": "disable"
+    },
+    "pool": {
+      "min": 5,
+      "max": 10
+    }
+  }
+}

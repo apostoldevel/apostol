@@ -1,0 +1,127 @@
+#!/bin/bash
+#
+# Configure apostol - wraps cmake with sensible defaults.
+# All source dependencies are handled by CMake FetchContent automatically.
+#
+# Usage: ./configure [OPTIONS]
+
+set -e
+
+PROJECT_NAME=apostol
+BUILD_TYPE=Release
+
+# CMake feature flags (matching CMakeLists.txt cache variables)
+WITH_POSTGRESQL=OFF
+WITH_SSL=ON
+WITH_CURL=ON
+APP_NAME=apostol
+
+# --- Helpers --------------------------------------------------------------
+
+pop_directory()  { popd  >/dev/null; }
+push_directory() { pushd "$1" >/dev/null; }
+
+display_heading_message() { echo; echo "********************** $* **********************"; echo; }
+display_message()         { echo "$@"; }
+display_error()           { >&2 echo "$@"; }
+
+display_help()
+{
+    display_message "Usage: ./configure [OPTION]..."
+    display_message ""
+    display_message "Build options:"
+    display_message "  --release                Release build (default)"
+    display_message "  --debug                  Debug build"
+    display_message "  --update                 Reconfigure without deleting the build directory"
+    display_message "  --build-dir=<path>       Location of build files (default: cmake-build-{type})"
+    display_message ""
+    display_message "Feature flags:"
+    display_message "  --with-postgresql        Enable PostgreSQL / libpq support (default: off)"
+    display_message "  --without-postgresql     Disable PostgreSQL support"
+    display_message "  --without-ssl            Disable OpenSSL support (default: on)"
+    display_message "  --without-curl           Disable libcurl support (default: on)"
+    display_message "  --app-name=<name>        Application binary / config name (default: apostol)"
+    display_message ""
+    display_message "  --help                   Display this help"
+    display_message ""
+}
+
+display_configuration()
+{
+    display_message "Configuration"
+    display_message "--------------------------------------------------------------------"
+    display_message "PROJECT_NAME         : $PROJECT_NAME"
+    display_message "BUILD_TYPE           : $BUILD_TYPE"
+    display_message "BUILD_DIR            : $BUILD_DIR"
+    display_message "WITH_POSTGRESQL      : $WITH_POSTGRESQL"
+    display_message "WITH_SSL             : $WITH_SSL"
+    display_message "WITH_CURL            : $WITH_CURL"
+    display_message "APP_NAME             : $APP_NAME"
+    display_message "--------------------------------------------------------------------"
+}
+
+make_configuration()
+{
+    if ! [[ $BUILD_UPDATE ]]; then
+        rm -rf "$BUILD_DIR"
+        mkdir -p "$BUILD_DIR"
+    fi
+
+    display_heading_message "Configuring: $PROJECT_NAME"
+
+    cmake \
+        -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+        -DWITH_POSTGRESQL="$WITH_POSTGRESQL" \
+        -DWITH_SSL="$WITH_SSL" \
+        -DWITH_CURL="$WITH_CURL" \
+        -DAPP_NAME="$APP_NAME" \
+        -B "$BUILD_DIR" .
+
+    display_message ""
+    echo -e "********************** \e[32;1mSUCCESS\e[0m **********************"
+    echo -e "\e[32m-- To build $PROJECT_NAME run:\e[0m"
+    display_message "--------------------------------------------------------------------"
+    echo -e "\e[1m\$ cmake --build $BUILD_DIR --parallel \$(nproc)\e[0m"
+    display_message "--------------------------------------------------------------------"
+    echo -e "\e[32m-- To install $PROJECT_NAME run:\e[0m"
+    display_message "--------------------------------------------------------------------"
+    echo -e "\e[1m\$ sudo cmake --install $BUILD_DIR\e[0m"
+    display_message "--------------------------------------------------------------------"
+}
+
+# --- Parse options --------------------------------------------------------
+
+for OPTION in "$@"; do
+    case $OPTION in
+        (--help)               DISPLAY_HELP=yes ;;
+
+        (--release)            BUILD_TYPE=Release ;;
+        (--debug)              BUILD_TYPE=Debug ;;
+        (--update)             BUILD_UPDATE=yes ;;
+
+        (--with-postgresql)    WITH_POSTGRESQL=ON ;;
+        (--without-postgresql) WITH_POSTGRESQL=OFF ;;
+        (--without-ssl)        WITH_SSL=OFF ;;
+        (--without-curl)       WITH_CURL=OFF ;;
+
+        (--app-name=*)         APP_NAME="${OPTION#*=}" ;;
+        (--build-dir=*)        BUILD_DIR="${OPTION#*=}" ;;
+    esac
+done
+
+if ! [[ $BUILD_DIR ]]; then
+    if [[ $BUILD_TYPE == Debug ]]; then
+        BUILD_DIR=cmake-build-debug
+    else
+        BUILD_DIR=cmake-build-release
+    fi
+fi
+
+# --- Run ------------------------------------------------------------------
+
+if [[ $DISPLAY_HELP ]]; then
+    display_help
+else
+    display_configuration
+    make_configuration
+fi
