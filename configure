@@ -11,7 +11,7 @@ PROJECT_NAME=apostol
 BUILD_TYPE=Release
 
 # CMake feature flags (matching CMakeLists.txt cache variables)
-WITH_POSTGRESQL=OFF
+WITH_POSTGRESQL=ON
 WITH_SSL=ON
 WITH_CURL=ON
 APP_NAME=apostol
@@ -122,8 +122,10 @@ fi
 if [[ $DISPLAY_HELP ]]; then
     display_help
 else
-    display_heading_message "Updating submodules"
-    git submodule update --init --remote
+    if [[ -d .git ]]; then
+        display_heading_message "Updating submodules"
+        git submodule update --init --remote
+    fi
 
     display_configuration
     make_configuration
