@@ -17,8 +17,8 @@
   "process": {
     "master": true,
     "helper": true,
-    "user": "",
-    "group": ""
+    "user": "nobody",
+    "group": "nogroup"
   },
   "workers": 1,
   "server": {
