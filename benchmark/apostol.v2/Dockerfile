@@ -24,25 +24,23 @@ RUN set -eux; \
 
 WORKDIR /opt/$PROJECT_NAME
 
+# Clone the project and configure
 RUN set -eux; \
-    git clone --depth 1 --branch version2 https://github.com/apostoldevel/apostol.git .
+    git clone --depth 1 --branch version2 https://github.com/apostoldevel/apostol.git . && \
+    ./configure --without-ssl --without-curl
 
 # Overlay benchmark WebServer — replaces the default WebServer module
 COPY WebServer.hpp src/modules/Workers/WebServer/WebServer.hpp
 COPY WebServer.cpp src/modules/Workers/WebServer/WebServer.cpp
 
-# Build: PostgreSQL ON for /db/ping, no SSL, no Curl, no tests
+# Build and install
 RUN set -eux; \
-    cmake -B cmake-build-release \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DWITH_POSTGRESQL=ON \
-          -DWITH_SSL=OFF \
-          -DWITH_CURL=OFF \
-          -DBUILD_TESTING=OFF \
-          -DUSE_SYSTEMD=OFF \
-    && cmake --build cmake-build-release --parallel "$(nproc)" --target $PROJECT_NAME_app \
-    && cmake --install cmake-build-release \
-    && rm -rf cmake-build-release src
+    mkdir -p conf/sites && \
+    cd cmake-build-release && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && \
+    rm -rf cmake-build-release src
 
 # --- Runtime stage ---
 FROM debian:bookworm-slim AS app
