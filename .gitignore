@@ -3,5 +3,4 @@ cmake-build-*/
 build/
 *.o
 *.a
-.env
 .idea/
