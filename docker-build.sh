@@ -2,6 +2,8 @@
 
 set -e
 
+git submodule update --init --remote
+
 ./docker-image-rm.sh
 
 docker compose build
