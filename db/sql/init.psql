@@ -1,0 +1,7 @@
+\echo [M] init.psql
+\ir sets.psql
+\ir user.psql
+\ir db.psql
+\connect :dbname :username
+\ir create.psql
+\q

@@ -1,0 +1,40 @@
+{
+  "log_level": "notice",
+
+  "server": {
+    "listen": "0.0.0.0",
+    "port": 8080,
+    "backlog": 4096,
+    "timeout": 5000
+  },
+
+  "process": {
+    "master": true,
+    "limit_nofile": 1048576
+  },
+
+  "daemon": {
+    "enabled": false,
+    "pid": "/run/apostol.pid"
+  },
+
+  "module": {
+    "PGHTTP": { "enable": false },
+    "StreamServer": { "enable": false }
+  },
+
+  "postgres": {
+    "connect": true,
+    "timeout": 5,
+    "worker": {
+      "dbname": "bench",
+      "user": "bench",
+      "password": "bench",
+      "sslmode": "disable"
+    },
+    "pool": {
+      "min": 5,
+      "max": 15
+    }
+  }
+}

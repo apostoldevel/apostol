@@ -1,0 +1,12 @@
+\encoding UTF8
+-- Пароль пользователя:
+\ir .env.psql
+
+-- Наименование пользователя:
+\set username http
+
+-- Наименование базы данных:
+\set dbname web
+
+-- Иные параметры:
+SET plpgsql.extra_warnings TO 'shadowed_variables';

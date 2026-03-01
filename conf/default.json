@@ -15,8 +15,8 @@
     "lock": "logs/apostol.lock"
   },
   "process": {
-    "master": false,
-    "helper": false,
+    "master": true,
+    "helper": true,
     "user": "",
     "group": ""
   },
@@ -49,20 +49,16 @@
     "notice": false,
     "timeout": 10,
     "worker": {
-      "host": "",
+      "host": "postgres",
       "port": "5432",
-      "dbname": "",
-      "user": "daemon",
-      "password": "",
+      "dbname": "web",
+      "user": "http",
+      "password": "http",
       "sslmode": "disable"
     },
     "helper": {
-      "user": "apibot",
-      "password": ""
-    },
-    "kernel": {
-      "user": "kernel",
-      "password": ""
+      "user": "http",
+      "password": "http"
     },
     "pool": {
       "min": 5,

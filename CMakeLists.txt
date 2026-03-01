@@ -184,10 +184,12 @@ install(DIRECTORY DESTINATION ${INSTALL_PATH})
 install(DIRECTORY DESTINATION ${INSTALL_PATH}/conf)
 install(DIRECTORY DESTINATION ${INSTALL_PATH}/logs)
 install(DIRECTORY DESTINATION ${INSTALL_PATH}/cache)
+install(DIRECTORY conf/sites/ DESTINATION ${INSTALL_PATH}/sites)
+install(DIRECTORY www/ DESTINATION ${INSTALL_PATH}/www)
 
 # Install default config if present
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/conf/${APP_NAME}.json")
-    install(FILES conf/${APP_NAME}.json DESTINATION ${INSTALL_PATH}/conf)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/conf/default.json")
+    install(FILES conf/default.json DESTINATION ${INSTALL_PATH} RENAME ${APP_NAME}.json)
 endif()
 
 # systemd unit

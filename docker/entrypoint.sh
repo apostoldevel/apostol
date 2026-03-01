@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+# Установка значений переменных по умолчанию
 PROJECT_NAME="${PROJECT_NAME:-apostol}"
 
 set -o allexport
@@ -23,9 +24,19 @@ if [ -n "$PGPORT" ]; then
   PG_PARAMS+=(-p "$PGPORT")
 fi
 
+# Удаление логов, если каталог существует
 if [[ -d /var/log/$PROJECT_NAME ]]; then
   find /var/log/"$PROJECT_NAME" -name '*.log' -delete
 fi
+
+pop_directory() {
+  popd >/dev/null
+}
+
+push_directory() {
+  local DIRECTORY="$1"
+  pushd "$DIRECTORY" >/dev/null
+}
 
 display_message() {
   echo "$@"
@@ -46,16 +57,27 @@ display_configuration() {
   display_message "--------------------------------------------------------------------"
 }
 
+set_env() {
+  push_directory /opt/"$PROJECT_NAME"
+  envsubst < conf/sites/default.json > /etc/"$PROJECT_NAME"/sites/default.json
+  envsubst < conf/default.json > /etc/"$PROJECT_NAME"/conf/"$PROJECT_NAME".json
+  pop_directory
+}
+
 init_app() {
-  mkdir -p /etc/"$PROJECT_NAME"/conf
-  cp -p /opt/"$PROJECT_NAME"/conf/default.json /etc/"$PROJECT_NAME"/conf/"$PROJECT_NAME".json
+  mkdir -p /etc/"$PROJECT_NAME"/conf /etc/"$PROJECT_NAME"/oauth2 /etc/"$PROJECT_NAME"/sites
+  push_directory /opt/"$PROJECT_NAME"
+  cp -p conf/*.json /etc/"$PROJECT_NAME"/conf
+  pop_directory
 }
 
 display_configuration
 
-if [[ ! -f /etc/$PROJECT_NAME/conf/$PROJECT_NAME.json ]]; then
+if [[ ! -f /etc/$PROJECT_NAME/conf/$PROJECT_NAME.conf ]]; then
   init_app
 fi
+
+set_env
 
 display_message "Waiting for the database to be ready..."
 

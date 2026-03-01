@@ -12,7 +12,7 @@ services:
     networks:
       - db-network
     ports:
-      - "5434:5432"
+      - "5433:5432"
     restart: unless-stopped
     env_file: ./docker/postgres/.env
     volumes:
@@ -38,6 +38,19 @@ services:
       timeout: 5s
       retries: 3
 
+  pgweb:
+    build: ./docker/pgweb
+    container_name: pgweb
+    restart: unless-stopped
+    networks:
+      - lan-network
+      - db-network
+    ports:
+      - "8081:8081"
+    env_file: ./docker/pgweb/.env
+    depends_on:
+      - postgres
+
   backend:
     build: .
     container_name: backend
@@ -45,7 +58,7 @@ services:
       - lan-network
       - db-network
     ports:
-      - "4977:4977"
+      - "8080:8080"
     restart: unless-stopped
     env_file: .env
     volumes:
@@ -58,12 +71,12 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.20.1.0/24
+        - subnet: 172.18.1.0/24
   db-network:
     ipam:
       driver: default
       config:
-        - subnet: 172.20.2.0/24
+        - subnet: 172.18.2.0/24
 
 volumes:
   postgresql:
