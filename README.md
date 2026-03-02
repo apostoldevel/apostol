@@ -65,38 +65,38 @@ The framework itself lives in a [separate repository](https://github.com/apostol
 
 | Service | RPS | Latency p50 |
 |---------|----:|------------:|
-| Nginx (static return) | 543,000 | 111us |
-| **Apostol v2** | **486,000** | **184us** |
-| Go (net/http) | 212,000 | 446us |
-| Apostol v1 | 126,000 | 768us |
-| Node.js (Fastify) | 102,000 | 0.94ms |
+| Nginx (static return) | 566,000 | 111us |
+| **Apostol v2** | **507,000** | **170us** |
+| Go (net/http) | 211,000 | 447us |
+| Apostol v1 | 128,000 | 790us |
+| Node.js (Fastify) | 102,000 | 0.95ms |
 | Python (FastAPI) | 2,400 | 41ms |
 
 ### /db/ping -- direct (keep-alive ON, 100 connections)
 
 | Service | RPS | Latency p50 |
 |---------|----:|------------:|
-| **Apostol v2** | **109,000** | **0.93ms** |
-| Go | 73,000 | 1.04ms |
-| Apostol v1 | 60,000 | 1.66ms |
-| Node.js | 38,000 | 2.46ms |
+| **Apostol v2** | **112,000** | **0.91ms** |
+| Go | 72,000 | 1.07ms |
+| Apostol v1 | 61,000 | 1.61ms |
+| Node.js | 36,000 | 2.65ms |
 | Python | 2,300 | 42ms |
 
 ### /ping -- via Nginx proxy (keep-alive ON, 100 connections)
 
 | Service | RPS | Latency p50 |
 |---------|----:|------------:|
-| **Apostol v2** | **60,000** | **1.76ms** |
-| Go | 39,000 | 2.02ms |
-| Apostol v1 | 13,000 | 5.00ms |
-| Node.js | 6,600 | 11.18ms |
-| Python | 5,400 | 16.01ms |
+| **Apostol v2** | **70,000** | **1.07ms** |
+| Go | 38,000 | 2.06ms |
+| Apostol v1 | 16,000 | 3.18ms |
+| Node.js | 5,900 | 14.29ms |
+| Python | 5,500 | 14.62ms |
 
 **Key findings**:
-- Apostol v2 reaches **89%** of Nginx throughput on /ping (486K vs 543K)
-- Apostol v2 **surpasses Nginx** on keep-alive OFF (88K vs 86K RPS) thanks to `SO_REUSEPORT`
-- On /db/ping, Apostol v2 leads with 109K RPS -- **1.5x faster** than Go, **1.8x faster** than v1
-- Through Nginx proxy, Apostol v2 maintains the highest throughput at 60K RPS
+- Apostol v2 reaches **90%** of Nginx throughput on /ping (507K vs 566K)
+- On /ping keep-alive OFF, Apostol v2 **matches Nginx** at c100 (84K each, both use `SO_REUSEPORT`) and leads at c1000 (81K vs 75K)
+- On /db/ping, Apostol v2 leads with 112K RPS -- **1.6x faster** than Go, **1.8x faster** than v1
+- Through Nginx proxy, Apostol v2 maintains the highest throughput at 70K RPS
 
 > Full results, methodology, and analysis: [REST API Benchmark](doc/BENCHMARK.md).
 

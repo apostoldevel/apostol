@@ -46,7 +46,7 @@ max_connections = 200
 
 **PgBouncer** -- session pooling mode, `default_pool_size=50`, `max_client_conn=500`.
 
-**Nginx** -- serves as the v0 baseline (static JSON responses) and an API gateway for proxy tests. `worker_processes auto`, `keepalive_requests 10000`, access logging disabled.
+**Nginx** -- serves as the v0 baseline (static JSON responses) and an API gateway for proxy tests. `worker_processes auto`, `listen 80 reuseport`, `keepalive_requests 10000`, access logging disabled.
 
 ### Connection Pools
 
@@ -78,7 +78,7 @@ Each service implements identical endpoints returning JSON with `Content-Type: a
 
 ## Tuning for Fair Comparison
 
-Before running the benchmark, we equalized two critical kernel-level parameters across all services to ensure a fair comparison.
+Before running the benchmark, we equalized critical kernel-level parameters across all services to ensure a fair comparison.
 
 ### TCP Listen Backlog
 
@@ -88,14 +88,29 @@ Default values varied widely across services:
 
 | Service | Default Backlog | Benchmark Setting |
 |---------|----------------|-------------------|
-| Nginx | 511 | **4096** (`listen 80 backlog=4096`) |
+| Nginx | 511 | **4096** (`listen 80 backlog=4096 reuseport`) |
 | Apostol v1 | 4096 (`SOMAXCONN`) | 4096 (no change) |
-| Apostol v2 | 128 | **4096** (`server.backlog` in JSON config) |
+| Apostol v2 | 4096 | 4096 (no change) |
 | Go | 4096 (`SOMAXCONN`) | 4096 (no change) |
 | Node.js | 511 | **4096** (`backlog` in `fastify.listen()`) |
 | Python | 2048 | **4096** (`--backlog 4096` in uvicorn) |
 
 All services now use `backlog=4096`, matching the kernel's `net.core.somaxconn`.
+
+### SO_REUSEPORT
+
+`SO_REUSEPORT` allows multiple sockets to bind to the same port. The kernel distributes incoming connections across these sockets, eliminating the single-socket accept bottleneck under high concurrency.
+
+| Service | SO_REUSEPORT | Source |
+|---------|:------------:|--------|
+| Nginx | Yes | `listen 80 reuseport` |
+| Apostol v2 | Yes | `setsockopt(SO_REUSEPORT)` in libapostol |
+| Apostol v1 | No | Single accept socket |
+| Go | No | Go runtime default |
+| Node.js | No | PM2 cluster mode (round-robin) |
+| Python | No | uvicorn default |
+
+Both Nginx and Apostol v2 use `SO_REUSEPORT`, ensuring a level playing field on connection handling tests.
 
 ### epoll Event Array Size
 
@@ -105,13 +120,9 @@ The `epoll_wait()` `maxevents` parameter controls how many I/O events the kernel
 |---------|-----------------|--------|
 | Nginx | 512 | `epoll_events` directive (default) |
 | Apostol v1 | 512 | `EVENT_SIZE` in Sockets.cpp |
-| Apostol v2 | 64 -> **512** | `MAX_EVENTS` in event_loop.hpp |
+| Apostol v2 | 512 | `MAX_EVENTS` in event_loop.hpp |
 | Go | 128 | Go runtime (hardcoded) |
 | Node.js | 1024 | libuv (hardcoded) |
-
-Apostol v2's `MAX_EVENTS` was increased from 64 to 512 to match v1. At 64, v2 needed **8x more syscalls** per event loop iteration under high load -- a significant overhead that masked its true performance.
-
-These two changes -- backlog and epoll event array -- had a dramatic impact on Apostol v2's throughput, particularly in `Connection: close` scenarios.
 
 ---
 
@@ -149,34 +160,34 @@ Pure HTTP stack performance. Keep-alive eliminates TCP handshake overhead, isola
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| Nginx (v0) | 543,131 | 146us | 111us | 579us |
-| **Apostol v2 (v5)** | **485,521** | **199us** | **184us** | **498us** |
-| Go (v4) | 211,891 | 517us | 446us | 1.74ms |
-| Apostol v1 (v1) | 126,096 | 790us | 768us | 1.16ms |
-| Node.js (v3) | 101,891 | 1.03ms | 0.94ms | 2.27ms |
-| Python (v2) | 2,418 | 41.25ms | 41.03ms | 42.99ms |
+| Nginx (v0) | 566,343 | 127us | 111us | 455us |
+| **Apostol v2 (v5)** | **506,814** | **191us** | **170us** | **485us** |
+| Go (v4) | 211,121 | 519us | 447us | 1.76ms |
+| Apostol v1 (v1) | 127,652 | 787us | 790us | 1.16ms |
+| Node.js (v3) | 101,509 | 1.03ms | 0.95ms | 2.19ms |
+| Python (v2) | 2,399 | 41.29ms | 41.03ms | 43.12ms |
 
 ```
-Nginx     ████████████████████████████████████████████████████████  543K
-Apostol2  ██████████████████████████████████████████████████████     486K
-Go        ██████████████████████                                    212K
-Apostol1  █████████████                                             126K
-Node.js   ██████████                                                102K
-Python    ▏                                                           2K
+Nginx     ████████████████████████████████████████████████████████  566K
+Apostol2  ██████████████████████████████████████████████████        507K
+Go        █████████████████████                                    211K
+Apostol1  █████████████                                            128K
+Node.js   ██████████                                               102K
+Python    ▏                                                          2K
 ```
 
 **4 threads / 1000 connections:**
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| Nginx | 580,145 | 1.83ms | 1.79ms | 5.85ms |
-| **Apostol v2** | **515,234** | **1.87ms** | **1.72ms** | **3.69ms** |
-| Go | 215,164 | 4.63ms | 4.56ms | 7.88ms |
-| Apostol v1 | 117,543 | 8.46ms | 8.78ms | 12.61ms |
-| Node.js | 104,400 | 21.81ms | 9.15ms | 510.49ms |
-| Python | 21,904 | 45.41ms | 44.97ms | 59.94ms |
+| Nginx | 595,692 | 1.74ms | 1.72ms | 5.68ms |
+| **Apostol v2** | **479,977** | **1.98ms** | **1.81ms** | **4.06ms** |
+| Go | 204,109 | 4.88ms | 4.81ms | 8.23ms |
+| Apostol v1 | 119,149 | 8.37ms | 8.40ms | 11.60ms |
+| Node.js | 100,895 | 24.52ms | 9.43ms | 582.48ms |
+| Python | 21,452 | 46.26ms | 44.89ms | 59.96ms |
 
-At 1000 connections, Apostol v2 maintains 515K RPS with p99 = 3.69ms -- **even lower** than its p99 at 100 connections. For comparison: Node.js degrades to p99 = 510ms.
+At 1000 connections, Apostol v2 maintains 480K RPS with p99 = 4.06ms. For comparison: Node.js degrades to p99 = 582ms.
 
 ### /ping -- Keep-alive OFF
 
@@ -186,25 +197,25 @@ Disabling keep-alive (`Connection: close`) forces a new TCP connection per reque
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| **Apostol v2** | **88,327** | **330us** | **312us** | **802us** |
-| Nginx | 85,693 | 428us | 367us | 1.18ms |
-| Go | 38,892 | 1.31ms | 755us | 9.03ms |
-| Apostol v1 | 8,069 | 5.56ms | 4.29ms | 16.89ms |
-| Node.js | 6,420 | 7.58ms | 6.12ms | 19.81ms |
-| Python | 6,259 | 8.55ms | 8.04ms | 20.10ms |
+| Nginx | 84,442 | 428us | 365us | 1.18ms |
+| **Apostol v2** | **84,262** | **339us** | **318us** | **821us** |
+| Go | 41,305 | 1.27ms | 772us | 9.14ms |
+| Apostol v1 | 8,013 | 5.56ms | 3.70ms | 18.28ms |
+| Node.js | 5,873 | 8.36ms | 6.41ms | 23.70ms |
+| Python | 5,841 | 9.17ms | 8.53ms | 21.37ms |
 
 **4 threads / 1000 connections:**
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| **Apostol v2** | **82,492** | **2.88ms** | **2.41ms** | **7.40ms** |
-| Go | 79,118 | 6.44ms | 6.11ms | 16.32ms |
-| Nginx | 76,846 | 3.97ms | 3.12ms | 11.72ms |
-| Apostol v1 | 29,955 | 15.10ms | 14.65ms | 39.10ms |
-| Node.js | 12,608 | 33.80ms | 33.44ms | 83.92ms |
-| Python | 7,176 | 75.17ms | 72.55ms | 169.60ms |
+| **Apostol v2** | **81,246** | **2.90ms** | **2.44ms** | **7.46ms** |
+| Go | 79,670 | 6.84ms | 6.80ms | 16.20ms |
+| Nginx | 74,786 | 3.92ms | 3.08ms | 11.49ms |
+| Apostol v1 | 31,333 | 14.53ms | 14.06ms | 36.51ms |
+| Node.js | 12,636 | 33.17ms | 32.24ms | 81.53ms |
+| Python | 7,115 | 75.64ms | 73.04ms | 166.48ms |
 
-Without keep-alive, **Apostol v2 surpasses Nginx** at both 100 and 1000 connections. At c100: 88.3K vs 85.7K. At c1000: 82.5K vs 76.8K. This is possible because Apostol v2 uses `SO_REUSEPORT`, which distributes incoming connections across worker processes at the kernel level, while Nginx serializes connection acceptance through its accept mechanism.
+Without keep-alive at c100, Nginx and Apostol v2 deliver **nearly identical throughput** (84.4K vs 84.3K) -- both use `SO_REUSEPORT` for kernel-level connection distribution. However, Apostol v2 achieves lower latency (339us avg vs 428us). At c1000, Apostol v2 pulls ahead (81.2K vs 74.8K), suggesting its event loop handles connection churn more efficiently under extreme concurrency.
 
 ### /db/ping -- Keep-alive ON
 
@@ -214,13 +225,13 @@ Database round-trip test with keep-alive enabled. This is the production-relevan
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| **Apostol v2** | **109,106** | **0.92ms** | **0.93ms** | **1.56ms** |
-| Go | 73,166 | 1.82ms | 1.04ms | 12.07ms |
-| Apostol v1 | 60,238 | 1.95ms | 1.66ms | 2.85ms |
-| Node.js | 38,229 | 2.73ms | 2.46ms | 6.62ms |
-| Python | 2,288 | 47.08ms | 42.01ms | 242.24ms |
+| **Apostol v2** | **112,097** | **0.89ms** | **0.91ms** | **1.37ms** |
+| Go | 72,004 | 1.93ms | 1.07ms | 13.53ms |
+| Apostol v1 | 60,797 | 1.76ms | 1.61ms | 2.48ms |
+| Node.js | 35,521 | 2.94ms | 2.65ms | 7.37ms |
+| Python | 2,293 | 46.82ms | 42.00ms | 244.29ms |
 
-Apostol v2 leads with 109K RPS -- **1.5x faster** than Go (73K) and **1.8x faster** than Apostol v1 (60K). The advantage comes from the tight integration between epoll and libpq: HTTP parsing, PostgreSQL query dispatch, and response building all happen in a single event loop iteration with minimal overhead.
+Apostol v2 leads with 112K RPS -- **1.6x faster** than Go (72K) and **1.8x faster** than Apostol v1 (61K). The advantage comes from the tight integration between epoll and libpq: HTTP parsing, PostgreSQL query dispatch, and response building all happen in a single event loop iteration with minimal overhead.
 
 ### /db/ping -- Keep-alive OFF
 
@@ -228,13 +239,13 @@ Apostol v2 leads with 109K RPS -- **1.5x faster** than Go (73K) and **1.8x faste
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| **Apostol v2** | **60,210** | **1.31ms** | **0.88ms** | **4.67ms** |
-| Go | 11,315 | 4.78ms | 1.90ms | 19.49ms |
-| Node.js | 5,092 | 10.43ms | 7.30ms | 29.77ms |
-| Python | 4,615 | 13.05ms | 11.73ms | 39.65ms |
-| Apostol v1 | 2,796 | 6.05ms | 3.01ms | 19.44ms |
+| **Apostol v2** | **59,713** | **1.31ms** | **0.87ms** | **4.52ms** |
+| Go | 11,871 | 4.58ms | 1.88ms | 18.40ms |
+| Node.js | 5,251 | 10.13ms | 7.24ms | 26.99ms |
+| Python | 5,158 | 11.49ms | 10.84ms | 24.96ms |
+| Apostol v1 | 2,797 | 6.03ms | 2.93ms | 19.57ms |
 
-Apostol v2 achieves 60K RPS -- **5.3x faster** than Go and **21.5x faster** than Apostol v1 -- with consistently low latency (p99 = 4.67ms). The combination of `SO_REUSEPORT` and tight event loop integration allows v2 to handle TCP teardown and database round-trip concurrently without latency spikes.
+Apostol v2 achieves 60K RPS -- **5.0x faster** than Go and **21.3x faster** than Apostol v1 -- with consistently low latency (p99 = 4.52ms). The combination of `SO_REUSEPORT` and tight event loop integration allows v2 to handle TCP teardown and database round-trip concurrently without latency spikes.
 
 ---
 
@@ -248,21 +259,21 @@ All proxy tests route traffic through a shared Nginx instance: `loadgen -> Nginx
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| **Apostol v2** | **59,586** | **1.73ms** | **1.76ms** | **4.38ms** |
-| Go | 39,360 | 5.27ms | 2.02ms | 49.14ms |
-| Apostol v1 | 13,032 | 15.99ms | 5.00ms | 72.04ms |
-| Node.js | 6,639 | 22.17ms | 11.18ms | 86.64ms |
-| Python | 5,353 | 22.37ms | 16.01ms | 73.23ms |
+| **Apostol v2** | **69,682** | **1.76ms** | **1.07ms** | **5.64ms** |
+| Go | 38,370 | 5.77ms | 2.06ms | 43.24ms |
+| Apostol v1 | 16,444 | 11.74ms | 3.18ms | 54.16ms |
+| Node.js | 5,889 | 21.49ms | 14.29ms | 73.65ms |
+| Python | 5,473 | 22.80ms | 14.62ms | 83.66ms |
 
 **4 threads / 1000 connections:**
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| **Apostol v2** | **34,277** | **42.58ms** | **24.36ms** | **185.68ms** |
-| Go | 21,991 | 59.02ms | 38.31ms | 237.30ms |
-| Apostol v1 | 15,420 | 79.10ms | 55.56ms | 285.15ms |
-| Node.js | 10,873 | 98.84ms | 83.65ms | 284.41ms |
-| Python | 8,406 | 121.82ms | 125.66ms | 303.27ms |
+| **Apostol v2** | **39,090** | **34.92ms** | **20.71ms** | **141.98ms** |
+| Go | 21,790 | 61.86ms | 37.46ms | 261.89ms |
+| Apostol v1 | 14,621 | 79.48ms | 56.99ms | 274.02ms |
+| Node.js | 9,662 | 111.68ms | 102.08ms | 338.13ms |
+| Python | 8,809 | 119.80ms | 111.04ms | 314.21ms |
 
 ### /ping via Proxy -- Keep-alive OFF
 
@@ -270,13 +281,13 @@ All proxy tests route traffic through a shared Nginx instance: `loadgen -> Nginx
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| **Apostol v2** | **28,716** | **2.79ms** | **1.27ms** | **17.76ms** |
-| Apostol v1 | 6,103 | 24.17ms | 5.11ms | 123.95ms |
-| Go | 4,640 | 10.51ms | 9.34ms | 32.18ms |
-| Node.js | 4,003 | 13.53ms | 11.32ms | 68.02ms |
-| Python | 3,006 | 27.03ms | 14.82ms | 126.41ms |
+| **Apostol v2** | **29,310** | **3.07ms** | **1.22ms** | **22.43ms** |
+| Apostol v1 | 5,746 | 24.98ms | 4.93ms | 139.92ms |
+| Go | 3,503 | 13.93ms | 11.41ms | 42.03ms |
+| Node.js | 3,174 | 15.82ms | 14.18ms | 41.23ms |
+| Python | 2,659 | 28.34ms | 15.67ms | 134.27ms |
 
-With keep-alive OFF, each request requires two TCP handshakes (client->Nginx and Nginx->upstream). Apostol v2 maintains a commanding lead at 28.7K RPS -- **4.7x faster** than Apostol v1 and **6.2x faster** than Go.
+With keep-alive OFF, each request requires two TCP handshakes (client->Nginx and Nginx->upstream). Apostol v2 maintains a commanding lead at 29.3K RPS -- **5.1x faster** than Apostol v1 and **8.4x faster** than Go.
 
 ### /db/ping via Proxy -- Keep-alive ON
 
@@ -284,13 +295,13 @@ With keep-alive OFF, each request requires two TCP handshakes (client->Nginx and
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| Go | 36,310 | 4.28ms | 1.37ms | 51.45ms |
-| **Apostol v2** | **31,750** | **2.59ms** | **1.64ms** | **6.99ms** |
-| Node.js | 5,675 | 21.52ms | 15.88ms | 69.97ms |
-| Python | 5,154 | 25.37ms | 12.18ms | 205.65ms |
-| Apostol v1 | 3,356 | 48.13ms | 31.20ms | 223.42ms |
+| **Apostol v2** | **35,382** | **2.83ms** | **1.54ms** | **6.99ms** |
+| Go | 13,593 | 12.32ms | 5.21ms | 53.13ms |
+| Node.js | 5,337 | 28.34ms | 10.91ms | 108.10ms |
+| Python | 4,376 | 31.72ms | 16.11ms | 206.63ms |
+| Apostol v1 | 3,140 | 54.71ms | 23.21ms | 293.82ms |
 
-Go edges ahead on raw RPS (36.3K vs 31.8K) through the proxy with database queries. However, Apostol v2 delivers dramatically better latency consistency: p99 = 6.99ms vs Go's 51.45ms.
+Apostol v2 leads with 35.4K RPS -- **2.6x faster** than Go (13.6K) with consistently lower latency (p99 = 6.99ms vs 53.13ms).
 
 ### /db/ping via Proxy -- Keep-alive OFF
 
@@ -298,13 +309,13 @@ Go edges ahead on raw RPS (36.3K vs 31.8K) through the proxy with database queri
 
 | Service | RPS | Avg Latency | p50 | p99 |
 |---------|----:|------------:|----:|----:|
-| **Apostol v2** | **27,075** | **3.17ms** | **1.78ms** | **20.01ms** |
-| Apostol v1 | 4,521 | 18.43ms | 9.61ms | 96.42ms |
-| Go | 3,784 | 12.85ms | 12.51ms | 31.01ms |
-| Node.js | 2,980 | 21.48ms | 15.83ms | 118.42ms |
-| Python | 2,544 | 27.67ms | 18.76ms | 130.32ms |
+| **Apostol v2** | **28,428** | **3.30ms** | **1.67ms** | **24.92ms** |
+| Apostol v1 | 4,639 | 18.38ms | 10.64ms | 88.35ms |
+| Go | 3,255 | 14.85ms | 14.52ms | 35.23ms |
+| Node.js | 2,652 | 21.53ms | 18.03ms | 101.76ms |
+| Python | 2,404 | 28.18ms | 20.17ms | 124.76ms |
 
-With both proxy and database overhead under connection churn, Apostol v2 achieves 27K RPS -- **7.2x faster** than Go and **6.0x faster** than Apostol v1.
+With both proxy and database overhead under connection churn, Apostol v2 achieves 28.4K RPS -- **8.7x faster** than Go and **6.1x faster** than Apostol v1.
 
 ---
 
@@ -312,9 +323,9 @@ With both proxy and database overhead under connection churn, Apostol v2 achieve
 
 ### Apostol v2 vs Nginx
 
-On `/ping` with keep-alive ON, Apostol v2 reaches **89% of Nginx's throughput** (486K vs 543K). Given that Nginx serves static `return 200` directives with no application logic, this is a remarkable result for a full application server.
+On `/ping` with keep-alive ON, Apostol v2 reaches **90% of Nginx's throughput** (507K vs 566K). Given that Nginx serves static `return 200` directives with no application logic, this is a remarkable result for a full application server.
 
-On `/ping` with keep-alive OFF, Apostol v2 **surpasses Nginx** at both concurrency levels: 88.3K vs 85.7K (c100) and 82.5K vs 76.8K (c1000). The advantage comes from `SO_REUSEPORT` -- the kernel distributes incoming connections directly to worker processes, avoiding Nginx's serialized accept pattern.
+On `/ping` with keep-alive OFF, both services use `SO_REUSEPORT` and deliver **nearly identical throughput** at c100: 84.3K vs 84.4K. The difference is within measurement noise. However, Apostol v2 achieves **lower latency** (339us avg vs 428us, p50 = 318us vs 365us). At c1000, Apostol v2 pulls ahead on throughput as well (81.2K vs 74.8K), indicating more efficient event loop handling under extreme connection churn.
 
 ### Apostol v2 vs Apostol v1
 
@@ -322,20 +333,20 @@ Both versions use the same architectural pattern (single-threaded epoll event lo
 
 | Test | v2 | v1 | Speedup |
 |------|---:|---:|--------:|
-| /ping KA-ON c100 | 485,521 | 126,096 | **3.9x** |
-| /ping KA-ON c1000 | 515,234 | 117,543 | **4.4x** |
-| /ping KA-OFF c100 | 88,327 | 8,069 | **10.9x** |
-| /db/ping KA-ON c100 | 109,106 | 60,238 | **1.8x** |
-| /db/ping KA-OFF c100 | 60,210 | 2,796 | **21.5x** |
+| /ping KA-ON c100 | 506,814 | 127,652 | **4.0x** |
+| /ping KA-ON c1000 | 479,977 | 119,149 | **4.0x** |
+| /ping KA-OFF c100 | 84,262 | 8,013 | **10.5x** |
+| /db/ping KA-ON c100 | 112,097 | 60,797 | **1.8x** |
+| /db/ping KA-OFF c100 | 59,713 | 2,797 | **21.3x** |
 
-The 3.9x improvement on `/ping` keep-alive ON comes from:
+The 4.0x improvement on `/ping` keep-alive ON comes from:
 
 1. **llhttp** parser vs libdelphi's hand-written parser -- llhttp is a highly optimized state machine.
 2. **C++20 standard library** -- `std::string_view`, move semantics, and zero-copy patterns eliminate unnecessary allocations.
 3. **Minimal response path** -- v2's response builder writes directly to the socket buffer with no intermediate object construction.
 4. **Tuned epoll** -- `MAX_EVENTS=512` delivers more events per syscall.
 
-The 10.9x improvement on `/ping` keep-alive OFF additionally benefits from:
+The 10.5x improvement on `/ping` keep-alive OFF additionally benefits from:
 
 5. **`SO_REUSEPORT`** -- kernel-level load balancing of incoming connections across workers, vs v1's single accept socket.
 6. **backlog=4096** -- v1 already used `SOMAXCONN` (4096), but v2 was at 128 before tuning.
@@ -346,12 +357,12 @@ Apostol v2 outperforms Go across every direct test:
 
 | Test | Apostol v2 | Go | Ratio |
 |------|---:|---:|------:|
-| /ping KA-ON c100 | 485,521 | 211,891 | **2.3x** |
-| /ping KA-OFF c100 | 88,327 | 38,892 | **2.3x** |
-| /db/ping KA-ON c100 | 109,106 | 73,166 | **1.5x** |
-| /db/ping KA-OFF c100 | 60,210 | 11,315 | **5.3x** |
+| /ping KA-ON c100 | 506,814 | 211,121 | **2.4x** |
+| /ping KA-OFF c100 | 84,262 | 41,305 | **2.0x** |
+| /db/ping KA-ON c100 | 112,097 | 72,004 | **1.6x** |
+| /db/ping KA-OFF c100 | 59,713 | 11,871 | **5.0x** |
 
-The advantage narrows on database tests with keep-alive (1.5x vs 2.3x), confirming that the PostgreSQL round-trip becomes the dominant cost. On `/db/ping` without keep-alive, v2's advantage widens to 5.3x thanks to `SO_REUSEPORT` and efficient TCP teardown handling.
+The advantage narrows on database tests with keep-alive (1.6x vs 2.4x), confirming that the PostgreSQL round-trip becomes the dominant cost. On `/db/ping` without keep-alive, v2's advantage widens to 5.0x thanks to `SO_REUSEPORT` and efficient TCP teardown handling -- Go does not use `SO_REUSEPORT` by default.
 
 ### Proxy Overhead
 
@@ -359,31 +370,31 @@ The Nginx proxy adds significant overhead due to `Connection: close` on the upst
 
 | Service | Direct RPS | Proxy RPS | Retained |
 |---------|---:|---:|---:|
-| Apostol v2 | 485,521 | 59,586 | 12% |
-| Go | 211,891 | 39,360 | 19% |
-| Apostol v1 | 126,096 | 13,032 | 10% |
-| Node.js | 101,891 | 6,639 | 7% |
+| Apostol v2 | 506,814 | 69,682 | 14% |
+| Go | 211,121 | 38,370 | 18% |
+| Apostol v1 | 127,652 | 16,444 | 13% |
+| Node.js | 101,509 | 5,889 | 6% |
 
-The absolute proxy throughput ranking mirrors direct performance: Apostol v2 leads at 59.6K, followed by Go at 39.4K. Despite retaining only 12% of its direct throughput, Apostol v2's raw speed advantage is large enough that it still outperforms every other service through the proxy.
+The absolute proxy throughput ranking mirrors direct performance: Apostol v2 leads at 69.7K, followed by Go at 38.4K. Despite retaining only 14% of its direct throughput, Apostol v2's raw speed advantage is large enough that it still outperforms every other service through the proxy.
 
-On `/db/ping` via proxy, Go edges ahead on RPS (36.3K vs 31.8K) but Apostol v2 delivers far better latency consistency (p99 = 7ms vs 51ms). With keep-alive OFF, Apostol v2 regains the throughput lead decisively (27K vs 3.8K).
+On `/db/ping` via proxy, Apostol v2 leads with 35.4K RPS vs Go's 13.6K, with dramatically better latency consistency (p99 = 7ms vs 53ms). With keep-alive OFF, Apostol v2 maintains the lead at 28.4K vs 3.3K.
 
 ### Keep-alive Impact
 
 | Service | KA-ON (c100) | KA-OFF (c100) | Drop Factor |
 |---------|-------------:|---------------:|------------:|
-| **Apostol v2** | **485,521** | **88,327** | **5.5x** |
-| Nginx | 543,131 | 85,693 | 6.3x |
-| Go | 211,891 | 38,892 | 5.5x |
-| Apostol v1 | 126,096 | 8,069 | 15.6x |
-| Node.js | 101,891 | 6,420 | 15.9x |
-| Python | 2,418 | 6,259 | +159% |
+| **Apostol v2** | **506,814** | **84,262** | **6.0x** |
+| Nginx | 566,343 | 84,442 | 6.7x |
+| Go | 211,121 | 41,305 | 5.1x |
+| Apostol v1 | 127,652 | 8,013 | 15.9x |
+| Node.js | 101,509 | 5,873 | 17.3x |
+| Python | 2,399 | 5,841 | +143% |
 
-Apostol v2 and Go share the **smallest drop factor** (5.5x), ahead of Nginx (6.3x). For comparison, Apostol v1 and Node.js drop 15-16x. Python improves without keep-alive because its runtime overhead dominates TCP costs.
+Go has the **smallest drop factor** (5.1x), followed by Apostol v2 (6.0x) and Nginx (6.7x) -- all three use efficient connection handling. Apostol v1 and Node.js drop 16-17x. Python improves without keep-alive because its runtime overhead dominates TCP costs.
 
 ### Node.js and Python
 
-Node.js (Fastify + PM2) reaches 102K RPS on `/ping` -- competitive for a JavaScript runtime. Python (FastAPI + uvicorn) reaches 2.4K RPS at 100 connections but scales to 22K at 1000 connections as worker utilization improves.
+Node.js (Fastify + PM2) reaches 102K RPS on `/ping` -- competitive for a JavaScript runtime. Python (FastAPI + uvicorn) reaches 2.4K RPS at 100 connections but scales to 21K at 1000 connections as worker utilization improves.
 
 ---
 
@@ -427,4 +438,4 @@ This sets the worker/process count for all services simultaneously.
 
 ## Note
 
-Results collected with 4 worker processes, 10-second test duration, `wrk --latency`. All services use `backlog=4096` and `ulimits.nofile=1048576`. Results may vary between runs depending on host load and thermal conditions.
+Results collected with 4 worker processes, 10-second test duration, `wrk --latency`. All services use `backlog=4096` and `ulimits.nofile=1048576`. Nginx and Apostol v2 use `SO_REUSEPORT`. Results may vary between runs depending on host load and thermal conditions.

@@ -65,38 +65,38 @@
 
 | Сервис | RPS | Latency p50 |
 |--------|----:|------------:|
-| Nginx (static return) | 543 000 | 111us |
-| **Apostol v2** | **486 000** | **184us** |
-| Go (net/http) | 212 000 | 446us |
-| Apostol v1 | 126 000 | 768us |
-| Node.js (Fastify) | 102 000 | 0,94ms |
+| Nginx (static return) | 566 000 | 111us |
+| **Apostol v2** | **507 000** | **170us** |
+| Go (net/http) | 211 000 | 447us |
+| Apostol v1 | 128 000 | 790us |
+| Node.js (Fastify) | 102 000 | 0,95ms |
 | Python (FastAPI) | 2 400 | 41ms |
 
 ### /db/ping — напрямую (keep-alive ON, 100 соединений)
 
 | Сервис | RPS | Latency p50 |
 |--------|----:|------------:|
-| **Apostol v2** | **109 000** | **0,93ms** |
-| Go | 73 000 | 1,04ms |
-| Apostol v1 | 60 000 | 1,66ms |
-| Node.js | 38 000 | 2,46ms |
+| **Apostol v2** | **112 000** | **0,91ms** |
+| Go | 72 000 | 1,07ms |
+| Apostol v1 | 61 000 | 1,61ms |
+| Node.js | 36 000 | 2,65ms |
 | Python | 2 300 | 42ms |
 
 ### /ping — через Nginx proxy (keep-alive ON, 100 соединений)
 
 | Сервис | RPS | Latency p50 |
 |--------|----:|------------:|
-| **Apostol v2** | **60 000** | **1,76ms** |
-| Go | 39 000 | 2,02ms |
-| Apostol v1 | 13 000 | 5,00ms |
-| Node.js | 6 600 | 11,18ms |
-| Python | 5 400 | 16,01ms |
+| **Apostol v2** | **70 000** | **1,07ms** |
+| Go | 38 000 | 2,06ms |
+| Apostol v1 | 16 000 | 3,18ms |
+| Node.js | 5 900 | 14,29ms |
+| Python | 5 500 | 14,62ms |
 
 **Ключевые результаты**:
-- Apostol v2 достигает **89%** от throughput Nginx на /ping (486K vs 543K)
-- Apostol v2 **опережает Nginx** при keep-alive OFF (88K vs 86K RPS) благодаря `SO_REUSEPORT`
-- На /db/ping Apostol v2 лидирует с 109K RPS — **в 1,5 раза быстрее** Go, **в 1,8 раза быстрее** v1
-- Через Nginx proxy Apostol v2 сохраняет лидерство с 60K RPS
+- Apostol v2 достигает **90%** от throughput Nginx на /ping (507K vs 566K)
+- На /ping keep-alive OFF Apostol v2 **на равных с Nginx** при c100 (84K, оба используют `SO_REUSEPORT`) и лидирует при c1000 (81K vs 75K)
+- На /db/ping Apostol v2 лидирует с 112K RPS — **в 1,6 раза быстрее** Go, **в 1,8 раза быстрее** v1
+- Через Nginx proxy Apostol v2 сохраняет лидерство с 70K RPS
 
 > Полные результаты, методология и анализ: [REST API Benchmark](doc/BENCHMARK.ru-RU.md).
 
