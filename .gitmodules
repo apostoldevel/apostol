@@ -14,3 +14,6 @@
 	path = src/modules/Helpers/PGFetch
 	url = https://github.com/apostoldevel/module-PGFetch.git
 	branch = version2
+[submodule "db/sql/http"]
+	path = db/sql/http
+	url = https://github.com/apostoldevel/db-http.git

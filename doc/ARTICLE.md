@@ -94,7 +94,7 @@ Now let’s fetch data from the public service [JSONPlaceholder](https://jsonpla
 
 ```sql
 SELECT http.fetch(
-  'https://jsonplaceholder.typicode.com/posts/1',
+  'https://jsonplaceholder.typicode.com/todos/1',
   'GET',
   content => null::text,
   type    => 'curl'

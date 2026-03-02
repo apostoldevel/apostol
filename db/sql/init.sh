@@ -40,7 +40,7 @@ display_error()
 }
 
 init_db() {
-  cat /tmp/postgresql.conf >> /var/lib/postgresql/$PG_MAJOR/docker/postgresql.conf
+  cat /tmp/postgresql.conf >> "$PGDATA/postgresql.conf"
 }
 
 # Download from github.
