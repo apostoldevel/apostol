@@ -1,6 +1,6 @@
 [![en](https://img.shields.io/badge/lang-en-green.svg)](README.md)
 
-<img width="1584" height="642" alt="apostol-v2" src="https://github.com/user-attachments/assets/4755d305-6233-4e88-b094-8ae04832d59e" />
+<img width="1422" height="506" alt="apostol-v2" src="https://github.com/user-attachments/assets/90464f33-bfde-459b-8b29-162f4f4f1bc3" />
 
 # Апостол (A-POST-OL)
 
@@ -13,6 +13,7 @@
 ## Оглавление
 
 - [Описание](#описание)
+- [Бенчмарк](#бенчмарк)
 - [Модули](#модули)
     - [Модули в данной сборке](#данная-сборка-включает-три-модуля)
     - [Дополнительные модули](#дополнительные-модули)
@@ -27,7 +28,6 @@
 - [Конфигурация](#конфигурация)
 - [Запуск](#запуск)
 - [Управление процессом](#управление-процессом)
-- [Бенчмарк](#бенчмарк)
 - [Создание своего проекта](#создание-своего-проекта)
 - [Ссылки](#ссылки)
 - [Лицензия](#лицензия)
@@ -54,6 +54,51 @@
 - **Модульность** — приложения собираются из независимых модулей как конструктор.
 
 Сам фреймворк находится в [отдельном репозитории](https://github.com/apostoldevel/libapostol) и подключается как git submodule.
+
+---
+
+## Бенчмарк
+
+**Apostol v2 vs v1 vs Python vs Node.js vs Go vs Nginx** — сравнительное тестирование в идентичных Docker-условиях (wrk, 4 потока, 10 секунд, 4 воркера).
+
+### /ping — напрямую (keep-alive ON, 100 соединений)
+
+| Сервис | RPS | Latency p50 |
+|--------|----:|------------:|
+| Nginx (static return) | 543 000 | 111us |
+| **Apostol v2** | **486 000** | **184us** |
+| Go (net/http) | 212 000 | 446us |
+| Apostol v1 | 126 000 | 768us |
+| Node.js (Fastify) | 102 000 | 0,94ms |
+| Python (FastAPI) | 2 400 | 41ms |
+
+### /db/ping — напрямую (keep-alive ON, 100 соединений)
+
+| Сервис | RPS | Latency p50 |
+|--------|----:|------------:|
+| **Apostol v2** | **109 000** | **0,93ms** |
+| Go | 73 000 | 1,04ms |
+| Apostol v1 | 60 000 | 1,66ms |
+| Node.js | 38 000 | 2,46ms |
+| Python | 2 300 | 42ms |
+
+### /ping — через Nginx proxy (keep-alive ON, 100 соединений)
+
+| Сервис | RPS | Latency p50 |
+|--------|----:|------------:|
+| **Apostol v2** | **60 000** | **1,76ms** |
+| Go | 39 000 | 2,02ms |
+| Apostol v1 | 13 000 | 5,00ms |
+| Node.js | 6 600 | 11,18ms |
+| Python | 5 400 | 16,01ms |
+
+**Ключевые результаты**:
+- Apostol v2 достигает **89%** от throughput Nginx на /ping (486K vs 543K)
+- Apostol v2 **опережает Nginx** при keep-alive OFF (88K vs 86K RPS) благодаря `SO_REUSEPORT`
+- На /db/ping Apostol v2 лидирует с 109K RPS — **в 1,5 раза быстрее** Go, **в 1,8 раза быстрее** v1
+- Через Nginx proxy Apostol v2 сохраняет лидерство с 60K RPS
+
+> Полные результаты, методология и анализ: [REST API Benchmark](doc/BENCHMARK.ru-RU.md).
 
 ---
 
@@ -171,7 +216,7 @@ cmake --build build --parallel $(nproc)
 ### Установка
 
 ```shell
-sudo cmake --install build
+sudo cmake --install cmake-build-release
 ```
 
 По умолчанию бинарный файл `apostol` устанавливается в `/usr/sbin`, конфигурация — в `/etc/apostol/`.
@@ -209,14 +254,14 @@ cmake --build cmake-build-release --parallel $(nproc)
 ## Запуск
 
 ```shell
-# На переднем плане (single process)
-./build/apostol
+# На переднем плане
+./cmake-build-release/apostol
 
 # Как демон
-./build/apostol -d
+./cmake-build-release/apostol -d
 
 # Проверка конфигурации
-./build/apostol -t
+./cmake-build-release/apostol -t
 
 # Systemd-сервис (после установки)
 sudo systemctl start apostol
@@ -242,40 +287,6 @@ sudo systemctl start apostol
 | SIGQUIT | `-s quit` | Плавная остановка |
 | SIGHUP | `-s reload` | Перезагрузка конфигурации |
 | SIGUSR1 | `-s reopen` | Переоткрытие лог-файлов |
-
----
-
-## Бенчмарк
-
-**Apostol v2 vs v1 vs Python vs Node.js vs Go vs Nginx** — сравнительное тестирование в идентичных Docker-условиях (wrk, 4 потока, 10 секунд).
-
-### /ping — без базы данных (keep-alive ON, 100 соединений)
-
-| Сервис | RPS | Latency p50 |
-|--------|----:|------------:|
-| Nginx (static return) | 585,000 | 119us |
-| **Apostol v2** | **271,000** | **253us** |
-| Go (net/http) | 115,000 | 746us |
-| Apostol v1 | 67,000 | 1.29ms |
-| Node.js (Fastify) | 54,000 | 1.46ms |
-| Python (FastAPI) | 2,400 | 41ms |
-
-### /db/ping — PostgreSQL round-trip (keep-alive ON, 100 соединений)
-
-| Сервис | RPS | Latency p50 |
-|--------|----:|------------:|
-| **Apostol v2** | **69,000** | **1.18ms** |
-| Go | 58,000 | 1.55ms |
-| Apostol v1 | 33,000 | 2.69ms |
-| Node.js | 28,000 | 3.20ms |
-| Python | 2,200 | 43ms |
-
-**Ключевые результаты**:
-- Apostol v2 в **4 раза быстрее** v1 и в **2.4 раза быстрее** Go на /ping
-- Apostol v2 **опережает Nginx** при keep-alive OFF на 1000 соединениях (84K vs 74K RPS) благодаря `SO_REUSEPORT`
-- Минимальный разброс p99 latency среди всех сервисов (1.7x при c1000)
-
-> Полные результаты, методология и анализ: [REST API Benchmark](https://github.com/apostoldevel/apostol/blob/version2/doc/BENCHMARK.ru-RU.md).
 
 ---
 

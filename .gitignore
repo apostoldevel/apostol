@@ -1,6 +1,8 @@
 .worktrees/
 cmake-build-*/
 build/
+logs/
 *.o
 *.a
 .idea/
+ccc

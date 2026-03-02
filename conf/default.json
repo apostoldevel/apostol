@@ -24,7 +24,7 @@
   "server": {
     "listen": "127.0.0.1",
     "port": 4977,
-    "backlog": 128,
+    "backlog": 4096,
     "timeout": 5000,
     "root": "www"
   },

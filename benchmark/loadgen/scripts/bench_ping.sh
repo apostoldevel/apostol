@@ -3,11 +3,14 @@
 # Ping benchmark script.
 # Usage: docker compose --profile loadgen run --rm loadgen /bench/scripts/bench_ping.sh [OPTIONS]
 #
-# Tests:
+# Tests (direct):
 #   1. /api/vN/ping  — keep-alive ON  (t4/c100, t4/c1000)
 #   2. /api/vN/ping  — keep-alive OFF (t4/c100, t4/c1000)
 #   3. /api/vN/db/ping — keep-alive ON  (t4/c100)
 #   4. /api/vN/db/ping — keep-alive OFF (t4/c100)
+# Tests (via Nginx proxy):
+#   5. /api/vN/ping  — keep-alive ON/OFF (t4/c100, t4/c1000)
+#   6. /api/vN/db/ping — keep-alive ON/OFF (t4/c100)
 #
 # Options:
 #   --duration=<sec>     Test duration in seconds (default: 10)
@@ -175,6 +178,80 @@ for target_key in "${DB_TARGETS[@]}"; do
   version="${target_key%%-*}"
   run_wrk "dbping_ka-off_${target_key}_t4_c100" \
           "${base_url}/api/${version}/db/ping" 4 100 "true"
+done
+echo ""
+
+# --- Proxy targets (all via Nginx) ---
+PROXY_BASE="http://bench-nginx:80"
+PROXY_TARGETS=("v1" "v2" "v3" "v4" "v5")
+PROXY_LABELS=("v1-apostol" "v2-python" "v3-node" "v4-go" "v5-apostol_v2")
+
+# --- Proxy connectivity check ---
+echo "Checking proxy connectivity..."
+PROXY_AVAILABLE=()
+for i in "${!PROXY_TARGETS[@]}"; do
+  version="${PROXY_TARGETS[$i]}"
+  label="${PROXY_LABELS[$i]}"
+  if curl -sf --max-time 3 "${PROXY_BASE}/api/${version}/ping" > /dev/null 2>&1; then
+    echo "  proxy ${label}: OK"
+    PROXY_AVAILABLE+=("$i")
+  else
+    echo "  proxy ${label}: UNAVAILABLE (skipping)"
+  fi
+done
+echo ""
+
+# === 5. /ping via Nginx proxy ===
+echo "=== /ping via Nginx proxy — keep-alive ON ==="
+echo ""
+
+for cfg in "4:100" "4:1000"; do
+  IFS=':' read -r threads connections <<< "$cfg"
+  echo "--- t${threads}/c${connections} ---"
+  for i in "${PROXY_AVAILABLE[@]}"; do
+    version="${PROXY_TARGETS[$i]}"
+    label="${PROXY_LABELS[$i]}"
+    run_wrk "proxy_ping_ka-on_${label}_t${threads}_c${connections}" \
+            "${PROXY_BASE}/api/${version}/ping" "$threads" "$connections" "false"
+  done
+  echo ""
+done
+
+echo "=== /ping via Nginx proxy — keep-alive OFF ==="
+echo ""
+
+for cfg in "4:100" "4:1000"; do
+  IFS=':' read -r threads connections <<< "$cfg"
+  echo "--- t${threads}/c${connections} ---"
+  for i in "${PROXY_AVAILABLE[@]}"; do
+    version="${PROXY_TARGETS[$i]}"
+    label="${PROXY_LABELS[$i]}"
+    run_wrk "proxy_ping_ka-off_${label}_t${threads}_c${connections}" \
+            "${PROXY_BASE}/api/${version}/ping" "$threads" "$connections" "true"
+  done
+  echo ""
+done
+
+# === 6. /db/ping via Nginx proxy ===
+echo "=== /db/ping via Nginx proxy — keep-alive ON (t4/c100) ==="
+echo ""
+
+for i in "${PROXY_AVAILABLE[@]}"; do
+  version="${PROXY_TARGETS[$i]}"
+  label="${PROXY_LABELS[$i]}"
+  run_wrk "proxy_dbping_ka-on_${label}_t4_c100" \
+          "${PROXY_BASE}/api/${version}/db/ping" 4 100 "false"
+done
+echo ""
+
+echo "=== /db/ping via Nginx proxy — keep-alive OFF (t4/c100) ==="
+echo ""
+
+for i in "${PROXY_AVAILABLE[@]}"; do
+  version="${PROXY_TARGETS[$i]}"
+  label="${PROXY_LABELS[$i]}"
+  run_wrk "proxy_dbping_ka-off_${label}_t4_c100" \
+          "${PROXY_BASE}/api/${version}/db/ping" 4 100 "true"
 done
 echo ""
 

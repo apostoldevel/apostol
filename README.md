@@ -1,6 +1,6 @@
 [![ru](https://img.shields.io/badge/lang-ru-green.svg)](README.ru-RU.md)
 
-<img width="1584" height="642" alt="apostol-v2" src="https://github.com/user-attachments/assets/4755d305-6233-4e88-b094-8ae04832d59e" />
+<img width="1422" height="506" alt="apostol-v2" src="https://github.com/user-attachments/assets/90464f33-bfde-459b-8b29-162f4f4f1bc3" />
 
 # Apostol (A-POST-OL)
 
@@ -13,6 +13,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Benchmark](#benchmark)
 - [Modules](#modules)
     - [Modules in this build](#this-build-includes-three-modules)
     - [Additional modules](#additional-modules)
@@ -27,7 +28,6 @@
 - [Configuration](#configuration)
 - [Running](#running)
 - [Process control](#process-control)
-- [Benchmark](#benchmark)
 - [Creating your own project](#creating-your-own-project)
 - [Links](#links)
 - [License](#license)
@@ -54,6 +54,51 @@ The key element is the built-in HTTP server running in a single event loop toget
 - **Modularity** -- applications are assembled from independent modules like building blocks.
 
 The framework itself lives in a [separate repository](https://github.com/apostoldevel/libapostol) and is included as a git submodule.
+
+---
+
+## Benchmark
+
+**Apostol v2 vs v1 vs Python vs Node.js vs Go vs Nginx** -- comparative benchmark under identical Docker conditions (wrk, 4 threads, 10s duration, 4 workers).
+
+### /ping -- direct (keep-alive ON, 100 connections)
+
+| Service | RPS | Latency p50 |
+|---------|----:|------------:|
+| Nginx (static return) | 543,000 | 111us |
+| **Apostol v2** | **486,000** | **184us** |
+| Go (net/http) | 212,000 | 446us |
+| Apostol v1 | 126,000 | 768us |
+| Node.js (Fastify) | 102,000 | 0.94ms |
+| Python (FastAPI) | 2,400 | 41ms |
+
+### /db/ping -- direct (keep-alive ON, 100 connections)
+
+| Service | RPS | Latency p50 |
+|---------|----:|------------:|
+| **Apostol v2** | **109,000** | **0.93ms** |
+| Go | 73,000 | 1.04ms |
+| Apostol v1 | 60,000 | 1.66ms |
+| Node.js | 38,000 | 2.46ms |
+| Python | 2,300 | 42ms |
+
+### /ping -- via Nginx proxy (keep-alive ON, 100 connections)
+
+| Service | RPS | Latency p50 |
+|---------|----:|------------:|
+| **Apostol v2** | **60,000** | **1.76ms** |
+| Go | 39,000 | 2.02ms |
+| Apostol v1 | 13,000 | 5.00ms |
+| Node.js | 6,600 | 11.18ms |
+| Python | 5,400 | 16.01ms |
+
+**Key findings**:
+- Apostol v2 reaches **89%** of Nginx throughput on /ping (486K vs 543K)
+- Apostol v2 **surpasses Nginx** on keep-alive OFF (88K vs 86K RPS) thanks to `SO_REUSEPORT`
+- On /db/ping, Apostol v2 leads with 109K RPS -- **1.5x faster** than Go, **1.8x faster** than v1
+- Through Nginx proxy, Apostol v2 maintains the highest throughput at 60K RPS
+
+> Full results, methodology, and analysis: [REST API Benchmark](doc/BENCHMARK.md).
 
 ---
 
@@ -171,7 +216,7 @@ cmake --build build --parallel $(nproc)
 ### Install
 
 ```shell
-sudo cmake --install build
+sudo cmake --install cmake-build-release
 ```
 
 By default, the `apostol` binary is installed into `/usr/sbin`, configuration files into `/etc/apostol/`.
@@ -209,14 +254,14 @@ Key settings:
 ## Running
 
 ```shell
-# Foreground (single process)
-./build/apostol
+# Foreground
+./cmake-build-release/apostol
 
 # As a daemon
-./build/apostol -d
+./cmake-build-release/apostol -d
 
 # Test configuration
-./build/apostol -t
+./cmake-build-release/apostol -t
 
 # Systemd service (after install)
 sudo systemctl start apostol
@@ -242,40 +287,6 @@ sudo systemctl start apostol
 | SIGQUIT | `-s quit` | Graceful shutdown |
 | SIGHUP | `-s reload` | Reload config |
 | SIGUSR1 | `-s reopen` | Reopen log files |
-
----
-
-## Benchmark
-
-**Apostol v2 vs v1 vs Python vs Node.js vs Go vs Nginx** -- comparative benchmark under identical Docker conditions (wrk, 4 threads, 10s duration).
-
-### /ping -- no database (keep-alive ON, 100 connections)
-
-| Service | RPS | Latency p50 |
-|---------|----:|------------:|
-| Nginx (static return) | 585,000 | 119us |
-| **Apostol v2** | **271,000** | **253us** |
-| Go (net/http) | 115,000 | 746us |
-| Apostol v1 | 67,000 | 1.29ms |
-| Node.js (Fastify) | 54,000 | 1.46ms |
-| Python (FastAPI) | 2,400 | 41ms |
-
-### /db/ping -- PostgreSQL round-trip (keep-alive ON, 100 connections)
-
-| Service | RPS | Latency p50 |
-|---------|----:|------------:|
-| **Apostol v2** | **69,000** | **1.18ms** |
-| Go | 58,000 | 1.55ms |
-| Apostol v1 | 33,000 | 2.69ms |
-| Node.js | 28,000 | 3.20ms |
-| Python | 2,200 | 43ms |
-
-**Key findings**:
-- Apostol v2 is **4x faster** than v1 and **2.4x faster** than Go on /ping
-- Apostol v2 **surpasses Nginx** on keep-alive OFF at 1000 connections (84K vs 74K RPS) thanks to `SO_REUSEPORT`
-- Tightest p99 latency spread of any service (1.7x at c1000)
-
-> Full results, methodology, and analysis: [REST API Benchmark](https://github.com/apostoldevel/apostol/blob/version2/doc/BENCHMARK.md).
 
 ---
 
