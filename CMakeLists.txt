@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(apostol VERSION 0.1.0 LANGUAGES CXX)
+project(apostol VERSION 2.0.0 LANGUAGES CXX)
 
 # Version is exposed via the generated include/apostol/version.hpp
 # (see the apostol_version custom target below).
@@ -91,6 +91,22 @@ target_compile_definitions(apostol PUBLIC
     APP_DEFAULT_PG_CONNECT_TIMEOUT=5
 )
 
+# ─── Testing ─────────────────────────────────────────────────────────────────
+
+option(WITH_TEST "Build tests (downloads Catch2 via FetchContent)" ON)
+
+if(WITH_TEST)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG        v3.7.1
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(Catch2)
+endif()
+
 # ─── Build-time version header ───────────────────────────────────────────────
 #
 # cmake/GenerateVersion.cmake runs on every `cmake --build`, captures the
@@ -172,6 +188,85 @@ target_link_libraries(apostol_app PRIVATE apostol_modules)
 
 if(ENABLE_CLANG_TIDY AND CLANG_TIDY_EXE)
     set_target_properties(apostol_app PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+endif()
+
+# ─── Tests ───────────────────────────────────────────────────────────────────
+
+if(WITH_TEST)
+    enable_testing()
+
+    add_executable(apostol_tests
+        tests/unit/test_logger.cpp
+        tests/unit/test_config.cpp
+        tests/unit/test_event_loop.cpp
+        tests/unit/test_tcp.cpp
+        tests/unit/test_http.cpp
+        tests/unit/test_module.cpp
+        tests/unit/test_apostol_module.cpp
+        tests/unit/test_websocket.cpp
+        tests/unit/test_integration.cpp
+        tests/unit/test_settings.cpp
+        tests/unit/test_master.cpp
+        tests/unit/test_process_model.cpp
+        tests/unit/test_udp.cpp
+        tests/unit/test_base64.cpp
+        tests/unit/test_file_utils.cpp
+        tests/unit/test_http_utils.cpp
+        tests/unit/test_tcp_client.cpp
+        tests/unit/test_udp_client.cpp
+        tests/unit/test_http_client.cpp
+        tests/unit/test_http_proxy.cpp
+        tests/unit/test_oauth_providers.cpp
+        tests/unit/test_site_config.cpp
+        tests/unit/test_ws_client.cpp
+        tests/unit/test_route_manager.cpp
+    )
+
+    if(WITH_POSTGRESQL)
+        target_sources(apostol_tests PRIVATE
+            tests/unit/test_pg.cpp
+            tests/unit/test_pg_utils.cpp
+            tests/unit/test_pghttp.cpp
+            tests/unit/test_bot_session.cpp
+        )
+    endif()
+
+    if(WITH_SSL)
+        target_sources(apostol_tests PRIVATE
+            tests/unit/test_jwt.cpp
+            tests/unit/test_smtp_client.cpp
+        )
+    endif()
+
+    if(WITH_CURL)
+        target_sources(apostol_tests PRIVATE tests/unit/test_curl_client.cpp)
+    endif()
+
+    if(WITH_POSTGRESQL)
+        target_sources(apostol_tests PRIVATE
+            tests/unit/test_pgfetch.cpp
+        )
+    endif()
+
+    target_include_directories(apostol_tests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/lib/libapostol/src/lib    # jwt-cpp/jwt.h
+    )
+
+    target_compile_options(apostol_tests PRIVATE -Wno-unused-result)
+
+    target_compile_definitions(apostol_tests PRIVATE
+        CMAKE_BINARY_DIR="${CMAKE_BINARY_DIR}"
+    )
+
+    target_link_libraries(apostol_tests
+        PRIVATE
+            apostol_modules
+            Catch2::Catch2WithMain
+    )
+
+    include(CTest)
+    include(Catch)
+    catch_discover_tests(apostol_tests)
 endif()
 
 # ─── Install ──────────────────────────────────────────────────────────────────
