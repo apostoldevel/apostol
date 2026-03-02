@@ -9,7 +9,7 @@
 [submodule "src/modules/Workers/WebServer"]
 	path = src/modules/Workers/WebServer
 	url = https://github.com/apostoldevel/module-WebServer.git
-	branch = version2
+	branch = master
 [submodule "src/modules/Helpers/PGFetch"]
 	path = src/modules/Helpers/PGFetch
 	url = https://github.com/apostoldevel/module-PGFetch.git
@@ -17,3 +17,4 @@
 [submodule "db/sql/http"]
 	path = db/sql/http
 	url = https://github.com/apostoldevel/db-http.git
+	branch = master
