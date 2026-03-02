@@ -110,11 +110,11 @@ The framework has a modular architecture with built-in UDP/TCP/WebSocket/HTTP se
 
 | Module | Type | Description |
 |--------|------|-------------|
-| [PGHTTP](https://github.com/apostoldevel/module-PGHTTP/tree/version2) | Worker | HTTP to PostgreSQL function dispatcher -- implement REST API logic in PL/pgSQL |
-| [WebServer](https://github.com/apostoldevel/module-WebServer/tree/version2) | Worker | Static file serving with built-in Swagger UI |
-| [PGFetch](https://github.com/apostoldevel/module-PGFetch/tree/version2) | Helper | LISTEN/NOTIFY driven HTTP fetch -- send HTTP requests from PL/pgSQL |
+| [PGHTTP](https://github.com/apostoldevel/module-PGHTTP) | Worker | HTTP to PostgreSQL function dispatcher -- implement REST API logic in PL/pgSQL |
+| [WebServer](https://github.com/apostoldevel/module-WebServer) | Worker | Static file serving with built-in Swagger UI |
+| [PGFetch](https://github.com/apostoldevel/module-PGFetch) | Helper | LISTEN/NOTIFY driven HTTP fetch -- send HTTP requests from PL/pgSQL |
 
-> More details about this build: [article](https://github.com/apostoldevel/apostol/blob/version2/doc/ARTICLE.md).
+> More details about this build: [article](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.md).
 
 ### Additional modules
 
@@ -127,7 +127,7 @@ With [additional modules](https://github.com/apostoldevel/libapostol#modules) Ap
 - [**StreamServer**](https://github.com/apostoldevel/process-StreamServer) -- streaming data server;
 - [**WebSocket API**](https://github.com/apostoldevel/module-WebSocketAPI) -- JSON-RPC and pub/sub via WebSocket.
 
-For a full CRM build with all modules see [apostol-crm](https://github.com/apostoldevel/apostol-crm/tree/version2).
+For a full CRM build with all modules see [apostol-crm](https://github.com/apostoldevel/apostol-crm).
 
 ---
 
@@ -173,7 +173,7 @@ Each module is a separate git submodule -- add or remove modules to build exactl
 The fastest way to try Apostol -- Docker Compose with PostgreSQL, PgBouncer, and pgweb:
 
 ```shell
-git clone --recursive https://github.com/apostoldevel/apostol.git -b version2
+git clone --recursive https://github.com/apostoldevel/apostol.git
 cd apostol
 ./docker-build.sh
 docker compose up
@@ -200,7 +200,7 @@ sudo apt-get install build-essential cmake cmake-data g++ \
 ### Clone and build
 
 ```shell
-git clone --recursive https://github.com/apostoldevel/apostol.git -b version2
+git clone --recursive https://github.com/apostoldevel/apostol.git
 cd apostol
 ./configure
 cmake --build cmake-build-release --parallel $(nproc)
@@ -306,7 +306,7 @@ For automated project scaffolding see the [install script](https://github.com/ap
 ## Links
 
 - [libapostol](https://github.com/apostoldevel/libapostol) -- the framework
-- [apostol-crm](https://github.com/apostoldevel/apostol-crm/tree/version2) -- full CRM build with all modules
+- [apostol-crm](https://github.com/apostoldevel/apostol-crm) -- full CRM build with all modules
 - [db-platform](https://github.com/apostoldevel/db-platform) -- PostgreSQL backend framework
 
 ## License

@@ -110,11 +110,11 @@
 
 | Модуль | Тип | Описание |
 |--------|-----|----------|
-| [PGHTTP](https://github.com/apostoldevel/module-PGHTTP/tree/version2) | Worker | Диспетчер HTTP-запросов к функциям PostgreSQL — реализуйте REST API на PL/pgSQL |
-| [WebServer](https://github.com/apostoldevel/module-WebServer/tree/version2) | Worker | Раздача статических файлов со встроенным Swagger UI |
-| [PGFetch](https://github.com/apostoldevel/module-PGFetch/tree/version2) | Helper | HTTP-запросы по LISTEN/NOTIFY — отправляйте HTTP-запросы из PL/pgSQL |
+| [PGHTTP](https://github.com/apostoldevel/module-PGHTTP) | Worker | Диспетчер HTTP-запросов к функциям PostgreSQL — реализуйте REST API на PL/pgSQL |
+| [WebServer](https://github.com/apostoldevel/module-WebServer) | Worker | Раздача статических файлов со встроенным Swagger UI |
+| [PGFetch](https://github.com/apostoldevel/module-PGFetch) | Helper | HTTP-запросы по LISTEN/NOTIFY — отправляйте HTTP-запросы из PL/pgSQL |
 
-> Подробнее о возможностях этой сборки — в [статье](https://github.com/apostoldevel/apostol/blob/version2/doc/ARTICLE.ru-RU.md).
+> Подробнее о возможностях этой сборки — в [статье](https://github.com/apostoldevel/apostol/blob/master/doc/ARTICLE.ru-RU.md).
 
 ### Дополнительные модули
 
@@ -127,7 +127,7 @@
 - [**StreamServer**](https://github.com/apostoldevel/process-StreamServer) — сервер потоковых данных;
 - [**WebSocket API**](https://github.com/apostoldevel/module-WebSocketAPI) — JSON-RPC и pub/sub через WebSocket.
 
-Полная CRM-сборка со всеми модулями: [apostol-crm](https://github.com/apostoldevel/apostol-crm/tree/version2).
+Полная CRM-сборка со всеми модулями: [apostol-crm](https://github.com/apostoldevel/apostol-crm).
 
 ---
 
@@ -173,7 +173,7 @@ apostol/
 Самый быстрый способ попробовать Apostol — Docker Compose с PostgreSQL, PgBouncer и pgweb:
 
 ```shell
-git clone --recursive https://github.com/apostoldevel/apostol.git -b version2
+git clone --recursive https://github.com/apostoldevel/apostol.git
 cd apostol
 ./docker-build.sh
 docker compose up
@@ -200,7 +200,7 @@ sudo apt-get install build-essential cmake cmake-data g++ \
 ### Клонирование и сборка
 
 ```shell
-git clone --recursive https://github.com/apostoldevel/apostol.git -b version2
+git clone --recursive https://github.com/apostoldevel/apostol.git
 cd apostol
 ./configure
 cmake --build cmake-build-release --parallel $(nproc)
@@ -306,7 +306,7 @@ sudo systemctl start apostol
 ## Ссылки
 
 - [libapostol](https://github.com/apostoldevel/libapostol) — фреймворк
-- [apostol-crm](https://github.com/apostoldevel/apostol-crm/tree/version2) — полная сборка CRM со всеми модулями
+- [apostol-crm](https://github.com/apostoldevel/apostol-crm) — полная сборка CRM со всеми модулями
 - [db-platform](https://github.com/apostoldevel/db-platform) — PostgreSQL-фреймворк для разработки бэкенда
 
 ## Лицензия
