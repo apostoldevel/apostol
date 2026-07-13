@@ -147,6 +147,56 @@ TEST_CASE("EventLoop: remove_io stops receiving callbacks", "[event_loop]")
     ::close(pipefd[1]);
 }
 
+// ─── rearm_io lifecycle (regression: worker crash on closed fd) ────────────────
+//
+// Under APOSTOL_EPOLL_ET, every I/O handler calls rearm_io(fd) after it runs.
+// If the handler — or a re-entrant teardown it triggered (peer half-close,
+// libpq connection reset/replace, WebSocket reconnect) — already closed the
+// socket, epoll_ctl(EPOLL_CTL_MOD) fails with EBADF. rearm_io must treat that
+// as "the fd is gone, nothing to rearm" and return quietly, NOT throw: a thrown
+// exception unwinds the entire worker event loop and tears down every other
+// healthy connection it serves (observed in production as a fatal
+// "epoll_ctl MOD (rearm) ... Bad file descriptor" followed by a SIGSEGV during
+// teardown). With APOSTOL_EPOLL_ET off, rearm_io is a no-op and this trivially
+// holds.
+TEST_CASE("EventLoop: rearm_io on a closed fd does not throw", "[event_loop]")
+{
+    int pipefd[2];
+    REQUIRE(::pipe(pipefd) == 0);
+
+    EventLoop loop;
+    loop.add_io(pipefd[0], EPOLLIN, [](uint32_t) {});
+
+    // Close the socket without going through remove_io(). The kernel drops the
+    // fd from the epoll set on close, so a subsequent EPOLL_CTL_MOD sees EBADF.
+    ::close(pipefd[0]);
+
+    REQUIRE_NOTHROW(loop.rearm_io(pipefd[0]));
+
+    ::close(pipefd[1]);
+}
+
+TEST_CASE("EventLoop: loop stays usable after rearm_io on a closed fd", "[event_loop]")
+{
+    int pipefd[2];
+    REQUIRE(::pipe(pipefd) == 0);
+
+    EventLoop loop;
+    loop.add_io(pipefd[0], EPOLLIN, [](uint32_t) {});
+    ::close(pipefd[0]);
+    REQUIRE_NOTHROW(loop.rearm_io(pipefd[0]));
+
+    // The stale handler is gone and the loop is uncorrupted — a fresh timer
+    // still drives run() to completion.
+    int fired = 0;
+    loop.add_timer(10ms, [&] { ++fired; loop.stop(); }, false);
+    loop.run();
+
+    REQUIRE(fired == 1);
+
+    ::close(pipefd[1]);
+}
+
 // ─── Signal tests ────────────────────────────────────────────────────────────
 
 TEST_CASE("EventLoop: add_signal receives SIGUSR1 sent from self", "[event_loop]")
