@@ -49,8 +49,8 @@ public:
     using ApostolModule::match_path;
 
 #ifdef WITH_POSTGRESQL
-    using ApostolModule::pg_result_to_json;
-    using ApostolModule::reply_pg;
+    // pg_result_to_json and reply_pg are free functions in pg_utils.hpp
+    // (namespace apostol) — no using-declaration needed; tests call them directly.
     using ApostolModule::pq_quote_literal;
     using ApostolModule::headers_to_json;
     using ApostolModule::params_to_json;
@@ -456,22 +456,22 @@ TEST_CASE("ApostolModule: pg_result_to_json: empty result returns {}", "[apostol
     // PQmakeEmptyPGresult creates a PGresult* with the given status and 0 rows
     PgResult result(PQmakeEmptyPGresult(nullptr, PGRES_TUPLES_OK));
 
-    REQUIRE(EchoModule::pg_result_to_json(result) == "{}");
-    REQUIRE(EchoModule::pg_result_to_json(result, "array") == "[]");
-    REQUIRE(EchoModule::pg_result_to_json(result, "null")  == "null");
+    REQUIRE(pg_result_to_json(result) == "{}");
+    REQUIRE(pg_result_to_json(result, "array") == "[]");
+    REQUIRE(pg_result_to_json(result, "null")  == "null");
 }
 
 TEST_CASE("ApostolModule: pg_result_to_json: empty result with object_name", "[apostol_module][pg]")
 {
     PgResult result(PQmakeEmptyPGresult(nullptr, PGRES_TUPLES_OK));
-    REQUIRE(EchoModule::pg_result_to_json(result, "", "data") == R"({"data":[]})");
+    REQUIRE(pg_result_to_json(result, "", "data") == R"({"data":[]})");
 }
 
 TEST_CASE("ApostolModule: reply_pg: empty results vector returns 500", "[apostol_module][pg]")
 {
     std::vector<PgResult> empty;
     HttpResponse resp;
-    EchoModule::reply_pg(resp, empty);
+    reply_pg(resp, empty);
     std::string s = resp.serialize();
     REQUIRE(s.find("HTTP/1.1 500") != std::string::npos);
     REQUIRE(s.find(R"("code":500)") != std::string::npos);
@@ -482,7 +482,7 @@ TEST_CASE("ApostolModule: reply_pg: failed result returns 500 with error", "[apo
     std::vector<PgResult> results;
     results.emplace_back(PQmakeEmptyPGresult(nullptr, PGRES_FATAL_ERROR));
     HttpResponse resp;
-    EchoModule::reply_pg(resp, results);
+    reply_pg(resp, results);
     std::string s = resp.serialize();
     REQUIRE(s.find("HTTP/1.1 500") != std::string::npos);
 }
@@ -492,7 +492,7 @@ TEST_CASE("ApostolModule: reply_pg: ok empty result returns 200 with {}", "[apos
     std::vector<PgResult> results;
     results.emplace_back(PQmakeEmptyPGresult(nullptr, PGRES_TUPLES_OK));
     HttpResponse resp;
-    EchoModule::reply_pg(resp, results);
+    reply_pg(resp, results);
     std::string s = resp.serialize();
     REQUIRE(s.find("HTTP/1.1 200 OK") != std::string::npos);
     REQUIRE(s.find("Content-Type: application/json") != std::string::npos);
