@@ -13,10 +13,13 @@
 
 #include "apostol/event_loop.hpp"
 #include "apostol/pg.hpp"
+#include "apostol/tcp.hpp"
+#include "apostol/tcp_client.hpp"
 
 #include <libpq-fe.h>
 
 #include <chrono>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -494,4 +497,102 @@ TEST_CASE("PgPool — unlisten stops notifications", "[pg_notify]")
 
     CHECK(received_before >= 1);
     CHECK(received_after  == 0);
+}
+
+// Regression test for a bug where the dedicated LISTEN/NOTIFY connection
+// (PgPool::listener_) permanently gave up if its very first connect attempt
+// failed (e.g. pgbouncer not yet accepting connections on a cold start) —
+// unlike the regular query pool, it had no reconnect/backoff, so
+// notifications silently stopped being delivered forever until the whole
+// process restarted. Reproduced via a fake "pgbouncer" that isn't listening
+// yet when the pool starts (forcing the listener's first connect to fail),
+// then comes up shortly after and relays to the real test postgres.
+TEST_CASE("PgPool — listener recovers after initial connect failure", "[pg_notify]")
+{
+    EventLoop loop;
+
+    // Reserve a free port, then release it immediately so nothing is bound
+    // there yet — the pool's first LISTEN connect attempt must fail with
+    // connection-refused, exactly like backend hitting pgbouncer before it
+    // has started accepting connections.
+    uint16_t relay_port;
+    {
+        TcpListener probe(0);
+        relay_port = probe.local_port();
+    }
+
+    std::string relay_conninfo =
+        "host=127.0.0.1 port=" + std::to_string(relay_port) +
+        " dbname=web user=http password=http sslmode=disable connect_timeout=1";
+
+    PgPool pool(loop, relay_conninfo, /*min=*/1, /*max=*/2);
+
+    bool notified = false;
+    pool.listen("retry_after_failure_ch", [&](std::string_view, std::string_view payload) {
+        notified = (payload == "recovered");
+        loop.stop();
+    });
+
+    pool.start();
+
+    // Byte-relay: accepts on relay_port (standing in for pgbouncer) and
+    // forwards to the real test postgres, so the eventual reconnect goes
+    // all the way through to a genuine LISTEN + NOTIFY round trip.
+    struct RelayLink {
+        std::shared_ptr<TcpConnection> down;  // pool ↔ relay
+        std::unique_ptr<TcpClient>     up;    // relay ↔ real postgres
+    };
+    std::vector<std::shared_ptr<RelayLink>> links;
+    std::unique_ptr<TcpListener> relay;
+
+    // Bring the fake pgbouncer up well after the pool's first connect
+    // attempt has already failed and the exponential backoff (first window
+    // = 1s) has been armed — this is the window that used to be fatal for
+    // the listener.
+    loop.add_timer(400ms, [&] {
+        relay = std::make_unique<TcpListener>(relay_port);
+        loop.add_io(relay->fd(), EPOLLIN, [&](uint32_t) {
+            relay->accept_drain([&](TcpConnection raw_conn) {
+                auto link = std::make_shared<RelayLink>();
+                link->down = std::make_shared<TcpConnection>(std::move(raw_conn));
+                link->up   = std::make_unique<TcpClient>(loop);
+
+                auto     down = link->down;
+                TcpClient* up = link->up.get();
+
+                up->on_data([down](const char* d, std::size_t n) {
+                    down->write(d, n);
+                });
+
+                up->on_connect([&loop, down, up] {
+                    int down_fd = down->fd();
+                    loop.add_io(down_fd, EPOLLIN, [&loop, down, up](uint32_t) {
+                        char buf[4096];
+                        ssize_t n = down->read(buf, sizeof(buf));
+                        if (n > 0) {
+                            up->send(std::string_view(buf, static_cast<std::size_t>(n)));
+                        } else if (n == 0) {
+                            loop.remove_io(down->fd());
+                        }
+                    });
+                });
+
+                up->connect("127.0.0.1", 5432);  // real postgres, from kConnInfo
+
+                links.push_back(std::move(link));
+            });
+        });
+    }, false);
+
+    // Fire well after the shared backoff timer (~1s) has retried both the
+    // regular pool connection and the listener through the now-live relay.
+    loop.add_timer(2500ms, [&] {
+        pool.execute("SELECT pg_notify('retry_after_failure_ch', 'recovered')",
+            [](std::vector<PgResult>) {});
+    }, false);
+
+    loop.add_timer(6000ms, [&] { loop.stop(); }, false);
+    loop.run();
+
+    CHECK(notified);
 }
