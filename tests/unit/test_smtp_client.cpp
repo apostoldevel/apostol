@@ -6,7 +6,9 @@
 #include "apostol/event_loop.hpp"
 #include "apostol/tcp.hpp"
 
+#include <charconv>
 #include <chrono>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
@@ -235,22 +237,48 @@ TEST_CASE("SmtpClient: add_message returns reference", "[smtp_client]")
 
 // ─── Live SMTP tests ─────────────────────────────────────────────────────────
 
-TEST_CASE("SmtpClient: send real email via chargemecar SMTP", "[.live][smtp_client]")
+static std::string env_or(const char* name, const std::string& fallback = {})
 {
-    // Uses real SMTP credentials — tagged [.live] so it doesn't run by default
+    const char* value = std::getenv(name);
+    return (value != nullptr && *value != '\0') ? std::string(value) : fallback;
+}
+
+TEST_CASE("SmtpClient: send real email via a live SMTP server", "[.live][smtp_client]")
+{
+    // Tagged [.live] so it doesn't run by default. The server and the credentials
+    // come from the environment; the test is skipped when they are not set:
+    //   APOSTOL_TEST_SMTP_HOST, APOSTOL_TEST_SMTP_PORT (default 587),
+    //   APOSTOL_TEST_SMTP_USER, APOSTOL_TEST_SMTP_PASSWORD,
+    //   APOSTOL_TEST_SMTP_FROM (default: APOSTOL_TEST_SMTP_USER),
+    //   APOSTOL_TEST_SMTP_TO (default: the sender)
+    const std::string host     = env_or("APOSTOL_TEST_SMTP_HOST");
+    const std::string user     = env_or("APOSTOL_TEST_SMTP_USER");
+    const std::string password = env_or("APOSTOL_TEST_SMTP_PASSWORD");
+
+    if (host.empty() || user.empty() || password.empty())
+        SKIP("APOSTOL_TEST_SMTP_HOST, APOSTOL_TEST_SMTP_USER and APOSTOL_TEST_SMTP_PASSWORD are not set");
+
+    const std::string port_str = env_or("APOSTOL_TEST_SMTP_PORT", "587");
+    uint16_t port = 0;
+    const auto [end, ec] = std::from_chars(port_str.data(), port_str.data() + port_str.size(), port);
+    if (ec != std::errc{} || end != port_str.data() + port_str.size() || port == 0)
+        FAIL("APOSTOL_TEST_SMTP_PORT is not a valid port: " << port_str);
+
+    const std::string from = env_or("APOSTOL_TEST_SMTP_FROM", user);
+
     EventLoop loop;
 
     SmtpConfig cfg;
-    cfg.host     = "www366.your-server.de";
-    cfg.port     = 587;
-    cfg.username = "noreply@chargemecar.com";
-    cfg.password = "27Dj76RmBEf5T8X8";
+    cfg.host     = host;
+    cfg.port     = port;
+    cfg.username = user;
+    cfg.password = password;
 
     SmtpClient smtp(loop, cfg);
 
     auto& msg = smtp.add_message();
-    msg.from         = "noreply@chargemecar.com";
-    msg.to           = {"noreply@chargemecar.com"};
+    msg.from         = from;
+    msg.to           = {env_or("APOSTOL_TEST_SMTP_TO", from)};
     msg.subject      = "apostol SmtpClient test";
     msg.body         = "This is an automated test from apostol SmtpClient.";
     msg.content_type = "text/plain";
