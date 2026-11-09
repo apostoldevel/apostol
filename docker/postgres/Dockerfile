@@ -1,11 +1,11 @@
-# Базовый образ postgres
+# Base postgres image
 FROM postgres:latest
 
 ENV TZ 'Europe/Moscow'
 ENV LANG 'en_US.UTF-8'
 ENV LC_ALL 'en_US.UTF-8'
 
-# Настройка часового пояса и локалей
+# Configure the time zone and locales
 RUN set -eux; \
     echo $TZ > /etc/timezone; \
     echo "en_US.UTF-8 UTF-8" > /etc/locale.gen; \
@@ -16,7 +16,7 @@ RUN set -eux; \
     dpkg-reconfigure -f noninteractive locales && \
     apt-get clean && rm -rf /var/lib/apt/lists/*;
 
-# Копируем SQL файлы в образ
+# Copy the SQL files into the image
 COPY ./db/sql /docker-entrypoint-initdb.d
 COPY ./docker/postgres/postgresql.conf /tmp
 

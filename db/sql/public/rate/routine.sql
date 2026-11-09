@@ -2,11 +2,11 @@
 -- public.update_rate ----------------------------------------------------------
 --------------------------------------------------------------------------------
 /**
- * Обновляет курс валют.
- * @param {uuid} pCurrencyFrom - Ссылка на первую валюту
- * @param {uuid} pCurrencyTo - Ссылка на вторую валюту
- * @param {numeric} pValue - Значение - соотношение между первой и второй валютой
- * @param {timestamptz} pDateFrom - Дата
+ * Updates the exchange rate.
+ * @param {uuid} pCurrencyFrom - Reference to the first currency
+ * @param {uuid} pCurrencyTo - Reference to the second currency
+ * @param {numeric} pValue - Value: the ratio between the first and the second currency
+ * @param {timestamptz} pDateFrom - Date
  * @return {void}
  */
 CREATE OR REPLACE FUNCTION public.update_rate (
@@ -20,7 +20,7 @@ DECLARE
   dtDateFrom    timestamptz;
   dtDateTo 	    timestamptz;
 BEGIN
-  -- получим дату значения в текущем диапозоне дат
+  -- get the validity dates of the value in effect at the given date
   SELECT validFromDate, validToDate INTO dtDateFrom, dtDateTo
     FROM public.rate
    WHERE currencyFrom = pCurrencyFrom
@@ -29,14 +29,14 @@ BEGIN
      AND validToDate > pDateFrom;
 
   IF FOUND AND pDateFrom = dtDateFrom THEN
-    -- обновим значение в текущем диапозоне дат
+    -- update the value of the current date range
     UPDATE public.rate SET value = pValue
      WHERE currencyFrom = pCurrencyFrom
        AND currencyTo = pCurrencyTo
        AND validFromDate <= pDateFrom
        AND validToDate > pDateFrom;
   ELSE
-    -- обновим дату значения в текущем диапозоне дат
+    -- update the end date of the current date range
     UPDATE public.rate SET validToDate = pDateFrom
      WHERE currencyFrom = pCurrencyFrom
        AND currencyTo = pCurrencyTo
@@ -55,11 +55,11 @@ $$ LANGUAGE plpgsql
 -- public.get_rate -------------------------------------------------------------
 --------------------------------------------------------------------------------
 /**
- * Возвращает курс валют.
- * @param {uuid} pCurrencyFrom - Ссылка на первую валюту
- * @param {uuid} pCurrencyTo - Ссылка на вторую валюту
- * @param {timestamptz} pDateFrom - Дата
-* @return {numeric} Значение - соотношение между первой и второй валютой
+ * Returns the exchange rate.
+ * @param {uuid} pCurrencyFrom - Reference to the first currency
+ * @param {uuid} pCurrencyTo - Reference to the second currency
+ * @param {timestamptz} pDateFrom - Date
+* @return {numeric} Value: the ratio between the first and the second currency
  */
 CREATE OR REPLACE FUNCTION public.get_rate (
   pCurrencyFrom uuid,

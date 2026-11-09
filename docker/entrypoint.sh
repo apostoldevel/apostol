@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# Установка значений переменных по умолчанию
+# Default values of the variables
 PROJECT_NAME="${PROJECT_NAME:-apostol}"
 
 set -o allexport
@@ -24,7 +24,7 @@ if [ -n "$PGPORT" ]; then
   PG_PARAMS+=(-p "$PGPORT")
 fi
 
-# Удаление логов, если каталог существует
+# Remove the logs if the directory exists
 if [[ -d /var/log/$PROJECT_NAME ]]; then
   find /var/log/"$PROJECT_NAME" -name '*.log' -delete
 fi
